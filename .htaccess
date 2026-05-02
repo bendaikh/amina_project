@@ -9,6 +9,14 @@
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 
+    # Allow access to build assets (CSS, JS, fonts, images)
+    RewriteCond %{REQUEST_URI} ^/build/
+    RewriteRule ^ - [L]
+
+    # Allow access to public assets
+    RewriteCond %{REQUEST_URI} ^/(css|js|images|fonts|storage)/
+    RewriteRule ^ - [L]
+
     # Redirect Trailing Slashes If Not A Folder...
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_URI} (.+)/$
@@ -29,10 +37,33 @@ Options +FollowSymLinks
 # Default charset
 AddDefaultCharset UTF-8
 
-# File types
+# MIME Types - Critical for serving assets correctly
 <IfModule mod_mime.c>
-    AddType application/javascript js
+    # JavaScript
+    AddType application/javascript js mjs
+    AddType application/json json
+    
+    # CSS
     AddType text/css css
+    
+    # Images
+    AddType image/svg+xml svg svgz
+    AddType image/x-icon ico
+    AddType image/webp webp
+    AddType image/png png
+    AddType image/jpeg jpg jpeg
+    AddType image/gif gif
+    
+    # Fonts
+    AddType font/woff woff
+    AddType font/woff2 woff2
+    AddType font/ttf ttf
+    AddType font/otf otf
+    AddType application/vnd.ms-fontobject eot
+    
+    # Other
+    AddType application/pdf pdf
+    AddType text/html html htm
 </IfModule>
 
 # Compression
@@ -44,30 +75,67 @@ AddDefaultCharset UTF-8
     AddOutputFilterByType DEFLATE application/x-javascript
     AddOutputFilterByType DEFLATE application/json
     AddOutputFilterByType DEFLATE application/xml
+    AddOutputFilterByType DEFLATE text/xml
+    AddOutputFilterByType DEFLATE image/svg+xml
 </IfModule>
 
 # Browser Caching
 <IfModule mod_expires.c>
     ExpiresActive On
+    
+    # Images
     ExpiresByType image/jpg "access plus 1 year"
     ExpiresByType image/jpeg "access plus 1 year"
     ExpiresByType image/gif "access plus 1 year"
     ExpiresByType image/png "access plus 1 year"
     ExpiresByType image/svg+xml "access plus 1 year"
-    ExpiresByType text/css "access plus 1 month"
-    ExpiresByType application/pdf "access plus 1 month"
-    ExpiresByType application/javascript "access plus 1 month"
-    ExpiresByType application/x-javascript "access plus 1 month"
-    ExpiresByType application/x-shockwave-flash "access plus 1 month"
+    ExpiresByType image/webp "access plus 1 year"
     ExpiresByType image/x-icon "access plus 1 year"
+    
+    # CSS and JavaScript
+    ExpiresByType text/css "access plus 1 year"
+    ExpiresByType application/javascript "access plus 1 year"
+    ExpiresByType application/x-javascript "access plus 1 year"
+    ExpiresByType text/javascript "access plus 1 year"
+    
+    # Fonts
+    ExpiresByType font/woff "access plus 1 year"
+    ExpiresByType font/woff2 "access plus 1 year"
+    ExpiresByType font/ttf "access plus 1 year"
+    ExpiresByType font/otf "access plus 1 year"
+    ExpiresByType application/vnd.ms-fontobject "access plus 1 year"
+    
+    # Others
+    ExpiresByType application/pdf "access plus 1 month"
+    ExpiresByType application/json "access plus 0 seconds"
+    
     ExpiresDefault "access plus 2 days"
 </IfModule>
 
 # Security Headers
 <IfModule mod_headers.c>
+    # Ensure correct MIME types for build assets
+    <FilesMatch "\.(js|mjs)$">
+        Header set Content-Type "application/javascript"
+    </FilesMatch>
+    
+    <FilesMatch "\.css$">
+        Header set Content-Type "text/css"
+    </FilesMatch>
+    
+    <FilesMatch "\.json$">
+        Header set Content-Type "application/json"
+    </FilesMatch>
+    
+    # Security headers
     Header set X-Content-Type-Options "nosniff"
     Header set X-Frame-Options "SAMEORIGIN"
     Header set X-XSS-Protection "1; mode=block"
+    
+    # CORS for fonts (if needed)
+    <FilesMatch "\.(woff|woff2|ttf|otf|eot)$">
+        Header set Access-Control-Allow-Origin "*"
+    </FilesMatch>
 </IfModule>
 
 # Protect sensitive files
@@ -76,7 +144,12 @@ AddDefaultCharset UTF-8
     Deny from all
 </FilesMatch>
 
-<FilesMatch "(composer\.json|composer\.lock|package\.json|package-lock\.json|\.env|\.env\.example|\.gitignore|\.gitattributes)$">
+<FilesMatch "(composer\.json|composer\.lock|package\.json|package-lock\.json|\.env|\.env\.example|\.gitignore|\.gitattributes|artisan)$">
     Order allow,deny
     Deny from all
 </FilesMatch>
+
+# Prevent access to storage and vendor directories from root
+RedirectMatch 404 /\.git
+RedirectMatch 404 /storage/
+RedirectMatch 404 /vendor/

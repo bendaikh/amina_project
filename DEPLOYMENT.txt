@@ -1,0 +1,27 @@
+# Build Production Assets - Run this before deploying
+npm run build
+
+# After building, make sure these directories exist on your server:
+# - public/build/ (with all the built assets)
+# - storage/ (with proper permissions 755)
+# - bootstrap/cache/ (with proper permissions 755)
+
+# Set proper permissions on server:
+chmod -R 755 storage bootstrap/cache
+
+# Clear and cache config on production:
+php artisan config:clear
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+
+# If you get 500 errors, check:
+# 1. storage/ and bootstrap/cache/ permissions
+# 2. .env file exists and is configured correctly
+# 3. APP_KEY is set in .env (run: php artisan key:generate)
+# 4. Database credentials are correct
+
+# Asset issues? Check:
+# 1. public/build/ directory exists with files
+# 2. .htaccess is uploaded and working
+# 3. Run 'npm run build' locally, then upload public/build/ folder
