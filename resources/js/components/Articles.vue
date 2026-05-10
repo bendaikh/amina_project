@@ -2,8 +2,8 @@
   <div class="min-h-screen p-4 md:p-6 lg:p-8">
     <div class="max-w-full mx-auto">
       <div class="mb-8">
-        <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-2">Gestion Articles</h1>
-        <p class="text-gray-600">Gérez votre catalogue de produits et articles</p>
+        <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-2">Gestion des articles</h1>
+        <p class="text-gray-600">Accueil > Articles > Gérez votre catalogue de produits et articles</p>
       </div>
 
       <!-- Stats Cards -->
@@ -14,8 +14,8 @@
               <p class="text-gray-500 text-sm mb-1">Total Articles</p>
               <h3 class="text-3xl font-bold text-gray-900">{{ stats.total_articles }}</h3>
             </div>
-            <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center">
-              <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center">
+              <svg class="w-6 h-6 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
               </svg>
             </div>
@@ -61,7 +61,7 @@
                 v-model="searchQuery"
                 type="text"
                 placeholder="Rechercher..."
-                class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                 @input="debouncedSearch"
               />
               <svg class="w-5 h-5 text-gray-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -70,7 +70,7 @@
             </div>
             <button 
               @click="openCreateModal"
-              class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium"
+              class="px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors font-medium"
             >
               + Nouvel Article
             </button>
@@ -79,7 +79,7 @@
 
         <!-- Loading State -->
         <div v-if="loading" class="text-center py-12">
-          <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+          <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mx-auto"></div>
           <p class="mt-4 text-gray-500">Chargement...</p>
         </div>
 
@@ -88,50 +88,31 @@
           <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
               <tr>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Code Article</th>
                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Désignation</th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">HS Code</th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Colis</th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">LOT</th>
                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Calibre</th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Prod.</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Famille</th>
                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Marque</th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Emballage</th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Poids Brut</th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Poids Net</th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Poids Égoutté</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Prix de vente</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actif</th>
                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
               <tr v-for="article in articles" :key="article.id" class="hover:bg-gray-50">
-                <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ article.designation }}</td>
-                <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{{ article.hs_code || '-' }}</td>
-                <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
-                  <span class="block">P: {{ article.total_colis_palet || 0 }}</span>
-                  <span class="block">C: {{ article.total_colis_carton || 0 }}</span>
-                </td>
-                <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{{ article.lot || '-' }}</td>
+                <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ article.code_article || '-' }}</td>
+                <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{{ article.designation }}</td>
                 <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{{ article.calibre || '-' }}</td>
-                <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{{ formatDate(article.date_production) }}</td>
+                <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{{ article.famille || '-' }}</td>
                 <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{{ article.marque || '-' }}</td>
-                <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
-                  <span class="block">{{ article.emballage_type || '-' }}</span>
-                  <span class="block text-xs text-gray-400">{{ article.emballage_ref || '' }}</span>
-                </td>
-                <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
-                  <span class="block">U: {{ formatNumber(article.poids_brut_unitaire) }}</span>
-                  <span class="block font-medium">T: {{ formatNumber(article.poids_brut_total) }}</span>
-                </td>
-                <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
-                  <span class="block">U: {{ formatNumber(article.poids_net_unitaire) }}</span>
-                  <span class="block font-medium">T: {{ formatNumber(article.poids_net_total) }}</span>
-                </td>
-                <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
-                  <span class="block">U: {{ formatNumber(article.poids_net_egoutte_unitaire) }}</span>
-                  <span class="block font-medium">T: {{ formatNumber(article.poids_net_egoutte_total) }}</span>
+                <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{{ formatNumber(article.prix_vente) }} {{ article.devise || 'EUR' }}</td>
+                <td class="px-4 py-4 whitespace-nowrap text-sm">
+                  <span :class="article.actif ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'" class="px-2 py-1 rounded-full text-xs font-medium">
+                    {{ article.actif ? 'Oui' : 'Non' }}
+                  </span>
                 </td>
                 <td class="px-4 py-4 whitespace-nowrap text-sm font-medium">
-                  <button @click="openEditModal(article)" class="text-indigo-600 hover:text-indigo-900 mr-3">
+                  <button @click="openEditModal(article)" class="text-teal-600 hover:text-teal-900 mr-3">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
@@ -183,31 +164,114 @@
 
     <!-- Create/Edit Modal -->
     <div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div class="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-        <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+      <div class="bg-white rounded-xl shadow-xl w-full max-w-6xl max-h-[90vh] overflow-y-auto">
+        <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between z-10">
           <h3 class="text-xl font-semibold text-gray-900">
             {{ isEditing ? 'Modifier l\'article' : 'Nouvel Article' }}
           </h3>
-          <button @click="closeModal" class="text-gray-400 hover:text-gray-600">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+          <div class="flex items-center gap-4">
+            <button @click="closeModal" class="px-4 py-2 text-gray-600 hover:text-gray-800 flex items-center gap-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              Retour
+            </button>
+            <button
+              @click="submitForm"
+              :disabled="submitting"
+              class="px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors font-medium disabled:opacity-50 flex items-center gap-2"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+              Enregistrer
+            </button>
+          </div>
         </div>
 
         <form @submit.prevent="submitForm" class="p-6">
-          <!-- Désignation & HS Code -->
-          <div class="mb-6">
-            <h4 class="text-lg font-medium text-gray-900 mb-4 pb-2 border-b">Informations Générales</h4>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Section 1: Informations générales -->
+          <div class="mb-8 bg-gray-50 rounded-lg p-6 border border-gray-200">
+            <h4 class="text-lg font-semibold text-gray-900 mb-6 flex items-center gap-2">
+              <span class="w-8 h-8 bg-teal-600 text-white rounded-full flex items-center justify-center text-sm">1</span>
+              Informations générales
+            </h4>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Code article *</label>
+                <input
+                  v-model="form.code_article"
+                  type="text"
+                  required
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                  placeholder="ART-000125"
+                />
+              </div>
+              <div class="md:col-span-2">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Désignation *</label>
                 <input
                   v-model="form.designation"
                   type="text"
                   required
-                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  placeholder="Ex: OLIVES VERTES EN RONDELLE"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                  placeholder="Olives Vertes Dénoyautées 16/18"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Calibre</label>
+                <select
+                  v-model="form.calibre"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-white"
+                >
+                  <option value="">Sélectionner</option>
+                  <option value="16/18">16/18</option>
+                  <option value="19/21">19/21</option>
+                  <option value="22/25">22/25</option>
+                  <option value="26/29">26/29</option>
+                  <option value="30/33">30/33</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Famille *</label>
+                <select
+                  v-model="form.famille"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-white"
+                >
+                  <option value="">Sélectionner</option>
+                  <option value="Olives">Olives</option>
+                  <option value="Huiles">Huiles</option>
+                  <option value="Conserves">Conserves</option>
+                  <option value="Épices">Épices</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Sous-famille</label>
+                <select
+                  v-model="form.sous_famille"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-white"
+                >
+                  <option value="">Sélectionner</option>
+                  <option value="Olives vertes">Olives vertes</option>
+                  <option value="Olives noires">Olives noires</option>
+                  <option value="Olives mixtes">Olives mixtes</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Marque</label>
+                <input
+                  v-model="form.marque"
+                  type="text"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                  placeholder="Green Valley"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Code-barres</label>
+                <input
+                  v-model="form.code_barres"
+                  type="text"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                  placeholder="6198765432105"
                 />
               </div>
               <div>
@@ -215,248 +279,334 @@
                 <input
                   v-model="form.hs_code"
                   type="text"
-                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  placeholder="Ex: 2005700081"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                  placeholder="2005.70.00"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Actif</label>
+                <label class="relative inline-flex items-center cursor-pointer mt-2">
+                  <input type="checkbox" v-model="form.actif" class="sr-only peer">
+                  <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-teal-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-600"></div>
+                  <span class="ml-3 text-sm font-medium text-gray-700">{{ form.actif ? 'Oui' : 'Non' }}</span>
+                </label>
+              </div>
+              <div class="md:col-span-1 md:row-span-2">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Photo produit</label>
+                <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center h-32 flex flex-col items-center justify-center">
+                  <svg class="w-8 h-8 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  <button type="button" class="text-teal-600 text-sm hover:text-teal-700">Changer la photo</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 2: Poids & caractéristiques -->
+          <div class="mb-8 bg-gray-50 rounded-lg p-6 border border-gray-200">
+            <h4 class="text-lg font-semibold text-gray-900 mb-6 flex items-center gap-2">
+              <span class="w-8 h-8 bg-teal-600 text-white rounded-full flex items-center justify-center text-sm">2</span>
+              Poids & caractéristiques
+            </h4>
+            <div class="grid grid-cols-1 md:grid-cols-6 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Poids brut (Kg)</label>
+                <input
+                  v-model.number="form.poids_brut"
+                  type="number"
+                  step="0.001"
+                  min="0"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                  placeholder="1.200"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Poids net (Kg)</label>
+                <input
+                  v-model.number="form.poids_net"
+                  type="number"
+                  step="0.001"
+                  min="0"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                  placeholder="1.000"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Poids net égoutté (Kg)</label>
+                <input
+                  v-model.number="form.poids_net_egoutte"
+                  type="number"
+                  step="0.001"
+                  min="0"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                  placeholder="0.600"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">pH (optionnel)</label>
+                <input
+                  v-model.number="form.ph"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  max="14"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                  placeholder="4.20"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Taux de sel (%) (optionnel)</label>
+                <input
+                  v-model.number="form.taux_sel"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                  placeholder="3.50"
                 />
               </div>
             </div>
           </div>
 
-          <!-- Colis & LOT -->
-          <div class="mb-6">
-            <h4 class="text-lg font-medium text-gray-900 mb-4 pb-2 border-b">Colis & Lot</h4>
+          <!-- Section 3: Conditionnement / Emballage -->
+          <div class="mb-8 bg-gray-50 rounded-lg p-6 border border-gray-200">
+            <h4 class="text-lg font-semibold text-gray-900 mb-6 flex items-center gap-2">
+              <span class="w-8 h-8 bg-teal-600 text-white rounded-full flex items-center justify-center text-sm">3</span>
+              Conditionnement / Emballage
+            </h4>
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Total Colis (Palet)</label>
-                <input
-                  v-model.number="form.total_colis_palet"
-                  type="number"
-                  min="0"
-                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  placeholder="0"
-                />
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Total Colis (Carton)</label>
-                <input
-                  v-model.number="form.total_colis_carton"
-                  type="number"
-                  min="0"
-                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  placeholder="0"
-                />
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">LOT</label>
-                <input
-                  v-model="form.lot"
-                  type="text"
-                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  placeholder="Ex: 158F26.26"
-                />
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Calibre</label>
-                <input
-                  v-model="form.calibre"
-                  type="text"
-                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  placeholder="Ex: 30/33"
-                />
-              </div>
-            </div>
-          </div>
-
-          <!-- Production & Marque -->
-          <div class="mb-6">
-            <h4 class="text-lg font-medium text-gray-900 mb-4 pb-2 border-b">Production & Marque</h4>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Date Production</label>
-                <input
-                  v-model="form.date_production"
-                  type="date"
-                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                />
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Marque</label>
-                <input
-                  v-model="form.marque"
-                  type="text"
-                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  placeholder="Ex: MARJANA"
-                />
-              </div>
-            </div>
-          </div>
-
-          <!-- Emballage -->
-          <div class="mb-6">
-            <h4 class="text-lg font-medium text-gray-900 mb-4 pb-2 border-b">Emballage</h4>
-            <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Type emballage</label>
                 <select
-                  v-model="form.emballage_type"
-                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  v-model="form.type_emballage"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-white"
                 >
                   <option value="">Sélectionner</option>
+                  <option value="Bocal verre">Bocal verre</option>
                   <option value="Seaux">Seaux</option>
                   <option value="Pots">Pots</option>
-                  <option value="sachets">Sachets</option>
+                  <option value="Sachets">Sachets</option>
                   <option value="Cartons">Cartons</option>
                   <option value="Bidons">Bidons</option>
                 </select>
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Référence</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Unités par carton</label>
                 <input
-                  v-model="form.emballage_ref"
+                  v-model.number="form.unites_par_carton"
+                  type="number"
+                  min="0"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                  placeholder="12"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Cartons par palette</label>
+                <input
+                  v-model.number="form.cartons_par_palette"
+                  type="number"
+                  min="0"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                  placeholder="84"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Nombre total par palette</label>
+                <input
+                  v-model.number="form.nombre_total_par_palette"
+                  type="number"
+                  min="0"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                  placeholder="1008"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Type palette</label>
+                <select
+                  v-model="form.type_palette"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-white"
+                >
+                  <option value="">Sélectionner</option>
+                  <option value="Europe (80x120)">Europe (80x120)</option>
+                  <option value="US (100x120)">US (100x120)</option>
+                  <option value="Demi-palette (60x80)">Demi-palette (60x80)</option>
+                </select>
+              </div>
+              <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Dimensions carton (L x l x H) cm</label>
+                <div class="grid grid-cols-3 gap-2">
+                  <input
+                    v-model.number="form.dimension_carton_l"
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                    placeholder="30"
+                  />
+                  <input
+                    v-model.number="form.dimension_carton_w"
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                    placeholder="22"
+                  />
+                  <input
+                    v-model.number="form.dimension_carton_h"
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                    placeholder="24"
+                  />
+                </div>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Poids carton (Kg)</label>
+                <input
+                  v-model.number="form.poids_carton"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                  placeholder="14.50"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 4: Logistique (simplified) -->
+          <div class="mb-8 bg-gray-50 rounded-lg p-6 border border-gray-200">
+            <h4 class="text-lg font-semibold text-gray-900 mb-6 flex items-center gap-2">
+              <span class="w-8 h-8 bg-teal-600 text-white rounded-full flex items-center justify-center text-sm">4</span>
+              Logistique
+            </h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Poids palette (brut) Kg</label>
+                <input
+                  v-model.number="form.poids_palette"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                  placeholder="1246.00"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">DLC/DLUO (Mois)</label>
+                <input
+                  v-model.number="form.dlc_dluo"
+                  type="number"
+                  min="0"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                  placeholder="24"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 5: Informations commerciales -->
+          <div class="mb-8 bg-gray-50 rounded-lg p-6 border border-gray-200">
+            <h4 class="text-lg font-semibold text-gray-900 mb-6 flex items-center gap-2">
+              <span class="w-8 h-8 bg-teal-600 text-white rounded-full flex items-center justify-center text-sm">5</span>
+              Informations commerciales
+            </h4>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Prix de vente</label>
+                <input
+                  v-model.number="form.prix_vente"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                  placeholder="25.00"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Unité de facturation</label>
+                <select
+                  v-model="form.unite_facturation"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-white"
+                >
+                  <option value="Carton">Carton</option>
+                  <option value="Unité">Unité</option>
+                  <option value="Palette">Palette</option>
+                  <option value="Kg">Kg</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Devise</label>
+                <select
+                  v-model="form.devise"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-white"
+                >
+                  <option value="EUR">EUR - Euro</option>
+                  <option value="USD">USD - Dollar</option>
+                  <option value="MAD">MAD - Dirham</option>
+                  <option value="GBP">GBP - Livre</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Taux TVA (%)</label>
+                <select
+                  v-model="form.taux_tva"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-white"
+                >
+                  <option value="0">0%</option>
+                  <option value="7">7%</option>
+                  <option value="10">10%</option>
+                  <option value="14">14%</option>
+                  <option value="20">20%</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Marché</label>
+                <select
+                  v-model="form.marche"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-white"
+                >
+                  <option value="Local">Local</option>
+                  <option value="Export">Export</option>
+                  <option value="Les deux">Les deux</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Minimum de commande</label>
+                <div class="flex">
+                  <input
+                    v-model.number="form.minimum_commande"
+                    type="number"
+                    min="0"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                    placeholder="10"
+                  />
+                  <span class="inline-flex items-center px-3 text-sm text-gray-500 bg-gray-100 border border-l-0 border-gray-300 rounded-r-lg">
+                    cartons
+                  </span>
+                </div>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Code interne (optionnel)</label>
+                <input
+                  v-model="form.code_interne"
                   type="text"
-                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  placeholder="Ex: 10L, 870ml"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                  placeholder="INT-OLV-00125"
                 />
               </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Tare</label>
-                <input
-                  v-model.number="form.emballage_tare"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  placeholder="0.00"
-                />
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">T/Colis</label>
-                <input
-                  v-model.number="form.t_colis"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  placeholder="0.00"
-                />
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">T/Emb</label>
-                <input
-                  v-model.number="form.t_emb"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  placeholder="0.00"
-                />
+              <div class="md:col-span-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Observations</label>
+                <textarea
+                  v-model="form.observations"
+                  rows="3"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                  placeholder="Produit de qualité supérieure..."
+                ></textarea>
               </div>
             </div>
-          </div>
-
-          <!-- Poids Brut -->
-          <div class="mb-6">
-            <h4 class="text-lg font-medium text-gray-900 mb-4 pb-2 border-b">Poids Brut (KG)</h4>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Unitaire</label>
-                <input
-                  v-model.number="form.poids_brut_unitaire"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  placeholder="0.00"
-                />
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Total</label>
-                <input
-                  v-model.number="form.poids_brut_total"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  placeholder="0.00"
-                />
-              </div>
-            </div>
-          </div>
-
-          <!-- Poids Net -->
-          <div class="mb-6">
-            <h4 class="text-lg font-medium text-gray-900 mb-4 pb-2 border-b">Poids Net (KG)</h4>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Unitaire</label>
-                <input
-                  v-model.number="form.poids_net_unitaire"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  placeholder="0.00"
-                />
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Total</label>
-                <input
-                  v-model.number="form.poids_net_total"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  placeholder="0.00"
-                />
-              </div>
-            </div>
-          </div>
-
-          <!-- Poids Net Égoutté -->
-          <div class="mb-6">
-            <h4 class="text-lg font-medium text-gray-900 mb-4 pb-2 border-b">Poids Net Égoutté (KG)</h4>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Unitaire</label>
-                <input
-                  v-model.number="form.poids_net_egoutte_unitaire"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  placeholder="0.00"
-                />
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Total</label>
-                <input
-                  v-model.number="form.poids_net_egoutte_total"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  placeholder="0.00"
-                />
-              </div>
-            </div>
-          </div>
-
-          <!-- Form Actions -->
-          <div class="flex justify-end gap-4 pt-4 border-t">
-            <button
-              type="button"
-              @click="closeModal"
-              class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium"
-            >
-              Annuler
-            </button>
-            <button
-              type="submit"
-              :disabled="submitting"
-              class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {{ submitting ? 'Enregistrement...' : (isEditing ? 'Mettre à jour' : 'Créer l\'article') }}
-            </button>
           </div>
         </form>
       </div>
@@ -532,25 +682,39 @@ export default {
     getEmptyForm() {
       return {
         id: null,
+        code_article: '',
         designation: '',
-        hs_code: '',
-        total_colis_palet: 0,
-        total_colis_carton: 0,
-        lot: '',
         calibre: '',
-        date_production: '',
+        famille: '',
+        sous_famille: '',
         marque: '',
-        emballage_type: '',
-        emballage_ref: '',
-        emballage_tare: null,
-        t_colis: null,
-        t_emb: null,
-        poids_brut_unitaire: null,
-        poids_brut_total: null,
-        poids_net_unitaire: null,
-        poids_net_total: null,
-        poids_net_egoutte_unitaire: null,
-        poids_net_egoutte_total: null
+        code_barres: '',
+        hs_code: '',
+        actif: true,
+        poids_brut: null,
+        poids_net: null,
+        poids_net_egoutte: null,
+        ph: null,
+        taux_sel: null,
+        type_emballage: '',
+        unites_par_carton: null,
+        cartons_par_palette: null,
+        nombre_total_par_palette: null,
+        type_palette: '',
+        dimension_carton_l: null,
+        dimension_carton_w: null,
+        dimension_carton_h: null,
+        poids_carton: null,
+        poids_palette: null,
+        dlc_dluo: null,
+        prix_vente: null,
+        unite_facturation: 'Carton',
+        devise: 'EUR',
+        taux_tva: 20,
+        marche: 'Export',
+        minimum_commande: null,
+        code_interne: '',
+        observations: ''
       };
     },
     async fetchArticles(page = 1) {

@@ -24,29 +24,29 @@
       <!-- Sidebar -->
       <aside 
         :class="[
-          'fixed top-0 left-0 h-full bg-gradient-to-b from-indigo-600 to-indigo-800 text-white transition-transform duration-300 ease-in-out z-50',
+          'fixed top-0 left-0 h-full bg-gradient-to-b from-teal-600 to-teal-800 text-white transition-transform duration-300 ease-in-out z-50',
           'w-64 shadow-xl',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         ]"
       >
       <div class="flex flex-col h-full">
         <!-- Logo/Header -->
-        <div class="p-6 border-b border-indigo-500">
+        <div class="p-6 border-b border-teal-500">
           <div class="flex items-center space-x-3">
             <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
-              <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              <svg class="w-6 h-6 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
               </svg>
             </div>
             <div>
-              <h2 class="text-xl font-bold">Admin Panel</h2>
-              <p class="text-xs text-indigo-200">Super Admin</p>
+              <h2 class="text-xl font-bold">MON ENTREPRISE</h2>
+              <p class="text-xs text-teal-200">Gestion Commerciale</p>
             </div>
           </div>
         </div>
 
         <!-- Navigation -->
-        <nav class="flex-1 overflow-y-auto py-4 px-3 scrollbar-thin scrollbar-thumb-indigo-500 scrollbar-track-indigo-700">
+        <nav class="flex-1 overflow-y-auto py-4 px-3 scrollbar-thin scrollbar-thumb-teal-500 scrollbar-track-teal-700">
           <ul class="space-y-1">
             <li v-for="item in menuItems" :key="item.path">
               <router-link
@@ -55,8 +55,8 @@
                 :class="[
                   'flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200',
                   $route.path === item.path 
-                    ? 'bg-white text-indigo-600 shadow-md' 
-                    : 'text-white hover:bg-indigo-700 hover:shadow-md'
+                    ? 'bg-white text-teal-600 shadow-md' 
+                    : 'text-white hover:bg-teal-700 hover:shadow-md'
                 ]"
               >
                 <span v-html="item.icon" class="w-5 h-5"></span>
@@ -67,16 +67,16 @@
         </nav>
 
         <!-- User Profile -->
-        <div class="p-4 border-t border-indigo-500">
+        <div class="p-4 border-t border-teal-500">
           <div class="flex items-center space-x-3">
-            <div class="w-10 h-10 bg-indigo-400 rounded-full flex items-center justify-center">
+            <div class="w-10 h-10 bg-teal-400 rounded-full flex items-center justify-center">
               <span class="text-sm font-bold">{{ userInitials }}</span>
             </div>
             <div class="flex-1">
               <p class="text-sm font-medium">Super Admin</p>
-              <p class="text-xs text-indigo-200">{{ userEmail }}</p>
+              <p class="text-xs text-teal-200">{{ userEmail }}</p>
             </div>
-            <button @click="handleLogout" class="p-2 hover:bg-indigo-700 rounded-lg transition-colors" title="Déconnexion">
+            <button @click="handleLogout" class="p-2 hover:bg-teal-700 rounded-lg transition-colors" title="Déconnexion">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
               </svg>
@@ -203,12 +203,12 @@ export default {
   width: 6px;
 }
 
-.scrollbar-thumb-indigo-500::-webkit-scrollbar-thumb {
-  background-color: rgba(99, 102, 241, 0.5);
+.scrollbar-thumb-teal-500::-webkit-scrollbar-thumb {
+  background-color: rgba(20, 184, 166, 0.5);
   border-radius: 3px;
 }
 
-.scrollbar-track-indigo-700::-webkit-scrollbar-track {
-  background-color: rgba(67, 56, 202, 0.3);
+.scrollbar-track-teal-700::-webkit-scrollbar-track {
+  background-color: rgba(15, 118, 110, 0.3);
 }
 </style>

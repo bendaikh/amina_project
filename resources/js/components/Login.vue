@@ -1,10 +1,10 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center p-4">
+  <div class="min-h-screen bg-gradient-to-br from-teal-600 via-teal-700 to-teal-800 flex items-center justify-center p-4">
     <!-- Background Decorations -->
     <div class="absolute inset-0 overflow-hidden">
       <div class="absolute -top-40 -right-40 w-80 h-80 bg-white rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-blob"></div>
-      <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-blob animation-delay-2000"></div>
-      <div class="absolute top-40 left-40 w-80 h-80 bg-pink-300 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-blob animation-delay-4000"></div>
+      <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-teal-300 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-blob animation-delay-2000"></div>
+      <div class="absolute top-40 left-40 w-80 h-80 bg-green-300 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-blob animation-delay-4000"></div>
     </div>
 
     <!-- Login Card -->
@@ -12,12 +12,12 @@
       <!-- Logo/Brand Section -->
       <div class="text-center mb-8">
         <div class="inline-flex items-center justify-center w-20 h-20 bg-white rounded-2xl shadow-2xl mb-4 transform hover:scale-110 transition-transform duration-300">
-          <svg class="w-12 h-12 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          <svg class="w-12 h-12 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
           </svg>
         </div>
         <h1 class="text-4xl font-bold text-white mb-2">Bienvenue</h1>
-        <p class="text-indigo-100">Connectez-vous à votre compte</p>
+        <p class="text-teal-100">Connectez-vous à votre compte</p>
       </div>
 
       <!-- Login Form Card -->
@@ -39,7 +39,7 @@
                 v-model="formData.email"
                 type="email"
                 required
-                class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white"
+                class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white"
                 placeholder="admin@example.com"
               />
             </div>
@@ -61,7 +61,7 @@
                 v-model="formData.password"
                 :type="showPassword ? 'text' : 'password'"
                 required
-                class="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white"
+                class="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white"
                 placeholder="••••••••"
               />
               <button
@@ -87,13 +87,13 @@
                 id="remember"
                 v-model="formData.remember"
                 type="checkbox"
-                class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                class="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300 rounded"
               />
               <label for="remember" class="ml-2 block text-sm text-gray-700">
                 Se souvenir de moi
               </label>
             </div>
-            <a href="#" class="text-sm font-medium text-indigo-600 hover:text-indigo-500 transition-colors">
+            <a href="#" class="text-sm font-medium text-teal-600 hover:text-teal-500 transition-colors">
               Mot de passe oublié?
             </a>
           </div>
@@ -102,7 +102,7 @@
           <button
             type="submit"
             :disabled="isLoading"
-            class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 px-4 rounded-lg font-semibold hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transform transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+            class="w-full bg-gradient-to-r from-teal-600 to-teal-700 text-white py-3 px-4 rounded-lg font-semibold hover:from-teal-700 hover:to-teal-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 transform transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
           >
             <span v-if="!isLoading" class="flex items-center justify-center">
               <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -121,11 +121,11 @@
         </form>
 
         <!-- Demo Credentials Info -->
-        <div class="mt-6 p-4 bg-indigo-50 rounded-lg border border-indigo-100">
-          <p class="text-xs text-center text-indigo-700 font-medium mb-2">
+        <div class="mt-6 p-4 bg-teal-50 rounded-lg border border-teal-100">
+          <p class="text-xs text-center text-teal-700 font-medium mb-2">
             🔐 Identifiants de démo
           </p>
-          <div class="text-xs text-indigo-600 space-y-1">
+          <div class="text-xs text-teal-600 space-y-1">
             <p><strong>Email:</strong> admin@system.com</p>
             <p><strong>Mot de passe:</strong> password</p>
           </div>
@@ -164,7 +164,7 @@
       <!-- Footer -->
       <p class="text-center text-white text-sm mt-6">
         Vous n'avez pas de compte? 
-        <a href="#" class="font-semibold underline hover:text-indigo-200 transition-colors">
+        <a href="#" class="font-semibold underline hover:text-teal-200 transition-colors">
           Inscrivez-vous
         </a>
       </p>
@@ -190,16 +190,10 @@ export default {
     async handleLogin() {
       this.isLoading = true;
       
-      // Simulate API call
       setTimeout(() => {
-        // For demo purposes, accept any login
-        // In production, you would validate against your backend
         if (this.formData.email && this.formData.password) {
-          // Store authentication state
           localStorage.setItem('isAuthenticated', 'true');
           localStorage.setItem('userEmail', this.formData.email);
-          
-          // Redirect to dashboard
           this.$router.push('/dashboard');
         }
         

@@ -2,8 +2,8 @@
   <div class="min-h-screen p-4 md:p-6 lg:p-8">
     <div class="max-w-7xl mx-auto">
       <div class="mb-8">
-        <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-2">Gestion Clients & Prospects</h1>
-        <p class="text-gray-600">Gérez votre portefeuille clients et prospects</p>
+        <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-2">Détail du client</h1>
+        <p class="text-gray-600">Accueil > Clients > Détail du client</p>
       </div>
 
       <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
@@ -15,7 +15,7 @@
                 @input="searchClients"
                 type="text" 
                 placeholder="Rechercher un client ou prospect..." 
-                class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" 
+                class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent" 
               />
               <svg class="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -24,7 +24,7 @@
           </div>
           <button 
             @click="openCreateModal"
-            class="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium"
+            class="px-6 py-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors font-medium"
           >
             + Ajouter Client
           </button>
@@ -35,11 +35,11 @@
           <table class="w-full">
             <thead>
               <tr class="border-b border-gray-200">
-                <th class="text-left py-3 px-4 text-sm font-semibold text-gray-600">ICE/CIN</th>
-                <th class="text-left py-3 px-4 text-sm font-semibold text-gray-600">Nom</th>
+                <th class="text-left py-3 px-4 text-sm font-semibold text-gray-600">Code Client</th>
+                <th class="text-left py-3 px-4 text-sm font-semibold text-gray-600">Raison Sociale</th>
                 <th class="text-left py-3 px-4 text-sm font-semibold text-gray-600">Email</th>
                 <th class="text-left py-3 px-4 text-sm font-semibold text-gray-600">Téléphone</th>
-                <th class="text-left py-3 px-4 text-sm font-semibold text-gray-600">Catégorie</th>
+                <th class="text-left py-3 px-4 text-sm font-semibold text-gray-600">Type</th>
                 <th class="text-left py-3 px-4 text-sm font-semibold text-gray-600">Statut</th>
                 <th class="text-left py-3 px-4 text-sm font-semibold text-gray-600">Actions</th>
               </tr>
@@ -48,7 +48,7 @@
               <tr v-if="loading" class="border-b border-gray-100">
                 <td colspan="7" class="py-8 text-center text-gray-500">
                   <div class="flex items-center justify-center space-x-2">
-                    <svg class="animate-spin h-5 w-5 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <svg class="animate-spin h-5 w-5 text-teal-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                       <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                       <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
@@ -66,11 +66,11 @@
                 </td>
               </tr>
               <tr v-else v-for="client in clients" :key="client.id" class="border-b border-gray-100 hover:bg-gray-50">
-                <td class="py-4 px-4 text-gray-600">{{ client.ice_cin }}</td>
+                <td class="py-4 px-4 text-gray-600 font-medium">{{ client.code_client || client.ice_cin }}</td>
                 <td class="py-4 px-4">
                   <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
-                      <span class="text-indigo-600 font-semibold">{{ getInitials(client.nom) }}</span>
+                    <div class="w-10 h-10 bg-teal-100 rounded-full flex items-center justify-center">
+                      <span class="text-teal-600 font-semibold">{{ getInitials(client.nom) }}</span>
                     </div>
                     <div>
                       <p class="font-medium text-gray-900">{{ client.nom }}</p>
@@ -90,12 +90,12 @@
                     'px-3 py-1 text-xs font-medium rounded-full',
                     client.statut === 'client' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
                   ]">
-                    {{ client.statut === 'client' ? 'Client' : 'Prospect' }}
+                    {{ client.statut === 'client' ? 'Actif' : 'Prospect' }}
                   </span>
                 </td>
                 <td class="py-4 px-4">
                   <div class="flex space-x-2">
-                    <button @click="viewClient(client)" class="text-indigo-600 hover:text-indigo-800" title="Voir">
+                    <button @click="viewClient(client)" class="text-teal-600 hover:text-teal-800" title="Voir">
                       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
@@ -104,6 +104,11 @@
                     <button @click="editClient(client)" class="text-blue-600 hover:text-blue-800" title="Modifier">
                       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                    </button>
+                    <button @click="openAffectModal(client)" class="text-purple-600 hover:text-purple-800" title="Affecter articles">
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                       </svg>
                     </button>
                     <button @click="deleteClient(client)" class="text-red-600 hover:text-red-800" title="Supprimer">
@@ -144,166 +149,257 @@
 
       <!-- Create/Edit Modal -->
       <div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-          <div class="p-6 border-b border-gray-200">
-            <div class="flex items-center justify-between">
-              <h2 class="text-xl font-bold text-gray-900">
-                {{ isEditing ? 'Modifier Client' : 'Nouveau Client' }}
-              </h2>
-              <button @click="closeModal" class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+        <div class="bg-white rounded-xl shadow-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+          <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between z-10">
+            <h2 class="text-xl font-bold text-gray-900">
+              {{ isEditing ? 'Modifier Client' : 'Nouveau Client' }}
+            </h2>
+            <div class="flex items-center gap-4">
+              <button @click="closeModal" class="px-4 py-2 text-gray-600 hover:text-gray-800 flex items-center gap-2">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                 </svg>
+                Retour
+              </button>
+              <button @click="saveClient" :disabled="saving" class="px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors font-medium disabled:opacity-50 flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                {{ saving ? 'Enregistrement...' : 'Modifier' }}
               </button>
             </div>
           </div>
 
           <form @submit.prevent="saveClient" class="p-6">
-            <!-- Informations Client Fieldset -->
-            <fieldset class="border border-gray-300 rounded-lg p-4 mb-6">
-              <legend class="text-sm font-semibold text-gray-700 px-2">Informations Client</legend>
-              
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <!-- ICE/CIN -->
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">
-                    ICE/CIN:<span class="text-red-500">*</span>
-                  </label>
-                  <input 
-                    v-model="form.ice_cin"
-                    type="text" 
-                    required
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                  />
-                  <p v-if="errors.ice_cin" class="text-red-500 text-xs mt-1">{{ errors.ice_cin[0] }}</p>
+            <!-- Header Info Section -->
+            <div class="mb-8 bg-white rounded-lg p-6 border border-teal-200 shadow-sm">
+              <div class="flex items-center gap-6 mb-6">
+                <div class="w-20 h-20 bg-teal-100 rounded-lg flex items-center justify-center">
+                  <span class="text-2xl text-teal-600 font-bold">{{ getInitials(form.nom) }}</span>
                 </div>
-
-                <!-- Nom -->
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">
-                    Nom:<span class="text-red-500">*</span>
-                  </label>
-                  <input 
-                    v-model="form.nom"
-                    type="text" 
-                    required
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                  />
-                  <p v-if="errors.nom" class="text-red-500 text-xs mt-1">{{ errors.nom[0] }}</p>
-                </div>
-
-                <!-- Email -->
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Email:</label>
-                  <input 
-                    v-model="form.email"
-                    type="email" 
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                  />
-                  <p v-if="errors.email" class="text-red-500 text-xs mt-1">{{ errors.email[0] }}</p>
-                </div>
-
-                <!-- Téléphone -->
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Téléphone:</label>
-                  <input 
-                    v-model="form.telephone"
-                    type="tel" 
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                  />
-                </div>
-
-                <!-- Adresse -->
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Adresse:</label>
-                  <input 
-                    v-model="form.adresse"
-                    type="text" 
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                  />
-                </div>
-
-                <!-- Pays -->
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Pays:</label>
-                  <input 
-                    v-model="form.pays"
-                    type="text" 
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                  />
-                </div>
-
-                <!-- Catégorie -->
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Catégorie:</label>
-                  <select 
-                    v-model="form.categorie"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white"
-                  >
-                    <option value="local">local</option>
-                    <option value="international">international</option>
-                    <option value="export">export</option>
-                  </select>
-                </div>
-
-                <!-- Devise -->
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Devise:</label>
-                  <select 
-                    v-model="form.devise"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white"
-                  >
-                    <option value="MAD">MAD</option>
-                    <option value="EUR">EUR</option>
-                    <option value="USD">USD</option>
-                    <option value="GBP">GBP</option>
-                  </select>
+                <div class="flex-1 grid grid-cols-1 md:grid-cols-5 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-500 mb-1">Code client</label>
+                    <input v-model="form.code_client" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500" placeholder="CLI-00045" />
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-500 mb-1">Raison sociale *</label>
+                    <input v-model="form.nom" type="text" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500" placeholder="Olive World Ltd" />
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-500 mb-1">Type</label>
+                    <select v-model="form.categorie" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 bg-white">
+                      <option value="local">Local</option>
+                      <option value="export">Export</option>
+                      <option value="international">International</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-500 mb-1">Statut</label>
+                    <span :class="form.statut === 'client' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'" class="inline-block px-3 py-2 rounded-lg text-sm font-medium">
+                      {{ form.statut === 'client' ? 'Actif' : 'Prospect' }}
+                    </span>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-500 mb-1">Date de création</label>
+                    <input v-model="form.date_creation" type="date" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500" />
+                  </div>
                 </div>
               </div>
-            </fieldset>
-
-            <!-- Statut -->
-            <div class="mb-6">
-              <label class="block text-sm font-medium text-gray-700 mb-2">Statut:</label>
-              <div class="flex space-x-4">
-                <label class="flex items-center">
-                  <input 
-                    type="radio" 
-                    v-model="form.statut" 
-                    value="client"
-                    class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300"
-                  />
-                  <span class="ml-2 text-sm text-gray-700">Client</span>
-                </label>
-                <label class="flex items-center">
-                  <input 
-                    type="radio" 
-                    v-model="form.statut" 
-                    value="prospect"
-                    class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300"
-                  />
-                  <span class="ml-2 text-sm text-gray-700">Prospect</span>
-                </label>
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-500 mb-1">Secteur d'activité</label>
+                  <input v-model="form.secteur_activite" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500" placeholder="Agroalimentaire - Huiles" />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-500 mb-1">Groupe / Catégorie</label>
+                  <input v-model="form.groupe_categorie" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500" placeholder="Distributeur" />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-500 mb-1">Commercial en charge</label>
+                  <input v-model="form.commercial_charge" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500" placeholder="Jean Dupont" />
+                </div>
               </div>
             </div>
 
-            <!-- Actions -->
-            <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
-              <button 
-                type="button"
-                @click="closeModal"
-                class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
-              >
-                Annuler
+            <!-- Tabs Navigation -->
+            <div class="flex border-b border-gray-200 mb-6 overflow-x-auto">
+              <button type="button" @click="activeTab = 'informations'" :class="['px-4 py-3 text-sm font-medium whitespace-nowrap', activeTab === 'informations' ? 'text-teal-600 border-b-2 border-teal-600' : 'text-gray-500 hover:text-gray-700']">
+                <span class="flex items-center gap-2">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                  Informations
+                </span>
               </button>
-              <button 
-                type="submit"
-                :disabled="saving"
-                class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
-              >
-                {{ saving ? 'Enregistrement...' : (isEditing ? 'Mettre à jour' : 'Créer') }}
+              <button type="button" @click="activeTab = 'articles'" :class="['px-4 py-3 text-sm font-medium whitespace-nowrap', activeTab === 'articles' ? 'text-teal-600 border-b-2 border-teal-600' : 'text-gray-500 hover:text-gray-700']">
+                <span class="flex items-center gap-2">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
+                  Articles liés
+                </span>
               </button>
             </div>
+
+            <!-- Tab Content: Informations -->
+            <div v-show="activeTab === 'informations'" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <!-- Coordonnées -->
+              <div class="bg-gray-50 rounded-lg p-6 border border-gray-200">
+                <h4 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <span class="w-6 h-6 bg-teal-600 text-white rounded-full flex items-center justify-center text-xs">2</span>
+                  Coordonnées
+                </h4>
+                <div class="space-y-4">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Adresse complète</label>
+                    <textarea v-model="form.adresse" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500" placeholder="25 Rue de la République"></textarea>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Ville</label>
+                    <input v-model="form.ville" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500" placeholder="Paris" />
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Pays</label>
+                    <select v-model="form.pays" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 bg-white">
+                      <option value="">Sélectionner</option>
+                      <option value="France">France</option>
+                      <option value="Maroc">Maroc</option>
+                      <option value="Espagne">Espagne</option>
+                      <option value="Allemagne">Allemagne</option>
+                      <option value="Belgique">Belgique</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Téléphone</label>
+                    <input v-model="form.telephone" type="tel" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500" placeholder="+33 1 42 86 95 10" />
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <input v-model="form.email" type="email" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500" placeholder="contact@oliveworld.com" />
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Site web</label>
+                    <input v-model="form.site_web" type="url" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500" placeholder="www.oliveworld.com" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Contact principal -->
+              <div class="bg-gray-50 rounded-lg p-6 border border-gray-200">
+                <h4 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <span class="w-6 h-6 bg-teal-600 text-white rounded-full flex items-center justify-center text-xs">3</span>
+                  Contact principal
+                </h4>
+                <div class="space-y-4">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Nom du contact</label>
+                    <input v-model="form.contact_nom" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500" placeholder="Jean DUPONT" />
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Fonction</label>
+                    <input v-model="form.contact_fonction" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500" placeholder="Responsable achat" />
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Téléphone direct</label>
+                    <input v-model="form.contact_telephone" type="tel" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500" placeholder="+33 6 12 34 56 78" />
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <input v-model="form.contact_email" type="email" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500" placeholder="jean.dupont@oliveworld.com" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Autres informations (identifiants) -->
+              <div class="bg-gray-50 rounded-lg p-6 border border-gray-200">
+                <h4 class="text-lg font-semibold text-gray-900 mb-4">Autres informations (identifiants)</h4>
+                <div class="space-y-4">
+                  <div class="grid grid-cols-2 gap-4">
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">N° TVA</label>
+                      <input v-model="form.numero_tva" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500" placeholder="FR12345678901" />
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">N° RC / Registre</label>
+                      <input v-model="form.numero_rc" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500" placeholder="B123456" />
+                    </div>
+                  </div>
+                  <div class="grid grid-cols-2 gap-4">
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">EORI</label>
+                      <input v-model="form.eori" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500" placeholder="FR123456789000" />
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">Pays EORI</label>
+                      <input v-model="form.pays_eori" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500" placeholder="France" />
+                    </div>
+                  </div>
+                  <div class="grid grid-cols-2 gap-4">
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">Incoterm par défaut</label>
+                      <select v-model="form.incoterm" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 bg-white">
+                        <option value="FOB">FOB</option>
+                        <option value="CIF">CIF</option>
+                        <option value="EXW">EXW</option>
+                        <option value="DAP">DAP</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">Devise par défaut</label>
+                      <select v-model="form.devise" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 bg-white">
+                        <option value="EUR">EUR - Euro</option>
+                        <option value="USD">USD - Dollar</option>
+                        <option value="MAD">MAD - Dirham</option>
+                        <option value="GBP">GBP - Livre</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="grid grid-cols-2 gap-4">
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">Langue</label>
+                      <select v-model="form.langue" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 bg-white">
+                        <option value="Français">Français</option>
+                        <option value="Anglais">Anglais</option>
+                        <option value="Espagnol">Espagnol</option>
+                        <option value="Arabe">Arabe</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">Délai de paiement</label>
+                      <div class="flex">
+                        <input v-model.number="form.delai_paiement" type="number" min="0" class="w-full px-3 py-2 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-teal-500" placeholder="30" />
+                        <span class="inline-flex items-center px-3 bg-gray-100 border border-l-0 border-gray-300 rounded-r-lg text-sm text-gray-600">jours</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Logistique -->
+              <div class="bg-gray-50 rounded-lg p-6 border border-gray-200">
+                <h4 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <span class="w-6 h-6 bg-teal-600 text-white rounded-full flex items-center justify-center text-xs">4</span>
+                  Logistique
+                </h4>
+                <div class="space-y-4">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Adresse de livraison</label>
+                    <textarea v-model="form.adresse_livraison" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500" placeholder="Zone industrielle, Bâtiment A&#10;69007 Lyon, France"></textarea>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Transitaire (pour export)</label>
+                    <textarea v-model="form.transitaire" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500" placeholder="Transports Internationaux SAS&#10;10 Quai de la Gare, 76600 Le Havre, France"></textarea>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tab Content: Articles (placeholder) -->
+            <div v-show="activeTab === 'articles'" class="bg-gray-50 rounded-lg p-6 border border-gray-200">
+              <h4 class="text-lg font-semibold text-gray-900 mb-4">Articles liés</h4>
+              <p class="text-gray-500 mb-4">Articles achetés + prix négocié</p>
+              <button type="button" @click="openAffectModal(form)" class="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700">
+                + Affecter des articles
+              </button>
+            </div>
+
           </form>
         </div>
       </div>
@@ -324,8 +420,8 @@
           <div class="p-6" v-if="selectedClient">
             <div class="space-y-4">
               <div class="flex items-center space-x-4 mb-6">
-                <div class="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center">
-                  <span class="text-2xl text-indigo-600 font-bold">{{ getInitials(selectedClient.nom) }}</span>
+                <div class="w-16 h-16 bg-teal-100 rounded-full flex items-center justify-center">
+                  <span class="text-2xl text-teal-600 font-bold">{{ getInitials(selectedClient.nom) }}</span>
                 </div>
                 <div>
                   <h3 class="text-xl font-semibold text-gray-900">{{ selectedClient.nom }}</h3>
@@ -333,15 +429,15 @@
                     'px-3 py-1 text-xs font-medium rounded-full',
                     selectedClient.statut === 'client' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
                   ]">
-                    {{ selectedClient.statut === 'client' ? 'Client' : 'Prospect' }}
+                    {{ selectedClient.statut === 'client' ? 'Actif' : 'Prospect' }}
                   </span>
                 </div>
               </div>
               
               <div class="grid grid-cols-2 gap-4">
                 <div>
-                  <p class="text-sm text-gray-500">ICE/CIN</p>
-                  <p class="font-medium">{{ selectedClient.ice_cin }}</p>
+                  <p class="text-sm text-gray-500">Code Client</p>
+                  <p class="font-medium">{{ selectedClient.code_client || selectedClient.ice_cin }}</p>
                 </div>
                 <div>
                   <p class="text-sm text-gray-500">Email</p>
@@ -373,6 +469,75 @@
           </div>
         </div>
       </div>
+
+      <!-- Affect Articles Modal -->
+      <div v-if="showAffectModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+          <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between z-10">
+            <h2 class="text-xl font-bold text-gray-900">Affecter des articles à {{ affectClient?.nom }}</h2>
+            <button @click="showAffectModal = false" class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <div class="p-6">
+            <div class="mb-4">
+              <div class="relative">
+                <input 
+                  v-model="articleSearchQuery"
+                  @input="searchArticlesForAffect"
+                  type="text" 
+                  placeholder="Rechercher un article..." 
+                  class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent" 
+                />
+                <svg class="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+            </div>
+            <div class="border rounded-lg overflow-hidden">
+              <table class="w-full">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th class="w-12 px-4 py-3"></th>
+                    <th class="text-left px-4 py-3 text-sm font-medium text-gray-600">Code</th>
+                    <th class="text-left px-4 py-3 text-sm font-medium text-gray-600">Désignation</th>
+                    <th class="text-left px-4 py-3 text-sm font-medium text-gray-600">Prix</th>
+                    <th class="text-left px-4 py-3 text-sm font-medium text-gray-600">Prix négocié</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="article in availableArticles" :key="article.id" class="border-t border-gray-100 hover:bg-gray-50">
+                    <td class="px-4 py-3">
+                      <input type="checkbox" v-model="selectedArticles" :value="article.id" class="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500" />
+                    </td>
+                    <td class="px-4 py-3 text-sm text-gray-900">{{ article.code_article || article.id }}</td>
+                    <td class="px-4 py-3 text-sm text-gray-700">{{ article.designation }}</td>
+                    <td class="px-4 py-3 text-sm text-gray-500">{{ formatNumber(article.prix_vente) }} {{ article.devise || 'EUR' }}</td>
+                    <td class="px-4 py-3">
+                      <input type="number" v-model.number="negotiatedPrices[article.id]" step="0.01" class="w-24 px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-teal-500 text-sm" :placeholder="article.prix_vente" />
+                    </td>
+                  </tr>
+                  <tr v-if="availableArticles.length === 0">
+                    <td colspan="5" class="px-4 py-8 text-center text-gray-500">
+                      Aucun article trouvé
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="mt-6 flex justify-end gap-4">
+              <button @click="showAffectModal = false" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                Annuler
+              </button>
+              <button @click="affectArticles" :disabled="selectedArticles.length === 0" class="px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-50">
+                Affecter {{ selectedArticles.length }} article(s)
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -387,10 +552,17 @@ export default {
       saving: false,
       showModal: false,
       showViewModal: false,
+      showAffectModal: false,
       isEditing: false,
       selectedClient: null,
+      affectClient: null,
       searchQuery: '',
+      articleSearchQuery: '',
       searchTimeout: null,
+      activeTab: 'informations',
+      availableArticles: [],
+      selectedArticles: [],
+      negotiatedPrices: {},
       pagination: {
         current_page: 1,
         last_page: 1,
@@ -399,15 +571,38 @@ export default {
       },
       form: {
         id: null,
+        code_client: '',
         ice_cin: '',
         nom: '',
         email: '',
         telephone: '',
         adresse: '',
+        ville: '',
         pays: '',
-        categorie: 'local',
-        devise: 'MAD',
-        statut: 'client'
+        categorie: 'export',
+        devise: 'EUR',
+        statut: 'client',
+        date_creation: '',
+        secteur_activite: '',
+        groupe_categorie: '',
+        commercial_charge: '',
+        site_web: '',
+        contact_nom: '',
+        contact_fonction: '',
+        contact_telephone: '',
+        contact_email: '',
+        numero_tva: '',
+        numero_rc: '',
+        eori: '',
+        pays_eori: '',
+        incoterm: 'FOB',
+        langue: 'Français',
+        delai_paiement: 30,
+        plafond_credit: null,
+        solde_actuel: null,
+        mode_transport: 'maritime',
+        adresse_livraison: '',
+        transitaire: ''
       },
       errors: {}
     };
@@ -457,13 +652,15 @@ export default {
     
     openCreateModal() {
       this.isEditing = false;
+      this.activeTab = 'informations';
       this.resetForm();
       this.showModal = true;
     },
     
     editClient(client) {
       this.isEditing = true;
-      this.form = { ...client };
+      this.activeTab = 'informations';
+      this.form = { ...this.getEmptyForm(), ...client };
       this.showModal = true;
     },
     
@@ -477,19 +674,46 @@ export default {
       this.resetForm();
     },
     
-    resetForm() {
-      this.form = {
+    getEmptyForm() {
+      return {
         id: null,
+        code_client: '',
         ice_cin: '',
         nom: '',
         email: '',
         telephone: '',
         adresse: '',
+        ville: '',
         pays: '',
-        categorie: 'local',
-        devise: 'MAD',
-        statut: 'client'
+        categorie: 'export',
+        devise: 'EUR',
+        statut: 'client',
+        date_creation: '',
+        secteur_activite: '',
+        groupe_categorie: '',
+        commercial_charge: '',
+        site_web: '',
+        contact_nom: '',
+        contact_fonction: '',
+        contact_telephone: '',
+        contact_email: '',
+        numero_tva: '',
+        numero_rc: '',
+        eori: '',
+        pays_eori: '',
+        incoterm: 'FOB',
+        langue: 'Français',
+        delai_paiement: 30,
+        plafond_credit: null,
+        solde_actuel: null,
+        mode_transport: 'maritime',
+        adresse_livraison: '',
+        transitaire: ''
       };
+    },
+    
+    resetForm() {
+      this.form = this.getEmptyForm();
       this.errors = {};
     },
     
@@ -563,6 +787,64 @@ export default {
         alert('Une erreur est survenue');
       }
     },
+
+    async openAffectModal(client) {
+      this.affectClient = client;
+      this.selectedArticles = [];
+      this.negotiatedPrices = {};
+      this.articleSearchQuery = '';
+      await this.fetchArticlesForAffect();
+      this.showAffectModal = true;
+    },
+
+    async fetchArticlesForAffect() {
+      try {
+        const params = new URLSearchParams({ search: this.articleSearchQuery });
+        const response = await fetch(`/api/articles?${params}`);
+        const data = await response.json();
+        this.availableArticles = data.data || [];
+      } catch (error) {
+        console.error('Error fetching articles:', error);
+        this.availableArticles = [];
+      }
+    },
+
+    searchArticlesForAffect() {
+      clearTimeout(this.searchTimeout);
+      this.searchTimeout = setTimeout(() => {
+        this.fetchArticlesForAffect();
+      }, 300);
+    },
+
+    async affectArticles() {
+      try {
+        const articlesToAffect = this.selectedArticles.map(id => ({
+          article_id: id,
+          prix_negocie: this.negotiatedPrices[id] || null
+        }));
+
+        const response = await fetch(`/api/clients/${this.affectClient.id}/articles`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': this.getCsrfToken()
+          },
+          body: JSON.stringify({ articles: articlesToAffect })
+        });
+
+        if (response.ok) {
+          alert(`${this.selectedArticles.length} article(s) affecté(s) avec succès`);
+          this.showAffectModal = false;
+        } else {
+          const data = await response.json();
+          alert(data.message || 'Une erreur est survenue');
+        }
+      } catch (error) {
+        console.error('Error affecting articles:', error);
+        alert('Une erreur est survenue lors de l\'affectation');
+      }
+    },
     
     getInitials(name) {
       if (!name) return '??';
@@ -571,6 +853,16 @@ export default {
         return (parts[0][0] + parts[1][0]).toUpperCase();
       }
       return name.substring(0, 2).toUpperCase();
+    },
+
+    formatCurrency(value) {
+      if (!value) return '0,00 €';
+      return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(value);
+    },
+
+    formatNumber(value) {
+      if (value === null || value === undefined) return '-';
+      return parseFloat(value).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
   }
 };
