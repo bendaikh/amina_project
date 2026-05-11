@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Article;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class ArticleController extends Controller
 {
@@ -37,7 +38,7 @@ class ArticleController extends Controller
             'hs_code' => 'nullable|string|max:50',
             'code_barres' => 'nullable|string|max:255',
             'actif' => 'nullable|boolean',
-            'photo' => 'nullable|string|max:255',
+            'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'marque' => 'nullable|string|max:100',
             'calibre' => 'nullable|string|max:50',
             'total_colis_palet' => 'nullable|integer|min:0',
@@ -80,6 +81,11 @@ class ArticleController extends Controller
             'code_interne' => 'nullable|string|max:255',
             'observations' => 'nullable|string',
         ]);
+
+        if ($request->hasFile('photo')) {
+            $path = $request->file('photo')->store('articles', 'public');
+            $validated['photo'] = $path;
+        }
 
         $article = Article::create($validated);
 
@@ -104,7 +110,7 @@ class ArticleController extends Controller
             'hs_code' => 'nullable|string|max:50',
             'code_barres' => 'nullable|string|max:255',
             'actif' => 'nullable|boolean',
-            'photo' => 'nullable|string|max:255',
+            'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'marque' => 'nullable|string|max:100',
             'calibre' => 'nullable|string|max:50',
             'total_colis_palet' => 'nullable|integer|min:0',
@@ -147,6 +153,14 @@ class ArticleController extends Controller
             'code_interne' => 'nullable|string|max:255',
             'observations' => 'nullable|string',
         ]);
+
+        if ($request->hasFile('photo')) {
+            if ($article->photo) {
+                Storage::disk('public')->delete($article->photo);
+            }
+            $path = $request->file('photo')->store('articles', 'public');
+            $validated['photo'] = $path;
+        }
 
         $article->update($validated);
 

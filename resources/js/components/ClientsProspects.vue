@@ -406,65 +406,226 @@
 
       <!-- View Modal -->
       <div v-if="showViewModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-xl shadow-xl max-w-lg w-full">
-          <div class="p-6 border-b border-gray-200">
-            <div class="flex items-center justify-between">
-              <h2 class="text-xl font-bold text-gray-900">Détails du Client</h2>
-              <button @click="showViewModal = false" class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
+        <div class="bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+          <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between z-10">
+            <h2 class="text-xl font-bold text-gray-900">Détails du Client</h2>
+            <button @click="showViewModal = false" class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
           <div class="p-6" v-if="selectedClient">
-            <div class="space-y-4">
-              <div class="flex items-center space-x-4 mb-6">
-                <div class="w-16 h-16 bg-teal-100 rounded-full flex items-center justify-center">
-                  <span class="text-2xl text-teal-600 font-bold">{{ getInitials(selectedClient.nom) }}</span>
-                </div>
-                <div>
-                  <h3 class="text-xl font-semibold text-gray-900">{{ selectedClient.nom }}</h3>
+            <!-- Header with client info -->
+            <div class="flex items-center space-x-4 mb-6 pb-6 border-b border-gray-200">
+              <div class="w-20 h-20 bg-teal-100 rounded-full flex items-center justify-center">
+                <span class="text-2xl text-teal-600 font-bold">{{ getInitials(selectedClient.nom) }}</span>
+              </div>
+              <div class="flex-1">
+                <h3 class="text-2xl font-semibold text-gray-900">{{ selectedClient.nom }}</h3>
+                <div class="flex items-center gap-3 mt-2">
                   <span :class="[
                     'px-3 py-1 text-xs font-medium rounded-full',
                     selectedClient.statut === 'client' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
                   ]">
                     {{ selectedClient.statut === 'client' ? 'Actif' : 'Prospect' }}
                   </span>
+                  <span class="px-3 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+                    {{ selectedClient.categorie || 'Non défini' }}
+                  </span>
                 </div>
+              </div>
+            </div>
+            
+            <!-- Client Details Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+              <!-- Informations générales -->
+              <div class="bg-gray-50 rounded-lg p-4">
+                <h4 class="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <svg class="w-5 h-5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Informations générales
+                </h4>
+                <div class="space-y-3">
+                  <div class="flex justify-between">
+                    <span class="text-sm text-gray-500">Code Client</span>
+                    <span class="text-sm font-medium">{{ selectedClient.code_client || selectedClient.ice_cin || '-' }}</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-sm text-gray-500">ICE/CIN</span>
+                    <span class="text-sm font-medium">{{ selectedClient.ice_cin || '-' }}</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-sm text-gray-500">Secteur d'activité</span>
+                    <span class="text-sm font-medium">{{ selectedClient.secteur_activite || '-' }}</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-sm text-gray-500">Commercial</span>
+                    <span class="text-sm font-medium">{{ selectedClient.commercial_charge || '-' }}</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-sm text-gray-500">Date de création</span>
+                    <span class="text-sm font-medium">{{ selectedClient.date_creation || '-' }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Coordonnées -->
+              <div class="bg-gray-50 rounded-lg p-4">
+                <h4 class="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <svg class="w-5 h-5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  Coordonnées
+                </h4>
+                <div class="space-y-3">
+                  <div class="flex justify-between">
+                    <span class="text-sm text-gray-500">Email</span>
+                    <span class="text-sm font-medium">{{ selectedClient.email || '-' }}</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-sm text-gray-500">Téléphone</span>
+                    <span class="text-sm font-medium">{{ selectedClient.telephone || '-' }}</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-sm text-gray-500">Ville</span>
+                    <span class="text-sm font-medium">{{ selectedClient.ville || '-' }}</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-sm text-gray-500">Pays</span>
+                    <span class="text-sm font-medium">{{ selectedClient.pays || '-' }}</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-sm text-gray-500">Site web</span>
+                    <span class="text-sm font-medium">{{ selectedClient.site_web || '-' }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Contact principal -->
+              <div class="bg-gray-50 rounded-lg p-4">
+                <h4 class="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <svg class="w-5 h-5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                  Contact principal
+                </h4>
+                <div class="space-y-3">
+                  <div class="flex justify-between">
+                    <span class="text-sm text-gray-500">Nom</span>
+                    <span class="text-sm font-medium">{{ selectedClient.contact_nom || '-' }}</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-sm text-gray-500">Fonction</span>
+                    <span class="text-sm font-medium">{{ selectedClient.contact_fonction || '-' }}</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-sm text-gray-500">Téléphone</span>
+                    <span class="text-sm font-medium">{{ selectedClient.contact_telephone || '-' }}</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-sm text-gray-500">Email</span>
+                    <span class="text-sm font-medium">{{ selectedClient.contact_email || '-' }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Informations commerciales -->
+              <div class="bg-gray-50 rounded-lg p-4">
+                <h4 class="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <svg class="w-5 h-5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Informations commerciales
+                </h4>
+                <div class="space-y-3">
+                  <div class="flex justify-between">
+                    <span class="text-sm text-gray-500">Devise</span>
+                    <span class="text-sm font-medium">{{ selectedClient.devise || '-' }}</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-sm text-gray-500">Incoterm</span>
+                    <span class="text-sm font-medium">{{ selectedClient.incoterm || '-' }}</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-sm text-gray-500">Délai paiement</span>
+                    <span class="text-sm font-medium">{{ selectedClient.delai_paiement ? selectedClient.delai_paiement + ' jours' : '-' }}</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-sm text-gray-500">Plafond crédit</span>
+                    <span class="text-sm font-medium">{{ selectedClient.plafond_credit ? formatNumber(selectedClient.plafond_credit) + ' ' + (selectedClient.devise || 'EUR') : '-' }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Adresse complète -->
+            <div class="bg-gray-50 rounded-lg p-4 mb-8" v-if="selectedClient.adresse">
+              <h4 class="text-sm font-semibold text-gray-900 mb-2">Adresse complète</h4>
+              <p class="text-sm text-gray-700">{{ selectedClient.adresse }}</p>
+            </div>
+
+            <!-- Articles affectés -->
+            <div class="border-t border-gray-200 pt-6">
+              <div class="flex items-center justify-between mb-4">
+                <h4 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                  <svg class="w-5 h-5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                  </svg>
+                  Articles affectés
+                </h4>
+                <span class="px-3 py-1 text-sm font-medium bg-teal-100 text-teal-800 rounded-full">
+                  {{ selectedClient.articles ? selectedClient.articles.length : 0 }} article(s)
+                </span>
               </div>
               
-              <div class="grid grid-cols-2 gap-4">
-                <div>
-                  <p class="text-sm text-gray-500">Code Client</p>
-                  <p class="font-medium">{{ selectedClient.code_client || selectedClient.ice_cin }}</p>
-                </div>
-                <div>
-                  <p class="text-sm text-gray-500">Email</p>
-                  <p class="font-medium">{{ selectedClient.email || '-' }}</p>
-                </div>
-                <div>
-                  <p class="text-sm text-gray-500">Téléphone</p>
-                  <p class="font-medium">{{ selectedClient.telephone || '-' }}</p>
-                </div>
-                <div>
-                  <p class="text-sm text-gray-500">Pays</p>
-                  <p class="font-medium">{{ selectedClient.pays || '-' }}</p>
-                </div>
-                <div>
-                  <p class="text-sm text-gray-500">Catégorie</p>
-                  <p class="font-medium">{{ selectedClient.categorie }}</p>
-                </div>
-                <div>
-                  <p class="text-sm text-gray-500">Devise</p>
-                  <p class="font-medium">{{ selectedClient.devise }}</p>
-                </div>
+              <div v-if="selectedClient.articles && selectedClient.articles.length > 0" class="border rounded-lg overflow-hidden">
+                <table class="w-full">
+                  <thead class="bg-gray-100">
+                    <tr>
+                      <th class="text-left px-4 py-3 text-sm font-medium text-gray-600">Code</th>
+                      <th class="text-left px-4 py-3 text-sm font-medium text-gray-600">Désignation</th>
+                      <th class="text-left px-4 py-3 text-sm font-medium text-gray-600">Prix standard</th>
+                      <th class="text-left px-4 py-3 text-sm font-medium text-gray-600">Prix négocié</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="article in selectedClient.articles" :key="article.id" class="border-t border-gray-100 hover:bg-gray-50">
+                      <td class="px-4 py-3 text-sm font-medium text-gray-900">{{ article.code_article || article.id }}</td>
+                      <td class="px-4 py-3 text-sm text-gray-700">{{ article.designation }}</td>
+                      <td class="px-4 py-3 text-sm text-gray-500">{{ formatNumber(article.prix_vente) }} {{ article.devise || 'EUR' }}</td>
+                      <td class="px-4 py-3 text-sm">
+                        <span v-if="article.pivot && article.pivot.prix_negocie" class="font-medium text-teal-600">
+                          {{ formatNumber(article.pivot.prix_negocie) }} {{ article.devise || 'EUR' }}
+                        </span>
+                        <span v-else class="text-gray-400">-</span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
               
-              <div>
-                <p class="text-sm text-gray-500">Adresse</p>
-                <p class="font-medium">{{ selectedClient.adresse || '-' }}</p>
+              <div v-else class="bg-gray-50 rounded-lg p-8 text-center">
+                <svg class="w-12 h-12 mx-auto text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                </svg>
+                <p class="text-gray-500">Aucun article affecté à ce client</p>
+                <button @click="showViewModal = false; openAffectModal(selectedClient)" class="mt-4 px-4 py-2 bg-teal-600 text-white text-sm rounded-lg hover:bg-teal-700">
+                  + Affecter des articles
+                </button>
               </div>
+            </div>
+
+            <!-- Action buttons -->
+            <div class="flex justify-end gap-3 mt-6 pt-6 border-t border-gray-200">
+              <button @click="showViewModal = false; openAffectModal(selectedClient)" class="px-4 py-2 border border-teal-600 text-teal-600 rounded-lg hover:bg-teal-50">
+                Gérer les articles
+              </button>
+              <button @click="showViewModal = false; editClient(selectedClient)" class="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700">
+                Modifier le client
+              </button>
             </div>
           </div>
         </div>
@@ -664,9 +825,17 @@ export default {
       this.showModal = true;
     },
     
-    viewClient(client) {
-      this.selectedClient = client;
-      this.showViewModal = true;
+    async viewClient(client) {
+      try {
+        const response = await fetch(`/api/clients/${client.id}`);
+        const data = await response.json();
+        this.selectedClient = data;
+        this.showViewModal = true;
+      } catch (error) {
+        console.error('Error fetching client details:', error);
+        this.selectedClient = client;
+        this.showViewModal = true;
+      }
     },
     
     closeModal() {

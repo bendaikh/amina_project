@@ -94,7 +94,7 @@ class ClientController extends Controller
      */
     public function show(Client $client)
     {
-        return response()->json($client);
+        return response()->json($client->load('articles'));
     }
 
     /**
@@ -155,5 +155,39 @@ class ClientController extends Controller
         return response()->json([
             'message' => 'Client supprimé avec succès'
         ]);
+    }
+
+    /**
+     * Assign articles to a client.
+     */
+    public function assignArticles(Request $request, Client $client)
+    {
+        $validated = $request->validate([
+            'articles' => 'required|array',
+            'articles.*.article_id' => 'required|exists:articles,id',
+            'articles.*.prix_negocie' => 'nullable|numeric|min:0',
+        ]);
+
+        $syncData = [];
+        foreach ($validated['articles'] as $article) {
+            $syncData[$article['article_id']] = [
+                'prix_negocie' => $article['prix_negocie'] ?? null
+            ];
+        }
+
+        $client->articles()->syncWithoutDetaching($syncData);
+
+        return response()->json([
+            'message' => count($validated['articles']) . ' article(s) affecté(s) avec succès',
+            'client' => $client->load('articles')
+        ]);
+    }
+
+    /**
+     * Get articles assigned to a client.
+     */
+    public function getArticles(Client $client)
+    {
+        return response()->json($client->articles);
     }
 }

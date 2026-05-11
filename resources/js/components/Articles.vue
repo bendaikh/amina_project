@@ -293,11 +293,25 @@
               </div>
               <div class="md:col-span-1 md:row-span-2">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Photo produit</label>
-                <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center h-32 flex flex-col items-center justify-center">
-                  <svg class="w-8 h-8 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                  <button type="button" class="text-teal-600 text-sm hover:text-teal-700">Changer la photo</button>
+                <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center h-32 flex flex-col items-center justify-center relative overflow-hidden">
+                  <template v-if="photoPreview || form.photo">
+                    <img :src="photoPreview || getPhotoUrl(form.photo)" alt="Photo produit" class="absolute inset-0 w-full h-full object-cover" />
+                    <div class="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                      <label class="cursor-pointer text-white text-sm font-medium">
+                        Changer
+                        <input type="file" accept="image/*" @change="handlePhotoUpload" class="hidden" />
+                      </label>
+                    </div>
+                  </template>
+                  <template v-else>
+                    <svg class="w-8 h-8 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <label class="cursor-pointer text-teal-600 text-sm hover:text-teal-700">
+                      Ajouter une photo
+                      <input type="file" accept="image/*" @change="handlePhotoUpload" class="hidden" />
+                    </label>
+                  </template>
                 </div>
               </div>
             </div>
@@ -671,7 +685,9 @@ export default {
       searchQuery: '',
       searchTimeout: null,
       articleToDelete: null,
-      form: this.getEmptyForm()
+      form: this.getEmptyForm(),
+      photoFile: null,
+      photoPreview: null
     };
   },
   mounted() {
@@ -770,20 +786,56 @@ export default {
     closeModal() {
       this.showModal = false;
       this.form = this.getEmptyForm();
+      this.photoFile = null;
+      this.photoPreview = null;
+    },
+    handlePhotoUpload(event) {
+      const file = event.target.files[0];
+      if (file) {
+        if (!file.type.startsWith('image/')) {
+          alert('Veuillez sélectionner un fichier image');
+          return;
+        }
+        if (file.size > 2 * 1024 * 1024) {
+          alert('L\'image ne doit pas dépasser 2 Mo');
+          return;
+        }
+        this.photoFile = file;
+        this.photoPreview = URL.createObjectURL(file);
+      }
+    },
+    getPhotoUrl(path) {
+      if (!path) return null;
+      if (path.startsWith('http')) return path;
+      return `/storage/${path}`;
     },
     async submitForm() {
       this.submitting = true;
       try {
         const url = this.isEditing ? `/api/articles/${this.form.id}` : '/api/articles';
-        const method = this.isEditing ? 'PUT' : 'POST';
+        
+        const formData = new FormData();
+        
+        Object.keys(this.form).forEach(key => {
+          if (key !== 'id' && key !== 'photo' && this.form[key] !== null && this.form[key] !== '') {
+            formData.append(key, this.form[key]);
+          }
+        });
+        
+        if (this.photoFile) {
+          formData.append('photo', this.photoFile);
+        }
+        
+        if (this.isEditing) {
+          formData.append('_method', 'PUT');
+        }
         
         const response = await fetch(url, {
-          method,
+          method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
             'Accept': 'application/json'
           },
-          body: JSON.stringify(this.form)
+          body: formData
         });
 
         if (response.ok) {

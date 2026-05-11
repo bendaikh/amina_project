@@ -95,4 +95,11 @@ class Article extends Model
     {
         return $this->total_colis_palet + $this->total_colis_carton;
     }
+
+    public function clients()
+    {
+        return $this->belongsToMany(Client::class, 'article_client')
+            ->withPivot('prix_negocie')
+            ->withTimestamps();
+    }
 }

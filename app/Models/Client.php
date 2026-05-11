@@ -52,4 +52,11 @@ class Client extends Model
         'plafond_credit' => 'decimal:2',
         'solde_actuel' => 'decimal:2',
     ];
+
+    public function articles()
+    {
+        return $this->belongsToMany(Article::class, 'article_client')
+            ->withPivot('prix_negocie')
+            ->withTimestamps();
+    }
 }

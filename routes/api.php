@@ -12,6 +12,8 @@ Route::prefix('clients')->group(function () {
     Route::get('/{client}', [ClientController::class, 'show']);
     Route::put('/{client}', [ClientController::class, 'update']);
     Route::delete('/{client}', [ClientController::class, 'destroy']);
+    Route::post('/{client}/articles', [ClientController::class, 'assignArticles']);
+    Route::get('/{client}/articles', [ClientController::class, 'getArticles']);
 });
 
 // Article routes
