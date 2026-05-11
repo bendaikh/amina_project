@@ -111,6 +111,11 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                       </svg>
                     </button>
+                    <button @click="toggleActive(client)" :class="client.actif !== false ? 'text-green-600 hover:text-green-800' : 'text-gray-400 hover:text-gray-600'" :title="client.actif !== false ? 'Désactiver' : 'Activer'">
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </button>
                     <button @click="deleteClient(client)" class="text-red-600 hover:text-red-800" title="Supprimer">
                       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -209,11 +214,17 @@
               <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label class="block text-sm font-medium text-gray-500 mb-1">Secteur d'activité</label>
-                  <input v-model="form.secteur_activite" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500" placeholder="Agroalimentaire - Huiles" />
+                  <select v-model="form.secteur_activite" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 bg-white">
+                    <option value="">Sélectionner</option>
+                    <option v-for="item in parametres.secteur_activite" :key="item.id" :value="item.valeur">{{ item.valeur }}</option>
+                  </select>
                 </div>
                 <div>
                   <label class="block text-sm font-medium text-gray-500 mb-1">Groupe / Catégorie</label>
-                  <input v-model="form.groupe_categorie" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500" placeholder="Distributeur" />
+                  <select v-model="form.groupe_categorie" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 bg-white">
+                    <option value="">Sélectionner</option>
+                    <option v-for="item in parametres.groupe_categorie" :key="item.id" :value="item.valeur">{{ item.valeur }}</option>
+                  </select>
                 </div>
                 <div>
                   <label class="block text-sm font-medium text-gray-500 mb-1">Commercial en charge</label>
@@ -335,19 +346,15 @@
                     <div>
                       <label class="block text-sm font-medium text-gray-700 mb-1">Incoterm par défaut</label>
                       <select v-model="form.incoterm" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 bg-white">
-                        <option value="FOB">FOB</option>
-                        <option value="CIF">CIF</option>
-                        <option value="EXW">EXW</option>
-                        <option value="DAP">DAP</option>
+                        <option value="">Sélectionner</option>
+                        <option v-for="item in parametres.incoterm" :key="item.id" :value="item.code">{{ item.valeur }}</option>
                       </select>
                     </div>
                     <div>
                       <label class="block text-sm font-medium text-gray-700 mb-1">Devise par défaut</label>
                       <select v-model="form.devise" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 bg-white">
-                        <option value="EUR">EUR - Euro</option>
-                        <option value="USD">USD - Dollar</option>
-                        <option value="MAD">MAD - Dirham</option>
-                        <option value="GBP">GBP - Livre</option>
+                        <option value="">Sélectionner</option>
+                        <option v-for="item in parametres.devise" :key="item.id" :value="item.code">{{ item.valeur }}</option>
                       </select>
                     </div>
                   </div>
@@ -363,10 +370,10 @@
                     </div>
                     <div>
                       <label class="block text-sm font-medium text-gray-700 mb-1">Délai de paiement</label>
-                      <div class="flex">
-                        <input v-model.number="form.delai_paiement" type="number" min="0" class="w-full px-3 py-2 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-teal-500" placeholder="30" />
-                        <span class="inline-flex items-center px-3 bg-gray-100 border border-l-0 border-gray-300 rounded-r-lg text-sm text-gray-600">jours</span>
-                      </div>
+                      <select v-model="form.delai_paiement_type" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 bg-white">
+                        <option value="">Sélectionner</option>
+                        <option v-for="item in parametres.delai_paiement" :key="item.id" :value="item.code">{{ item.valeur }}</option>
+                      </select>
                     </div>
                   </div>
                 </div>
@@ -724,6 +731,13 @@ export default {
       availableArticles: [],
       selectedArticles: [],
       negotiatedPrices: {},
+      parametres: {
+        secteur_activite: [],
+        groupe_categorie: [],
+        incoterm: [],
+        devise: [],
+        delai_paiement: []
+      },
       pagination: {
         current_page: 1,
         last_page: 1,
@@ -756,9 +770,11 @@ export default {
         numero_rc: '',
         eori: '',
         pays_eori: '',
-        incoterm: 'FOB',
+        incoterm: '',
         langue: 'Français',
         delai_paiement: 30,
+        delai_paiement_type: '',
+        actif: true,
         plafond_credit: null,
         solde_actuel: null,
         mode_transport: 'maritime',
@@ -770,8 +786,33 @@ export default {
   },
   mounted() {
     this.fetchClients();
+    this.fetchParametres();
   },
   methods: {
+    async fetchParametres() {
+      try {
+        const response = await fetch('/api/parametres/all-for-forms');
+        if (response.ok) {
+          this.parametres = await response.json();
+        }
+      } catch (error) {
+        console.error('Error fetching parametres:', error);
+      }
+    },
+    async toggleActive(client) {
+      try {
+        const response = await fetch(`/api/clients/${client.id}/toggle-active`, {
+          method: 'POST',
+          headers: { 'Accept': 'application/json' }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          client.actif = data.client.actif;
+        }
+      } catch (error) {
+        console.error('Error toggling active:', error);
+      }
+    },
     getCsrfToken() {
       return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
     },
@@ -870,9 +911,11 @@ export default {
         numero_rc: '',
         eori: '',
         pays_eori: '',
-        incoterm: 'FOB',
+        incoterm: '',
         langue: 'Français',
         delai_paiement: 30,
+        delai_paiement_type: '',
+        actif: true,
         plafond_credit: null,
         solde_actuel: null,
         mode_transport: 'maritime',

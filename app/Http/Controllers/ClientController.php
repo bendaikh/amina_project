@@ -74,6 +74,8 @@ class ClientController extends Controller
             'incoterm' => 'nullable|string|max:50',
             'langue' => 'nullable|string|max:50',
             'delai_paiement' => 'nullable|integer|min:0',
+            'delai_paiement_type' => 'nullable|string|max:50',
+            'actif' => 'nullable|boolean',
             'plafond_credit' => 'nullable|numeric|min:0',
             'solde_actuel' => 'nullable|numeric',
             'mode_transport' => 'nullable|string|max:50',
@@ -130,6 +132,8 @@ class ClientController extends Controller
             'incoterm' => 'nullable|string|max:50',
             'langue' => 'nullable|string|max:50',
             'delai_paiement' => 'nullable|integer|min:0',
+            'delai_paiement_type' => 'nullable|string|max:50',
+            'actif' => 'nullable|boolean',
             'plafond_credit' => 'nullable|numeric|min:0',
             'solde_actuel' => 'nullable|numeric',
             'mode_transport' => 'nullable|string|max:50',
@@ -189,5 +193,19 @@ class ClientController extends Controller
     public function getArticles(Client $client)
     {
         return response()->json($client->articles);
+    }
+
+    /**
+     * Toggle client active status.
+     */
+    public function toggleActive(Client $client)
+    {
+        $client->actif = !$client->actif;
+        $client->save();
+
+        return response()->json([
+            'message' => $client->actif ? 'Client activé' : 'Client désactivé',
+            'client' => $client
+        ]);
     }
 }

@@ -21,6 +21,7 @@ class Client extends Model
         'categorie',
         'devise',
         'statut',
+        'actif',
         'date_creation',
         'secteur_activite',
         'groupe_categorie',
@@ -37,6 +38,7 @@ class Client extends Model
         'incoterm',
         'langue',
         'delai_paiement',
+        'delai_paiement_type',
         'plafond_credit',
         'solde_actuel',
         'mode_transport',
@@ -51,6 +53,7 @@ class Client extends Model
         'delai_paiement' => 'integer',
         'plafond_credit' => 'decimal:2',
         'solde_actuel' => 'decimal:2',
+        'actif' => 'boolean',
     ];
 
     public function articles()

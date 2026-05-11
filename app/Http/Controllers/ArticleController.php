@@ -30,6 +30,13 @@ class ArticleController extends Controller
 
     public function store(Request $request)
     {
+        // Convert actif to boolean if it's a string
+        if ($request->has('actif')) {
+            $request->merge([
+                'actif' => filter_var($request->actif, FILTER_VALIDATE_BOOLEAN)
+            ]);
+        }
+
         $validated = $request->validate([
             'code_article' => 'nullable|string|max:255',
             'designation' => 'required|string|max:255',
@@ -62,14 +69,22 @@ class ArticleController extends Controller
             'ph' => 'nullable|numeric|min:0|max:14',
             'taux_sel' => 'nullable|numeric|min:0',
             'type_emballage' => 'nullable|string|max:100',
+            'type_emballage_primaire' => 'nullable|string|max:100',
+            'type_emballage_secondaire' => 'nullable|string|max:100',
             'unites_par_carton' => 'nullable|integer|min:0',
+            'unites_par_colis' => 'nullable|integer|min:0',
             'cartons_par_palette' => 'nullable|integer|min:0',
+            'colis_par_palette' => 'nullable|integer|min:0',
             'nombre_total_par_palette' => 'nullable|integer|min:0',
             'type_palette' => 'nullable|string|max:100',
             'dimension_carton_l' => 'nullable|numeric|min:0',
             'dimension_carton_w' => 'nullable|numeric|min:0',
             'dimension_carton_h' => 'nullable|numeric|min:0',
+            'dimension_colis_l' => 'nullable|numeric|min:0',
+            'dimension_colis_w' => 'nullable|numeric|min:0',
+            'dimension_colis_h' => 'nullable|numeric|min:0',
             'poids_carton' => 'nullable|numeric|min:0',
+            'poids_colis' => 'nullable|numeric|min:0',
             'poids_palette' => 'nullable|numeric|min:0',
             'dlc_dluo' => 'nullable|integer|min:0',
             'prix_vente' => 'nullable|numeric|min:0',
@@ -102,6 +117,13 @@ class ArticleController extends Controller
 
     public function update(Request $request, Article $article)
     {
+        // Convert actif to boolean if it's a string
+        if ($request->has('actif')) {
+            $request->merge([
+                'actif' => filter_var($request->actif, FILTER_VALIDATE_BOOLEAN)
+            ]);
+        }
+
         $validated = $request->validate([
             'code_article' => 'nullable|string|max:255',
             'designation' => 'required|string|max:255',
@@ -134,14 +156,22 @@ class ArticleController extends Controller
             'ph' => 'nullable|numeric|min:0|max:14',
             'taux_sel' => 'nullable|numeric|min:0',
             'type_emballage' => 'nullable|string|max:100',
+            'type_emballage_primaire' => 'nullable|string|max:100',
+            'type_emballage_secondaire' => 'nullable|string|max:100',
             'unites_par_carton' => 'nullable|integer|min:0',
+            'unites_par_colis' => 'nullable|integer|min:0',
             'cartons_par_palette' => 'nullable|integer|min:0',
+            'colis_par_palette' => 'nullable|integer|min:0',
             'nombre_total_par_palette' => 'nullable|integer|min:0',
             'type_palette' => 'nullable|string|max:100',
             'dimension_carton_l' => 'nullable|numeric|min:0',
             'dimension_carton_w' => 'nullable|numeric|min:0',
             'dimension_carton_h' => 'nullable|numeric|min:0',
+            'dimension_colis_l' => 'nullable|numeric|min:0',
+            'dimension_colis_w' => 'nullable|numeric|min:0',
+            'dimension_colis_h' => 'nullable|numeric|min:0',
             'poids_carton' => 'nullable|numeric|min:0',
+            'poids_colis' => 'nullable|numeric|min:0',
             'poids_palette' => 'nullable|numeric|min:0',
             'dlc_dluo' => 'nullable|integer|min:0',
             'prix_vente' => 'nullable|numeric|min:0',
@@ -182,13 +212,45 @@ class ArticleController extends Controller
     public function stats()
     {
         $total = Article::count();
+        $totalActifs = Article::where('actif', true)->count();
         $totalPoidsBrut = Article::sum('poids_brut_total');
         $totalPoidsNet = Article::sum('poids_net_total');
 
         return response()->json([
             'total_articles' => $total,
+            'total_actifs' => $totalActifs,
             'total_poids_brut' => $totalPoidsBrut,
             'total_poids_net' => $totalPoidsNet,
+        ]);
+    }
+
+    public function duplicate(Article $article)
+    {
+        $newArticle = $article->replicate();
+        $newArticle->code_article = $article->code_article ? $article->code_article . '-COPIE' : null;
+        $newArticle->designation = $article->designation . ' (Copie)';
+        $newArticle->created_at = now();
+        $newArticle->updated_at = now();
+        
+        // Don't copy the photo - user can add a new one
+        $newArticle->photo = null;
+        
+        $newArticle->save();
+
+        return response()->json([
+            'message' => 'Article dupliqué avec succès',
+            'article' => $newArticle
+        ], 201);
+    }
+
+    public function toggleActive(Article $article)
+    {
+        $article->actif = !$article->actif;
+        $article->save();
+
+        return response()->json([
+            'message' => $article->actif ? 'Article activé' : 'Article désactivé',
+            'article' => $article
         ]);
     }
 }

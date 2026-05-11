@@ -112,12 +112,22 @@
                   </span>
                 </td>
                 <td class="px-4 py-4 whitespace-nowrap text-sm font-medium">
-                  <button @click="openEditModal(article)" class="text-teal-600 hover:text-teal-900 mr-3">
+                  <button @click="openEditModal(article)" class="text-teal-600 hover:text-teal-900 mr-2" title="Modifier">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
                   </button>
-                  <button @click="deleteArticle(article.id)" class="text-red-600 hover:text-red-900">
+                  <button @click="duplicateArticle(article.id)" class="text-blue-600 hover:text-blue-900 mr-2" title="Dupliquer">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                  </button>
+                  <button @click="toggleActive(article)" class="mr-2" :class="article.actif ? 'text-green-600 hover:text-green-900' : 'text-gray-400 hover:text-gray-600'" :title="article.actif ? 'Désactiver' : 'Activer'">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </button>
+                  <button @click="deleteArticle(article.id)" class="text-red-600 hover:text-red-900" title="Supprimer">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                     </svg>
@@ -224,11 +234,7 @@
                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-white"
                 >
                   <option value="">Sélectionner</option>
-                  <option value="16/18">16/18</option>
-                  <option value="19/21">19/21</option>
-                  <option value="22/25">22/25</option>
-                  <option value="26/29">26/29</option>
-                  <option value="30/33">30/33</option>
+                  <option v-for="item in parametres.calibre" :key="item.id" :value="item.valeur">{{ item.valeur }}</option>
                 </select>
               </div>
               <div>
@@ -238,10 +244,7 @@
                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-white"
                 >
                   <option value="">Sélectionner</option>
-                  <option value="Olives">Olives</option>
-                  <option value="Huiles">Huiles</option>
-                  <option value="Conserves">Conserves</option>
-                  <option value="Épices">Épices</option>
+                  <option v-for="item in parametres.famille" :key="item.id" :value="item.valeur">{{ item.valeur }}</option>
                 </select>
               </div>
               <div>
@@ -251,9 +254,7 @@
                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-white"
                 >
                   <option value="">Sélectionner</option>
-                  <option value="Olives vertes">Olives vertes</option>
-                  <option value="Olives noires">Olives noires</option>
-                  <option value="Olives mixtes">Olives mixtes</option>
+                  <option v-for="item in (filteredSousFamilles.length > 0 ? filteredSousFamilles : parametres.sous_famille)" :key="item.id" :value="item.valeur">{{ item.valeur }}</option>
                 </select>
               </div>
               <div>
@@ -358,6 +359,16 @@
                 />
               </div>
               <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">DLC/DLUO (Mois)</label>
+                <input
+                  v-model.number="form.dlc_dluo"
+                  type="number"
+                  min="0"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                  placeholder="24"
+                />
+              </div>
+              <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">pH (optionnel)</label>
                 <input
                   v-model.number="form.ph"
@@ -370,7 +381,7 @@
                 />
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Taux de sel (%) (optionnel)</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Taux de sel (%)</label>
                 <input
                   v-model.number="form.taux_sel"
                   type="number"
@@ -391,24 +402,30 @@
             </h4>
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Type emballage</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Type emballage primaire *</label>
                 <select
-                  v-model="form.type_emballage"
+                  v-model="form.type_emballage_primaire"
+                  required
                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-white"
                 >
                   <option value="">Sélectionner</option>
-                  <option value="Bocal verre">Bocal verre</option>
-                  <option value="Seaux">Seaux</option>
-                  <option value="Pots">Pots</option>
-                  <option value="Sachets">Sachets</option>
-                  <option value="Cartons">Cartons</option>
-                  <option value="Bidons">Bidons</option>
+                  <option v-for="item in parametres.type_emballage_primaire" :key="item.id" :value="item.valeur">{{ item.valeur }}</option>
                 </select>
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Unités par carton</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Type emballage secondaire</label>
+                <select
+                  v-model="form.type_emballage_secondaire"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-white"
+                >
+                  <option value="">Sélectionner</option>
+                  <option v-for="item in parametres.type_emballage_secondaire" :key="item.id" :value="item.valeur">{{ item.valeur }}</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Unités par colis</label>
                 <input
-                  v-model.number="form.unites_par_carton"
+                  v-model.number="form.unites_par_colis"
                   type="number"
                   min="0"
                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
@@ -416,9 +433,9 @@
                 />
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Cartons par palette</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Colis par palette</label>
                 <input
-                  v-model.number="form.cartons_par_palette"
+                  v-model.number="form.colis_par_palette"
                   type="number"
                   min="0"
                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
@@ -431,9 +448,11 @@
                   v-model.number="form.nombre_total_par_palette"
                   type="number"
                   min="0"
-                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                  placeholder="1008"
+                  readonly
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600"
+                  :placeholder="(form.unites_par_colis || 0) * (form.colis_par_palette || 0) || '1008'"
                 />
+                <p class="text-xs text-gray-500 mt-1">Calculé automatiquement</p>
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Type palette</label>
@@ -442,16 +461,14 @@
                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-white"
                 >
                   <option value="">Sélectionner</option>
-                  <option value="Europe (80x120)">Europe (80x120)</option>
-                  <option value="US (100x120)">US (100x120)</option>
-                  <option value="Demi-palette (60x80)">Demi-palette (60x80)</option>
+                  <option v-for="item in parametres.type_palette" :key="item.id" :value="item.valeur">{{ item.valeur }}</option>
                 </select>
               </div>
               <div class="md:col-span-2">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Dimensions carton (L x l x H) cm</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Dimensions colis (L x l x H) cm</label>
                 <div class="grid grid-cols-3 gap-2">
                   <input
-                    v-model.number="form.dimension_carton_l"
+                    v-model.number="form.dimension_colis_l"
                     type="number"
                     step="0.1"
                     min="0"
@@ -459,7 +476,7 @@
                     placeholder="30"
                   />
                   <input
-                    v-model.number="form.dimension_carton_w"
+                    v-model.number="form.dimension_colis_w"
                     type="number"
                     step="0.1"
                     min="0"
@@ -467,7 +484,7 @@
                     placeholder="22"
                   />
                   <input
-                    v-model.number="form.dimension_carton_h"
+                    v-model.number="form.dimension_colis_h"
                     type="number"
                     step="0.1"
                     min="0"
@@ -476,10 +493,20 @@
                   />
                 </div>
               </div>
+            </div>
+          </div>
+
+          <!-- Section 4: Logistique -->
+          <div class="mb-8 bg-gray-50 rounded-lg p-6 border border-gray-200">
+            <h4 class="text-lg font-semibold text-gray-900 mb-6 flex items-center gap-2">
+              <span class="w-8 h-8 bg-teal-600 text-white rounded-full flex items-center justify-center text-sm">4</span>
+              Logistique
+            </h4>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Poids carton (Kg)</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Poids colis (Kg)</label>
                 <input
-                  v-model.number="form.poids_carton"
+                  v-model.number="form.poids_colis"
                   type="number"
                   step="0.01"
                   min="0"
@@ -487,16 +514,6 @@
                   placeholder="14.50"
                 />
               </div>
-            </div>
-          </div>
-
-          <!-- Section 4: Logistique (simplified) -->
-          <div class="mb-8 bg-gray-50 rounded-lg p-6 border border-gray-200">
-            <h4 class="text-lg font-semibold text-gray-900 mb-6 flex items-center gap-2">
-              <span class="w-8 h-8 bg-teal-600 text-white rounded-full flex items-center justify-center text-sm">4</span>
-              Logistique
-            </h4>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Poids palette (brut) Kg</label>
                 <input
@@ -504,19 +521,26 @@
                   type="number"
                   step="0.01"
                   min="0"
-                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                  placeholder="1246.00"
+                  readonly
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600"
+                  :placeholder="((form.poids_brut || 0) * (form.nombre_total_par_palette || 0)).toFixed(2) || '1246.00'"
                 />
+                <p class="text-xs text-gray-500 mt-1">= Poids brut × Nombre total par palette</p>
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">DLC/DLUO (Mois)</label>
-                <input
-                  v-model.number="form.dlc_dluo"
-                  type="number"
-                  min="0"
-                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                  placeholder="24"
-                />
+                <label class="block text-sm font-medium text-gray-700 mb-1">Minimum de commande</label>
+                <div class="flex">
+                  <input
+                    v-model.number="form.minimum_commande"
+                    type="number"
+                    min="0"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                    placeholder="10"
+                  />
+                  <span class="inline-flex items-center px-3 text-sm text-gray-500 bg-gray-100 border border-l-0 border-gray-300 rounded-r-lg">
+                    colis
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -545,10 +569,8 @@
                   v-model="form.unite_facturation"
                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-white"
                 >
-                  <option value="Carton">Carton</option>
-                  <option value="Unité">Unité</option>
-                  <option value="Palette">Palette</option>
-                  <option value="Kg">Kg</option>
+                  <option value="">Sélectionner</option>
+                  <option v-for="item in parametres.unite_facturation" :key="item.id" :value="item.valeur">{{ item.valeur }}</option>
                 </select>
               </div>
               <div>
@@ -557,23 +579,18 @@
                   v-model="form.devise"
                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-white"
                 >
-                  <option value="EUR">EUR - Euro</option>
-                  <option value="USD">USD - Dollar</option>
-                  <option value="MAD">MAD - Dirham</option>
-                  <option value="GBP">GBP - Livre</option>
+                  <option value="">Sélectionner</option>
+                  <option v-for="item in parametres.devise" :key="item.id" :value="item.code">{{ item.valeur }}</option>
                 </select>
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Taux TVA (%)</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Taux TVA</label>
                 <select
                   v-model="form.taux_tva"
                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-white"
                 >
-                  <option value="0">0%</option>
-                  <option value="7">7%</option>
-                  <option value="10">10%</option>
-                  <option value="14">14%</option>
-                  <option value="20">20%</option>
+                  <option value="">Sélectionner</option>
+                  <option v-for="item in parametres.taux_tva" :key="item.id" :value="item.code">{{ item.valeur }}</option>
                 </select>
               </div>
               <div>
@@ -582,25 +599,9 @@
                   v-model="form.marche"
                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-white"
                 >
-                  <option value="Local">Local</option>
-                  <option value="Export">Export</option>
-                  <option value="Les deux">Les deux</option>
+                  <option value="">Sélectionner</option>
+                  <option v-for="item in parametres.marche" :key="item.id" :value="item.valeur">{{ item.valeur }}</option>
                 </select>
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Minimum de commande</label>
-                <div class="flex">
-                  <input
-                    v-model.number="form.minimum_commande"
-                    type="number"
-                    min="0"
-                    class="w-full px-4 py-2 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                    placeholder="10"
-                  />
-                  <span class="inline-flex items-center px-3 text-sm text-gray-500 bg-gray-100 border border-l-0 border-gray-300 rounded-r-lg">
-                    cartons
-                  </span>
-                </div>
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Code interne (optionnel)</label>
@@ -687,12 +688,43 @@ export default {
       articleToDelete: null,
       form: this.getEmptyForm(),
       photoFile: null,
-      photoPreview: null
+      photoPreview: null,
+      parametres: {
+        famille: [],
+        sous_famille: [],
+        calibre: [],
+        type_emballage_primaire: [],
+        type_emballage_secondaire: [],
+        type_palette: [],
+        unite_facturation: [],
+        devise: [],
+        taux_tva: [],
+        marche: []
+      },
+      filteredSousFamilles: []
     };
   },
   mounted() {
     this.fetchArticles();
     this.fetchStats();
+    this.fetchParametres();
+  },
+  watch: {
+    'form.famille'(newVal) {
+      this.updateSousFamilles(newVal);
+    },
+    'form.unites_par_colis'() {
+      this.calculateTotals();
+    },
+    'form.colis_par_palette'() {
+      this.calculateTotals();
+    },
+    'form.poids_brut'() {
+      this.calculatePoidsPalette();
+    },
+    'form.nombre_total_par_palette'() {
+      this.calculatePoidsPalette();
+    }
   },
   methods: {
     getEmptyForm() {
@@ -712,19 +744,21 @@ export default {
         poids_net_egoutte: null,
         ph: null,
         taux_sel: null,
+        dlc_dluo: null,
         type_emballage: '',
-        unites_par_carton: null,
-        cartons_par_palette: null,
+        type_emballage_primaire: '',
+        type_emballage_secondaire: '',
+        unites_par_colis: null,
+        colis_par_palette: null,
         nombre_total_par_palette: null,
         type_palette: '',
-        dimension_carton_l: null,
-        dimension_carton_w: null,
-        dimension_carton_h: null,
-        poids_carton: null,
+        dimension_colis_l: null,
+        dimension_colis_w: null,
+        dimension_colis_h: null,
+        poids_colis: null,
         poids_palette: null,
-        dlc_dluo: null,
         prix_vente: null,
-        unite_facturation: 'Carton',
+        unite_facturation: 'Colis',
         devise: 'EUR',
         taux_tva: 20,
         marche: 'Export',
@@ -732,6 +766,72 @@ export default {
         code_interne: '',
         observations: ''
       };
+    },
+    async fetchParametres() {
+      try {
+        const response = await fetch('/api/parametres/all-for-forms');
+        if (response.ok) {
+          this.parametres = await response.json();
+        }
+      } catch (error) {
+        console.error('Error fetching parametres:', error);
+      }
+    },
+    updateSousFamilles(familleValue) {
+      if (!familleValue) {
+        this.filteredSousFamilles = [];
+        return;
+      }
+      const famille = this.parametres.famille.find(f => f.valeur === familleValue);
+      if (famille) {
+        this.filteredSousFamilles = this.parametres.sous_famille.filter(sf => sf.parent_id === famille.id);
+      } else {
+        this.filteredSousFamilles = this.parametres.sous_famille;
+      }
+    },
+    calculateTotals() {
+      const unites = this.form.unites_par_colis || 0;
+      const colis = this.form.colis_par_palette || 0;
+      this.form.nombre_total_par_palette = unites * colis;
+      this.calculatePoidsPalette();
+    },
+    calculatePoidsPalette() {
+      const poidsBrut = this.form.poids_brut || 0;
+      const nombreTotal = this.form.nombre_total_par_palette || 0;
+      this.form.poids_palette = parseFloat((poidsBrut * nombreTotal).toFixed(2));
+    },
+    async duplicateArticle(id) {
+      try {
+        const response = await fetch(`/api/articles/${id}/duplicate`, {
+          method: 'POST',
+          headers: { 'Accept': 'application/json' }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          alert(data.message);
+          this.fetchArticles(this.pagination.current_page);
+          this.fetchStats();
+        } else {
+          alert('Erreur lors de la duplication');
+        }
+      } catch (error) {
+        console.error('Error duplicating article:', error);
+        alert('Une erreur est survenue');
+      }
+    },
+    async toggleActive(article) {
+      try {
+        const response = await fetch(`/api/articles/${article.id}/toggle-active`, {
+          method: 'POST',
+          headers: { 'Accept': 'application/json' }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          article.actif = data.article.actif;
+        }
+      } catch (error) {
+        console.error('Error toggling active:', error);
+      }
     },
     async fetchArticles(page = 1) {
       this.loading = true;
@@ -818,7 +918,12 @@ export default {
         
         Object.keys(this.form).forEach(key => {
           if (key !== 'id' && key !== 'photo' && this.form[key] !== null && this.form[key] !== '') {
-            formData.append(key, this.form[key]);
+            // Convert boolean to "1"/"0" for proper Laravel handling
+            if (key === 'actif') {
+              formData.append(key, this.form[key] ? '1' : '0');
+            } else {
+              formData.append(key, this.form[key]);
+            }
           }
         });
         
