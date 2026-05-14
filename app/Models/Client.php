@@ -22,6 +22,8 @@ class Client extends Model
         'devise',
         'statut',
         'actif',
+        'marque',
+        'nomination',
         'date_creation',
         'secteur_activite',
         'groupe_categorie',
@@ -54,12 +56,13 @@ class Client extends Model
         'plafond_credit' => 'decimal:2',
         'solde_actuel' => 'decimal:2',
         'actif' => 'boolean',
+        'marque' => 'boolean',
     ];
 
     public function articles()
     {
         return $this->belongsToMany(Article::class, 'article_client')
-            ->withPivot('prix_negocie')
+            ->withPivot('prix_negocie', 'code_barres', 'marque')
             ->withTimestamps();
     }
 }

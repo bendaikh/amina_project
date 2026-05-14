@@ -58,6 +58,9 @@ class ClientController extends Controller
             'categorie' => 'nullable|string|max:50',
             'devise' => 'nullable|string|max:10',
             'statut' => 'nullable|in:client,prospect',
+            'actif' => 'nullable|boolean',
+            'marque' => 'nullable|boolean',
+            'nomination' => 'nullable|string|max:255',
             'date_creation' => 'nullable|date',
             'secteur_activite' => 'nullable|string|max:255',
             'groupe_categorie' => 'nullable|string|max:255',
@@ -75,7 +78,6 @@ class ClientController extends Controller
             'langue' => 'nullable|string|max:50',
             'delai_paiement' => 'nullable|integer|min:0',
             'delai_paiement_type' => 'nullable|string|max:50',
-            'actif' => 'nullable|boolean',
             'plafond_credit' => 'nullable|numeric|min:0',
             'solde_actuel' => 'nullable|numeric',
             'mode_transport' => 'nullable|string|max:50',
@@ -116,6 +118,9 @@ class ClientController extends Controller
             'categorie' => 'nullable|string|max:50',
             'devise' => 'nullable|string|max:10',
             'statut' => 'nullable|in:client,prospect',
+            'actif' => 'nullable|boolean',
+            'marque' => 'nullable|boolean',
+            'nomination' => 'nullable|string|max:255',
             'date_creation' => 'nullable|date',
             'secteur_activite' => 'nullable|string|max:255',
             'groupe_categorie' => 'nullable|string|max:255',
@@ -133,7 +138,6 @@ class ClientController extends Controller
             'langue' => 'nullable|string|max:50',
             'delai_paiement' => 'nullable|integer|min:0',
             'delai_paiement_type' => 'nullable|string|max:50',
-            'actif' => 'nullable|boolean',
             'plafond_credit' => 'nullable|numeric|min:0',
             'solde_actuel' => 'nullable|numeric',
             'mode_transport' => 'nullable|string|max:50',
@@ -170,12 +174,16 @@ class ClientController extends Controller
             'articles' => 'required|array',
             'articles.*.article_id' => 'required|exists:articles,id',
             'articles.*.prix_negocie' => 'nullable|numeric|min:0',
+            'articles.*.code_barres' => 'nullable|string|max:255',
+            'articles.*.marque' => 'nullable|string|max:255',
         ]);
 
         $syncData = [];
         foreach ($validated['articles'] as $article) {
             $syncData[$article['article_id']] = [
-                'prix_negocie' => $article['prix_negocie'] ?? null
+                'prix_negocie' => $article['prix_negocie'] ?? null,
+                'code_barres' => $article['code_barres'] ?? null,
+                'marque' => $article['marque'] ?? null,
             ];
         }
 

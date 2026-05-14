@@ -376,6 +376,18 @@
                       </select>
                     </div>
                   </div>
+                  <div class="grid grid-cols-2 gap-4">
+                    <div>
+                      <label class="flex items-center space-x-3 cursor-pointer">
+                        <input type="checkbox" v-model="form.marque" class="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500">
+                        <span class="text-sm font-medium text-gray-700">Marque</span>
+                      </label>
+                    </div>
+                    <div v-if="form.marque">
+                      <label class="block text-sm font-medium text-gray-700 mb-1">Nomination</label>
+                      <input v-model="form.nomination" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500" placeholder="Entrez la nomination" />
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -594,6 +606,8 @@
                     <tr>
                       <th class="text-left px-4 py-3 text-sm font-medium text-gray-600">Code</th>
                       <th class="text-left px-4 py-3 text-sm font-medium text-gray-600">Désignation</th>
+                      <th class="text-left px-4 py-3 text-sm font-medium text-gray-600">Code à barres</th>
+                      <th class="text-left px-4 py-3 text-sm font-medium text-gray-600">Marque</th>
                       <th class="text-left px-4 py-3 text-sm font-medium text-gray-600">Prix standard</th>
                       <th class="text-left px-4 py-3 text-sm font-medium text-gray-600">Prix négocié</th>
                     </tr>
@@ -602,6 +616,8 @@
                     <tr v-for="article in selectedClient.articles" :key="article.id" class="border-t border-gray-100 hover:bg-gray-50">
                       <td class="px-4 py-3 text-sm font-medium text-gray-900">{{ article.code_article || article.id }}</td>
                       <td class="px-4 py-3 text-sm text-gray-700">{{ article.designation }}</td>
+                      <td class="px-4 py-3 text-sm text-gray-500">{{ (article.pivot && article.pivot.code_barres) || article.code_barres || '-' }}</td>
+                      <td class="px-4 py-3 text-sm text-gray-500">{{ (article.pivot && article.pivot.marque) || article.marque || '-' }}</td>
                       <td class="px-4 py-3 text-sm text-gray-500">{{ formatNumber(article.prix_vente) }} {{ article.devise || 'EUR' }}</td>
                       <td class="px-4 py-3 text-sm">
                         <span v-if="article.pivot && article.pivot.prix_negocie" class="font-medium text-teal-600">
@@ -673,6 +689,8 @@
                     <th class="text-left px-4 py-3 text-sm font-medium text-gray-600">Désignation</th>
                     <th class="text-left px-4 py-3 text-sm font-medium text-gray-600">Prix</th>
                     <th class="text-left px-4 py-3 text-sm font-medium text-gray-600">Prix négocié</th>
+                    <th class="text-left px-4 py-3 text-sm font-medium text-gray-600">Code à barres</th>
+                    <th class="text-left px-4 py-3 text-sm font-medium text-gray-600">Marque</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -686,9 +704,15 @@
                     <td class="px-4 py-3">
                       <input type="number" v-model.number="negotiatedPrices[article.id]" step="0.01" class="w-24 px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-teal-500 text-sm" :placeholder="article.prix_vente" />
                     </td>
+                    <td class="px-4 py-3">
+                      <input type="text" v-model="articleCodeBarres[article.id]" class="w-32 px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-teal-500 text-sm" :placeholder="article.code_barres || ''" />
+                    </td>
+                    <td class="px-4 py-3">
+                      <input type="text" v-model="articleMarque[article.id]" class="w-32 px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-teal-500 text-sm" :placeholder="article.marque || ''" />
+                    </td>
                   </tr>
                   <tr v-if="availableArticles.length === 0">
-                    <td colspan="5" class="px-4 py-8 text-center text-gray-500">
+                    <td colspan="7" class="px-4 py-8 text-center text-gray-500">
                       Aucun article trouvé
                     </td>
                   </tr>
@@ -731,6 +755,8 @@ export default {
       availableArticles: [],
       selectedArticles: [],
       negotiatedPrices: {},
+      articleCodeBarres: {},
+      articleMarque: {},
       parametres: {
         secteur_activite: [],
         groupe_categorie: [],
@@ -775,6 +801,8 @@ export default {
         delai_paiement: 30,
         delai_paiement_type: '',
         actif: true,
+        marque: false,
+        nomination: '',
         plafond_credit: null,
         solde_actuel: null,
         mode_transport: 'maritime',
@@ -916,6 +944,8 @@ export default {
         delai_paiement: 30,
         delai_paiement_type: '',
         actif: true,
+        marque: false,
+        nomination: '',
         plafond_credit: null,
         solde_actuel: null,
         mode_transport: 'maritime',
@@ -1004,6 +1034,8 @@ export default {
       this.affectClient = client;
       this.selectedArticles = [];
       this.negotiatedPrices = {};
+      this.articleCodeBarres = {};
+      this.articleMarque = {};
       this.articleSearchQuery = '';
       await this.fetchArticlesForAffect();
       this.showAffectModal = true;
@@ -1032,7 +1064,9 @@ export default {
       try {
         const articlesToAffect = this.selectedArticles.map(id => ({
           article_id: id,
-          prix_negocie: this.negotiatedPrices[id] || null
+          prix_negocie: this.negotiatedPrices[id] || null,
+          code_barres: this.articleCodeBarres[id] || null,
+          marque: this.articleMarque[id] || null
         }));
 
         const response = await fetch(`/api/clients/${this.affectClient.id}/articles`, {

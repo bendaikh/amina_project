@@ -6,6 +6,7 @@ use App\Models\Article;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 
 class ArticleController extends Controller
 {
@@ -38,7 +39,12 @@ class ArticleController extends Controller
         }
 
         $validated = $request->validate([
-            'code_article' => 'nullable|string|max:255',
+            'code_article' => [
+                'nullable',
+                'string',
+                'max:255',
+                Rule::unique('articles', 'code_article')->whereNotNull('code_article')
+            ],
             'designation' => 'required|string|max:255',
             'famille' => 'nullable|string|max:255',
             'sous_famille' => 'nullable|string|max:255',
@@ -125,7 +131,12 @@ class ArticleController extends Controller
         }
 
         $validated = $request->validate([
-            'code_article' => 'nullable|string|max:255',
+            'code_article' => [
+                'nullable',
+                'string',
+                'max:255',
+                Rule::unique('articles', 'code_article')->ignore($article->id)->whereNotNull('code_article')
+            ],
             'designation' => 'required|string|max:255',
             'famille' => 'nullable|string|max:255',
             'sous_famille' => 'nullable|string|max:255',
@@ -227,7 +238,24 @@ class ArticleController extends Controller
     public function duplicate(Article $article)
     {
         $newArticle = $article->replicate();
-        $newArticle->code_article = $article->code_article ? $article->code_article . '-COPIE' : null;
+        
+        // Generate unique code_article
+        if ($article->code_article) {
+            $baseCode = $article->code_article;
+            $counter = 1;
+            $newCode = $baseCode . '-COPIE';
+            
+            // Check if code already exists, if so increment counter
+            while (Article::where('code_article', $newCode)->exists()) {
+                $counter++;
+                $newCode = $baseCode . '-COPIE-' . $counter;
+            }
+            
+            $newArticle->code_article = $newCode;
+        } else {
+            $newArticle->code_article = null;
+        }
+        
         $newArticle->designation = $article->designation . ' (Copie)';
         $newArticle->created_at = now();
         $newArticle->updated_at = now();

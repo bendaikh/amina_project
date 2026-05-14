@@ -122,6 +122,11 @@
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                     </svg>
                   </button>
+                  <button @click="openMontageModal(article)" class="text-purple-600 hover:text-purple-900 mr-2" title="Montage de prix">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                    </svg>
+                  </button>
                   <button @click="toggleActive(article)" class="mr-2" :class="article.actif ? 'text-green-600 hover:text-green-900' : 'text-gray-400 hover:text-gray-600'" :title="article.actif ? 'Désactiver' : 'Activer'">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -656,6 +661,146 @@
         </div>
       </div>
     </div>
+
+    <!-- Montage de Prix Modal -->
+    <div v-if="showMontageModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div class="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+        <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between z-10">
+          <h3 class="text-xl font-semibold text-gray-900">
+            Montage de prix - {{ montageArticle?.designation || '' }}
+          </h3>
+          <button @click="closeMontageModal" class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div class="p-6">
+          <!-- Prix de base / kg -->
+          <div class="mb-6 bg-teal-50 rounded-lg p-6 border border-teal-200">
+            <h4 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <span class="w-8 h-8 bg-teal-600 text-white rounded-full flex items-center justify-center text-sm">1</span>
+              Prix de base / kg
+            </h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Prix achat matière première (DH/kg)</label>
+                <input v-model.number="montageForm.prix_achat_matiere" type="number" step="0.01" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500" placeholder="0.00" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Perte produit (%)</label>
+                <input v-model.number="montageForm.perte_produit" type="number" step="0.01" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500" placeholder="0.00" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Perte noyau (%)</label>
+                <input v-model.number="montageForm.perte_noyau" type="number" step="0.01" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500" placeholder="0.00" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Frais de production (DH/kg)</label>
+                <input v-model.number="montageForm.frais_production" type="number" step="0.01" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500" placeholder="0.00" />
+              </div>
+            </div>
+            <div class="mt-4 p-4 bg-white rounded-lg border border-teal-300">
+              <div class="flex justify-between items-center">
+                <span class="text-sm font-medium text-gray-700">Prix de base / kg:</span>
+                <span class="text-xl font-bold text-teal-600">{{ formatNumber(calculatedPrixBase) }} DH</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Coût total / kg -->
+          <div class="mb-6 bg-blue-50 rounded-lg p-6 border border-blue-200">
+            <h4 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <span class="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm">2</span>
+              Coût total / kg = Prix de base / kg +
+            </h4>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Emballage (DH/kg)</label>
+                <input v-model.number="montageForm.emballage" type="number" step="0.01" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="0.00" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Fret (DH/kg)</label>
+                <input v-model.number="montageForm.fret" type="number" step="0.01" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="0.00" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Transport (DH/kg)</label>
+                <input v-model.number="montageForm.transport" type="number" step="0.01" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="0.00" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Main d'œuvre (DH/kg)</label>
+                <input v-model.number="montageForm.main_oeuvre" type="number" step="0.01" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="0.00" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Palette (DH/kg)</label>
+                <input v-model.number="montageForm.palette" type="number" step="0.01" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="0.00" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Herbes / consommables (DH/kg)</label>
+                <input v-model.number="montageForm.herbes_consommables" type="number" step="0.01" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="0.00" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Frais transitaire (DH/kg)</label>
+                <input v-model.number="montageForm.frais_transitaire" type="number" step="0.01" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="0.00" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Autres frais (DH/kg)</label>
+                <input v-model.number="montageForm.autres_frais" type="number" step="0.01" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="0.00" />
+              </div>
+            </div>
+            <div class="mt-4 p-4 bg-white rounded-lg border border-blue-300">
+              <div class="flex justify-between items-center">
+                <span class="text-sm font-medium text-gray-700">Coût total / kg:</span>
+                <span class="text-xl font-bold text-blue-600">{{ formatNumber(calculatedCoutTotal) }} DH</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Prix de vente final -->
+          <div class="mb-6 bg-green-50 rounded-lg p-6 border border-green-200">
+            <h4 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <span class="w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center text-sm">3</span>
+              Prix de vente final / kg
+            </h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Marge bénéficiaire (%)</label>
+                <input v-model.number="montageForm.marge_beneficiaire" type="number" step="0.01" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500" placeholder="0.00" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Taux de change EUR/DH</label>
+                <input v-model.number="montageForm.taux_change_eur_dh" type="number" step="0.0001" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500" placeholder="10.50" />
+              </div>
+            </div>
+            <div class="mt-4 space-y-3">
+              <div class="p-4 bg-white rounded-lg border border-green-300">
+                <div class="flex justify-between items-center">
+                  <span class="text-sm font-medium text-gray-700">Prix de vente final / kg (DH):</span>
+                  <span class="text-xl font-bold text-green-600">{{ formatNumber(calculatedPrixVenteDH) }} DH</span>
+                </div>
+              </div>
+              <div class="p-4 bg-white rounded-lg border border-green-400">
+                <div class="flex justify-between items-center">
+                  <span class="text-sm font-medium text-gray-700">Prix de vente final / kg (EUR):</span>
+                  <span class="text-2xl font-bold text-green-700">{{ formatNumber(calculatedPrixVenteEUR) }} €</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="flex justify-end gap-4">
+            <button @click="closeMontageModal" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium">
+              Fermer
+            </button>
+            <button @click="saveMontageCalculation" class="px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors font-medium">
+              Enregistrer le calcul
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -680,12 +825,14 @@ export default {
       loading: true,
       showModal: false,
       showDeleteModal: false,
+      showMontageModal: false,
       isEditing: false,
       submitting: false,
       deleting: false,
       searchQuery: '',
       searchTimeout: null,
       articleToDelete: null,
+      montageArticle: null,
       form: this.getEmptyForm(),
       photoFile: null,
       photoPreview: null,
@@ -701,13 +848,68 @@ export default {
         taux_tva: [],
         marche: []
       },
-      filteredSousFamilles: []
+      filteredSousFamilles: [],
+      montageForm: {
+        prix_achat_matiere: 0,
+        perte_produit: 0,
+        perte_noyau: 0,
+        frais_production: 0,
+        emballage: 0,
+        fret: 0,
+        transport: 0,
+        main_oeuvre: 0,
+        palette: 0,
+        herbes_consommables: 0,
+        frais_transitaire: 0,
+        autres_frais: 0,
+        marge_beneficiaire: 0,
+        taux_change_eur_dh: 10.50
+      }
     };
   },
   mounted() {
     this.fetchArticles();
     this.fetchStats();
     this.fetchParametres();
+  },
+  computed: {
+    calculatedPrixBase() {
+      const prixAchat = this.montageForm.prix_achat_matiere || 0;
+      const perteProduit = this.montageForm.perte_produit || 0;
+      const perteNoyau = this.montageForm.perte_noyau || 0;
+      const fraisProd = this.montageForm.frais_production || 0;
+      
+      // Calculation: prix_achat * (1 + (perte_produit/100) + (perte_noyau/100)) + frais_production
+      const prixBase = prixAchat * (1 + (perteProduit / 100) + (perteNoyau / 100)) + fraisProd;
+      return prixBase;
+    },
+    calculatedCoutTotal() {
+      const prixBase = this.calculatedPrixBase;
+      const emballage = this.montageForm.emballage || 0;
+      const fret = this.montageForm.fret || 0;
+      const transport = this.montageForm.transport || 0;
+      const mainOeuvre = this.montageForm.main_oeuvre || 0;
+      const palette = this.montageForm.palette || 0;
+      const herbes = this.montageForm.herbes_consommables || 0;
+      const transitaire = this.montageForm.frais_transitaire || 0;
+      const autresFrais = this.montageForm.autres_frais || 0;
+      
+      return prixBase + emballage + fret + transport + mainOeuvre + palette + herbes + transitaire + autresFrais;
+    },
+    calculatedPrixVenteDH() {
+      const coutTotal = this.calculatedCoutTotal;
+      const marge = this.montageForm.marge_beneficiaire || 0;
+      
+      // Prix de vente = Coût total * (1 + (marge/100))
+      return coutTotal * (1 + (marge / 100));
+    },
+    calculatedPrixVenteEUR() {
+      const prixVenteDH = this.calculatedPrixVenteDH;
+      const tauxChange = this.montageForm.taux_change_eur_dh || 1;
+      
+      // Prix en EUR = Prix en DH ÷ Taux de change
+      return tauxChange > 0 ? prixVenteDH / tauxChange : 0;
+    }
   },
   watch: {
     'form.famille'(newVal) {
@@ -994,6 +1196,35 @@ export default {
     formatNumber(value) {
       if (value === null || value === undefined) return '-';
       return parseFloat(value).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    },
+    openMontageModal(article) {
+      this.montageArticle = article;
+      this.showMontageModal = true;
+    },
+    closeMontageModal() {
+      this.showMontageModal = false;
+      this.montageArticle = null;
+      // Reset form
+      this.montageForm = {
+        prix_achat_matiere: 0,
+        perte_produit: 0,
+        perte_noyau: 0,
+        frais_production: 0,
+        emballage: 0,
+        fret: 0,
+        transport: 0,
+        main_oeuvre: 0,
+        palette: 0,
+        herbes_consommables: 0,
+        frais_transitaire: 0,
+        autres_frais: 0,
+        marge_beneficiaire: 0,
+        taux_change_eur_dh: 10.50
+      };
+    },
+    saveMontageCalculation() {
+      alert(`Calcul sauvegardé!\nPrix de vente final: ${this.formatNumber(this.calculatedPrixVenteEUR)} €`);
+      this.closeMontageModal();
     }
   }
 };

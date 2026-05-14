@@ -113,7 +113,7 @@ class Article extends Model
     public function clients()
     {
         return $this->belongsToMany(Client::class, 'article_client')
-            ->withPivot('prix_negocie')
+            ->withPivot('prix_negocie', 'code_barres', 'marque')
             ->withTimestamps();
     }
 }
