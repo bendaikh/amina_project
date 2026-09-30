@@ -153,29 +153,17 @@
       </div>
 
       <!-- Create/Edit Modal -->
-      <div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-xl shadow-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
-          <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between z-10">
-            <h2 class="text-xl font-bold text-gray-900">
+      <div v-if="showModal" class="app-modal-overlay" @click.self="closeModal">
+        <div class="app-modal app-modal--xl" @click.stop>
+          <div class="app-modal__header">
+            <h2 class="app-modal__title">
               {{ isEditing ? 'Modifier Client' : 'Nouveau Client' }}
             </h2>
-            <div class="flex items-center gap-4">
-              <button @click="closeModal" class="px-4 py-2 text-gray-600 hover:text-gray-800 flex items-center gap-2">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
-                Retour
-              </button>
-              <button @click="saveClient" :disabled="saving" class="px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors font-medium disabled:opacity-50 flex items-center gap-2">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                </svg>
-                {{ saving ? 'Enregistrement...' : 'Modifier' }}
-              </button>
-            </div>
+            <button type="button" class="app-modal__close" @click="closeModal" aria-label="Fermer">&times;</button>
           </div>
 
-          <form @submit.prevent="saveClient" class="p-6">
+          <div class="app-modal__body">
+          <form @submit.prevent="saveClient">
             <!-- Header Info Section -->
             <div class="mb-8 bg-white rounded-lg p-6 border border-teal-200 shadow-sm">
               <div class="flex items-center gap-6 mb-6">
@@ -211,7 +199,7 @@
                   </div>
                 </div>
               </div>
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div class="app-form-grid app-form-grid--3">
                 <div>
                   <label class="block text-sm font-medium text-gray-500 mb-1">Secteur d'activité</label>
                   <select v-model="form.secteur_activite" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 bg-white">
@@ -241,7 +229,7 @@
                   Informations
                 </span>
               </button>
-              <button type="button" @click="activeTab = 'articles'" :class="['px-4 py-3 text-sm font-medium whitespace-nowrap', activeTab === 'articles' ? 'text-teal-600 border-b-2 border-teal-600' : 'text-gray-500 hover:text-gray-700']">
+              <button v-if="isEditing" type="button" @click="activeTab = 'articles'" :class="['px-4 py-3 text-sm font-medium whitespace-nowrap', activeTab === 'articles' ? 'text-teal-600 border-b-2 border-teal-600' : 'text-gray-500 hover:text-gray-700']">
                 <span class="flex items-center gap-2">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
                   Articles liés
@@ -250,7 +238,7 @@
             </div>
 
             <!-- Tab Content: Informations -->
-            <div v-show="activeTab === 'informations'" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div v-show="activeTab === 'informations'" class="app-form-grid app-form-grid--2">
               <!-- Coordonnées -->
               <div class="bg-gray-50 rounded-lg p-6 border border-gray-200">
                 <h4 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
@@ -403,6 +391,10 @@
                     <textarea v-model="form.adresse_livraison" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500" placeholder="Zone industrielle, Bâtiment A&#10;69007 Lyon, France"></textarea>
                   </div>
                   <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Port de chargement</label>
+                    <input v-model="form.port_chargement" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500" placeholder="Casablanca, Agadir…" />
+                  </div>
+                  <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Transitaire (pour export)</label>
                     <textarea v-model="form.transitaire" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500" placeholder="Transports Internationaux SAS&#10;10 Quai de la Gare, 76600 Le Havre, France"></textarea>
                   </div>
@@ -410,31 +402,40 @@
               </div>
             </div>
 
-            <!-- Tab Content: Articles (placeholder) -->
-            <div v-show="activeTab === 'articles'" class="bg-gray-50 rounded-lg p-6 border border-gray-200">
+            <!-- Tab Content: Articles (edit only) -->
+            <div v-if="isEditing" v-show="activeTab === 'articles'" class="bg-gray-50 rounded-lg p-6 border border-gray-200">
               <h4 class="text-lg font-semibold text-gray-900 mb-4">Articles liés</h4>
               <p class="text-gray-500 mb-4">Articles achetés + prix négocié</p>
-              <button type="button" @click="openAffectModal(form)" class="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700">
+              <button
+                type="button"
+                @click="openAffectModal(form)"
+                class="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700"
+              >
                 + Affecter des articles
               </button>
             </div>
 
           </form>
+          </div>
+          <div class="app-modal__footer">
+            <button type="button" @click="closeModal" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+              Annuler
+            </button>
+            <button type="button" @click="saveClient" :disabled="saving" class="px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-medium disabled:opacity-50">
+              {{ saving ? 'Enregistrement...' : (isEditing ? 'Modifier' : 'Enregistrer') }}
+            </button>
+          </div>
         </div>
       </div>
 
       <!-- View Modal -->
-      <div v-if="showViewModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-          <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between z-10">
-            <h2 class="text-xl font-bold text-gray-900">Détails du Client</h2>
-            <button @click="showViewModal = false" class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+      <div v-if="showViewModal" class="app-modal-overlay" @click.self="showViewModal = false">
+        <div class="app-modal app-modal--lg" @click.stop>
+          <div class="app-modal__header">
+            <h2 class="app-modal__title">Détails du Client</h2>
+            <button type="button" class="app-modal__close" @click="showViewModal = false" aria-label="Fermer">&times;</button>
           </div>
-          <div class="p-6" v-if="selectedClient">
+          <div class="app-modal__body" v-if="selectedClient">
             <!-- Header with client info -->
             <div class="flex items-center space-x-4 mb-6 pb-6 border-b border-gray-200">
               <div class="w-20 h-20 bg-teal-100 rounded-full flex items-center justify-center">
@@ -457,7 +458,7 @@
             </div>
             
             <!-- Client Details Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div class="app-form-grid app-form-grid--2 mb-8">
               <!-- Informations générales -->
               <div class="bg-gray-50 rounded-lg p-4">
                 <h4 class="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
@@ -600,7 +601,7 @@
                 </span>
               </div>
               
-              <div v-if="selectedClient.articles && selectedClient.articles.length > 0" class="border rounded-lg overflow-hidden">
+              <div v-if="selectedClient.articles && selectedClient.articles.length > 0" class="app-table-scroll app-table-scroll--wide">
                 <table class="w-full">
                   <thead class="bg-gray-100">
                     <tr>
@@ -641,31 +642,27 @@
               </div>
             </div>
 
-            <!-- Action buttons -->
-            <div class="flex justify-end gap-3 mt-6 pt-6 border-t border-gray-200">
-              <button @click="showViewModal = false; openAffectModal(selectedClient)" class="px-4 py-2 border border-teal-600 text-teal-600 rounded-lg hover:bg-teal-50">
-                Gérer les articles
-              </button>
-              <button @click="showViewModal = false; editClient(selectedClient)" class="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700">
-                Modifier le client
-              </button>
-            </div>
+            <!-- Action buttons moved to footer -->
+          </div>
+          <div class="app-modal__footer">
+            <button @click="showViewModal = false; openAffectModal(selectedClient)" class="px-4 py-2 border border-teal-600 text-teal-600 rounded-lg hover:bg-teal-50">
+              Gérer les articles
+            </button>
+            <button @click="showViewModal = false; editClient(selectedClient)" class="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700">
+              Modifier le client
+            </button>
           </div>
         </div>
       </div>
 
       <!-- Affect Articles Modal -->
-      <div v-if="showAffectModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-          <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between z-10">
-            <h2 class="text-xl font-bold text-gray-900">Affecter des articles à {{ affectClient?.nom }}</h2>
-            <button @click="showAffectModal = false" class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+      <div v-if="showAffectModal" class="app-modal-overlay" @click.self="showAffectModal = false">
+        <div class="app-modal app-modal--lg" @click.stop>
+          <div class="app-modal__header">
+            <h2 class="app-modal__title">Affecter des articles à {{ affectClient?.nom }}</h2>
+            <button type="button" class="app-modal__close" @click="showAffectModal = false" aria-label="Fermer">&times;</button>
           </div>
-          <div class="p-6">
+          <div class="app-modal__body">
             <div class="mb-4">
               <div class="relative">
                 <input 
@@ -680,7 +677,7 @@
                 </svg>
               </div>
             </div>
-            <div class="border rounded-lg overflow-hidden">
+            <div class="app-table-scroll app-table-scroll--wide">
               <table class="w-full">
                 <thead class="bg-gray-50">
                   <tr>
@@ -719,14 +716,14 @@
                 </tbody>
               </table>
             </div>
-            <div class="mt-6 flex justify-end gap-4">
-              <button @click="showAffectModal = false" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
-                Annuler
-              </button>
-              <button @click="affectArticles" :disabled="selectedArticles.length === 0" class="px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-50">
-                Affecter {{ selectedArticles.length }} article(s)
-              </button>
-            </div>
+          </div>
+          <div class="app-modal__footer">
+            <button @click="showAffectModal = false" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+              Annuler
+            </button>
+            <button @click="affectArticles" :disabled="selectedArticles.length === 0" class="px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-50">
+              Affecter {{ selectedArticles.length }} article(s)
+            </button>
           </div>
         </div>
       </div>
@@ -807,6 +804,7 @@ export default {
         solde_actuel: null,
         mode_transport: 'maritime',
         adresse_livraison: '',
+        port_chargement: '',
         transitaire: ''
       },
       errors: {}
@@ -850,7 +848,8 @@ export default {
       try {
         const params = new URLSearchParams({
           page: page,
-          search: this.searchQuery
+          search: this.searchQuery,
+          statut: 'client'
         });
         const response = await fetch(`/api/clients?${params}`);
         const data = await response.json();
@@ -950,6 +949,7 @@ export default {
         solde_actuel: null,
         mode_transport: 'maritime',
         adresse_livraison: '',
+        port_chargement: '',
         transitaire: ''
       };
     },
@@ -1031,6 +1031,10 @@ export default {
     },
 
     async openAffectModal(client) {
+      if (!client || !client.id) {
+        alert('Veuillez d\'abord enregistrer le client avant d\'affecter des articles.');
+        return;
+      }
       this.affectClient = client;
       this.selectedArticles = [];
       this.negotiatedPrices = {};
@@ -1061,6 +1065,12 @@ export default {
     },
 
     async affectArticles() {
+      if (!this.affectClient || !this.affectClient.id) {
+        alert('Veuillez d\'abord enregistrer le client avant d\'affecter des articles.');
+        this.showAffectModal = false;
+        return;
+      }
+
       try {
         const articlesToAffect = this.selectedArticles.map(id => ({
           article_id: id,
@@ -1082,6 +1092,10 @@ export default {
         if (response.ok) {
           alert(`${this.selectedArticles.length} article(s) affecté(s) avec succès`);
           this.showAffectModal = false;
+          this.fetchClients(this.pagination.current_page);
+          if (this.selectedClient && this.selectedClient.id === this.affectClient.id) {
+            this.viewClient(this.affectClient);
+          }
         } else {
           const data = await response.json();
           alert(data.message || 'Une erreur est survenue');

@@ -147,62 +147,65 @@
     </div>
 
     <!-- Create/Edit Modal -->
-    <div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div class="bg-white rounded-xl shadow-xl w-full max-w-md">
-        <div class="border-b border-gray-200 px-6 py-4">
-          <h3 class="text-lg font-semibold text-gray-900">
+    <div v-if="showModal" class="app-modal-overlay" @click.self="closeModal">
+      <div class="app-modal app-modal--sm" @click.stop>
+        <div class="app-modal__header">
+          <h2 class="app-modal__title">
             {{ isEditing ? 'Modifier le paramètre' : 'Nouveau paramètre' }}
-          </h3>
+          </h2>
+          <button type="button" class="app-modal__close" @click="closeModal" aria-label="Fermer">&times;</button>
         </div>
-        <form @submit.prevent="saveParam" class="p-6 space-y-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Valeur *</label>
-            <input
-              v-model="form.valeur"
-              type="text"
-              required
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
-              placeholder="Entrez la valeur"
-            />
+        <form @submit.prevent="saveParam">
+          <div class="app-modal__body space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Valeur *</label>
+              <input
+                v-model="form.valeur"
+                type="text"
+                required
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                placeholder="Entrez la valeur"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Code (optionnel)</label>
+              <input
+                v-model="form.code"
+                type="text"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                placeholder="Code court"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Ordre</label>
+              <input
+                v-model.number="form.ordre"
+                type="number"
+                min="0"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+              />
+            </div>
+            <div v-if="selectedType === 'sous_famille'">
+              <label class="block text-sm font-medium text-gray-700 mb-1">Famille parente</label>
+              <select
+                v-model="form.parent_id"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 bg-white"
+              >
+                <option :value="null">Aucune</option>
+                <option v-for="famille in familles" :key="famille.id" :value="famille.id">{{ famille.valeur }}</option>
+              </select>
+            </div>
+            <div class="flex items-center">
+              <input
+                v-model="form.actif"
+                type="checkbox"
+                id="actif"
+                class="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500"
+              />
+              <label for="actif" class="ml-2 text-sm text-gray-700">Actif</label>
+            </div>
           </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Code (optionnel)</label>
-            <input
-              v-model="form.code"
-              type="text"
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
-              placeholder="Code court"
-            />
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Ordre</label>
-            <input
-              v-model.number="form.ordre"
-              type="number"
-              min="0"
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
-            />
-          </div>
-          <div v-if="selectedType === 'sous_famille'">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Famille parente</label>
-            <select
-              v-model="form.parent_id"
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 bg-white"
-            >
-              <option :value="null">Aucune</option>
-              <option v-for="famille in familles" :key="famille.id" :value="famille.id">{{ famille.valeur }}</option>
-            </select>
-          </div>
-          <div class="flex items-center">
-            <input
-              v-model="form.actif"
-              type="checkbox"
-              id="actif"
-              class="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500"
-            />
-            <label for="actif" class="ml-2 text-sm text-gray-700">Actif</label>
-          </div>
-          <div class="flex justify-end gap-4 pt-4">
+          <div class="app-modal__footer">
             <button
               type="button"
               @click="closeModal"
@@ -243,7 +246,8 @@ export default {
         calibre: 'Calibres',
         type_emballage_primaire: 'Types emballage primaire',
         type_emballage_secondaire: 'Types emballage secondaire',
-        type_palette: 'Types de palette',
+        type_palette: 'Références d\'emballage',
+        compagnie_maritime: 'Compagnies maritimes',
         unite_facturation: 'Unités de facturation',
         devise: 'Devises',
         taux_tva: 'Taux TVA',

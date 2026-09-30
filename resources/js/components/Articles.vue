@@ -178,51 +178,36 @@
     </div>
 
     <!-- Create/Edit Modal -->
-    <div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div class="bg-white rounded-xl shadow-xl w-full max-w-6xl max-h-[90vh] overflow-y-auto">
-        <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between z-10">
-          <h3 class="text-xl font-semibold text-gray-900">
+    <div v-if="showModal" class="app-modal-overlay" @click.self="closeModal">
+      <div class="app-modal app-modal--xl" @click.stop>
+        <div class="app-modal__header">
+          <h2 class="app-modal__title">
             {{ isEditing ? 'Modifier l\'article' : 'Nouvel Article' }}
-          </h3>
-          <div class="flex items-center gap-4">
-            <button @click="closeModal" class="px-4 py-2 text-gray-600 hover:text-gray-800 flex items-center gap-2">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-              </svg>
-              Retour
-            </button>
-            <button
-              @click="submitForm"
-              :disabled="submitting"
-              class="px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors font-medium disabled:opacity-50 flex items-center gap-2"
-            >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-              </svg>
-              Enregistrer
-            </button>
-          </div>
+          </h2>
+          <button type="button" class="app-modal__close" @click="closeModal" aria-label="Fermer">&times;</button>
         </div>
 
-        <form @submit.prevent="submitForm" class="p-6">
+        <div class="app-modal__body">
+        <form @submit.prevent="submitForm">
           <!-- Section 1: Informations générales -->
           <div class="mb-8 bg-gray-50 rounded-lg p-6 border border-gray-200">
             <h4 class="text-lg font-semibold text-gray-900 mb-6 flex items-center gap-2">
               <span class="w-8 h-8 bg-teal-600 text-white rounded-full flex items-center justify-center text-sm">1</span>
               Informations générales
             </h4>
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="app-form-grid app-form-grid--4">
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Code article *</label>
                 <input
                   v-model="form.code_article"
                   type="text"
-                  required
-                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                  placeholder="ART-000125"
+                  readonly
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600"
+                  placeholder="Généré automatiquement"
                 />
+                <p class="text-xs text-gray-500 mt-1">Généré automatiquement</p>
               </div>
-              <div class="md:col-span-2">
+              <div class="app-span-full">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Désignation *</label>
                 <input
                   v-model="form.designation"
@@ -329,7 +314,7 @@
               <span class="w-8 h-8 bg-teal-600 text-white rounded-full flex items-center justify-center text-sm">2</span>
               Poids & caractéristiques
             </h4>
-            <div class="grid grid-cols-1 md:grid-cols-6 gap-4">
+            <div class="app-form-grid app-form-grid--4">
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Poids brut (Kg)</label>
                 <input
@@ -342,15 +327,30 @@
                 />
               </div>
               <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Tare (Kg)</label>
+                <input
+                  v-model.number="form.tare"
+                  type="number"
+                  step="0.001"
+                  min="0"
+                  :max="form.poids_brut || undefined"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                  placeholder="0.200"
+                />
+                <p class="text-xs text-gray-500 mt-1">Entre 0 et le poids brut</p>
+              </div>
+              <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Poids net (Kg)</label>
                 <input
                   v-model.number="form.poids_net"
                   type="number"
                   step="0.001"
                   min="0"
-                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                  readonly
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600"
                   placeholder="1.000"
                 />
+                <p class="text-xs text-gray-500 mt-1">= Poids brut − Tare</p>
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Poids net égoutté (Kg)</label>
@@ -405,7 +405,7 @@
               <span class="w-8 h-8 bg-teal-600 text-white rounded-full flex items-center justify-center text-sm">3</span>
               Conditionnement / Emballage
             </h4>
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="app-form-grid app-form-grid--4">
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Type emballage primaire *</label>
                 <select
@@ -460,7 +460,7 @@
                 <p class="text-xs text-gray-500 mt-1">Calculé automatiquement</p>
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Type palette</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Référence d'emballage</label>
                 <select
                   v-model="form.type_palette"
                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-white"
@@ -469,7 +469,18 @@
                   <option v-for="item in parametres.type_palette" :key="item.id" :value="item.valeur">{{ item.valeur }}</option>
                 </select>
               </div>
-              <div class="md:col-span-2">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Emballage sous réserve de retour</label>
+                <select
+                  v-model="form.sous_reserve_retour"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-white"
+                >
+                  <option :value="false">Non</option>
+                  <option :value="true">Oui</option>
+                </select>
+                <p class="text-xs text-gray-500 mt-1">Si Oui → suivi auto des emballages expédiés / retournés / restants (par client)</p>
+              </div>
+              <div class="app-span-full">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Dimensions colis (L x l x H) cm</label>
                 <div class="grid grid-cols-3 gap-2">
                   <input
@@ -507,7 +518,7 @@
               <span class="w-8 h-8 bg-teal-600 text-white rounded-full flex items-center justify-center text-sm">4</span>
               Logistique
             </h4>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="app-form-grid app-form-grid--3">
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Poids colis (Kg)</label>
                 <input
@@ -556,7 +567,7 @@
               <span class="w-8 h-8 bg-teal-600 text-white rounded-full flex items-center justify-center text-sm">5</span>
               Informations commerciales
             </h4>
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="app-form-grid app-form-grid--4">
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Prix de vente</label>
                 <input
@@ -617,7 +628,7 @@
                   placeholder="INT-OLV-00125"
                 />
               </div>
-              <div class="md:col-span-4">
+              <div class="app-span-full">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Observations</label>
                 <textarea
                   v-model="form.observations"
@@ -629,61 +640,74 @@
             </div>
           </div>
         </form>
+        </div>
+        <div class="app-modal__footer">
+          <button type="button" @click="closeModal" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+            Annuler
+          </button>
+          <button
+            type="button"
+            @click="submitForm"
+            :disabled="submitting"
+            class="px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-medium disabled:opacity-50"
+          >
+            {{ submitting ? 'Enregistrement...' : 'Enregistrer' }}
+          </button>
+        </div>
       </div>
     </div>
 
     <!-- Delete Confirmation Modal -->
-    <div v-if="showDeleteModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div class="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
-        <div class="text-center">
+    <div v-if="showDeleteModal" class="app-modal-overlay" @click.self="showDeleteModal = false">
+      <div class="app-modal app-modal--sm" @click.stop>
+        <div class="app-modal__header">
+          <h2 class="app-modal__title">Confirmer la suppression</h2>
+          <button type="button" class="app-modal__close" @click="showDeleteModal = false" aria-label="Fermer">&times;</button>
+        </div>
+        <div class="app-modal__body text-center">
           <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
           </div>
-          <h3 class="text-xl font-semibold text-gray-900 mb-2">Confirmer la suppression</h3>
-          <p class="text-gray-500 mb-6">Êtes-vous sûr de vouloir supprimer cet article ? Cette action est irréversible.</p>
-          <div class="flex gap-4 justify-center">
-            <button
-              @click="showDeleteModal = false"
-              class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium"
-            >
-              Annuler
-            </button>
-            <button
-              @click="confirmDelete"
-              :disabled="deleting"
-              class="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium disabled:opacity-50"
-            >
-              {{ deleting ? 'Suppression...' : 'Supprimer' }}
-            </button>
-          </div>
+          <p class="text-gray-500">Êtes-vous sûr de vouloir supprimer cet article ? Cette action est irréversible.</p>
+        </div>
+        <div class="app-modal__footer" style="justify-content: center">
+          <button
+            @click="showDeleteModal = false"
+            class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium"
+          >
+            Annuler
+          </button>
+          <button
+            @click="confirmDelete"
+            :disabled="deleting"
+            class="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium disabled:opacity-50"
+          >
+            {{ deleting ? 'Suppression...' : 'Supprimer' }}
+          </button>
         </div>
       </div>
     </div>
 
     <!-- Montage de Prix Modal -->
-    <div v-if="showMontageModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div class="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-        <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between z-10">
-          <h3 class="text-xl font-semibold text-gray-900">
+    <div v-if="showMontageModal" class="app-modal-overlay" @click.self="closeMontageModal">
+      <div class="app-modal app-modal--lg" @click.stop>
+        <div class="app-modal__header">
+          <h2 class="app-modal__title">
             Montage de prix - {{ montageArticle?.designation || '' }}
-          </h3>
-          <button @click="closeMontageModal" class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+          </h2>
+          <button type="button" class="app-modal__close" @click="closeMontageModal" aria-label="Fermer">&times;</button>
         </div>
 
-        <div class="p-6">
+        <div class="app-modal__body">
           <!-- Prix de base / kg -->
           <div class="mb-6 bg-teal-50 rounded-lg p-6 border border-teal-200">
             <h4 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
               <span class="w-8 h-8 bg-teal-600 text-white rounded-full flex items-center justify-center text-sm">1</span>
               Prix de base / kg
             </h4>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="app-form-grid app-form-grid--2">
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Prix achat matière première (DH/kg)</label>
                 <input v-model.number="montageForm.prix_achat_matiere" type="number" step="0.01" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500" placeholder="0.00" />
@@ -715,7 +739,7 @@
               <span class="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm">2</span>
               Coût total / kg = Prix de base / kg +
             </h4>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="app-form-grid app-form-grid--3">
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Emballage (DH/kg)</label>
                 <input v-model.number="montageForm.emballage" type="number" step="0.01" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="0.00" />
@@ -763,7 +787,7 @@
               <span class="w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center text-sm">3</span>
               Prix de vente final / kg
             </h4>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="app-form-grid app-form-grid--2">
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Marge bénéficiaire (%)</label>
                 <input v-model.number="montageForm.marge_beneficiaire" type="number" step="0.01" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500" placeholder="0.00" />
@@ -789,15 +813,15 @@
             </div>
           </div>
 
-          <!-- Actions -->
-          <div class="flex justify-end gap-4">
-            <button @click="closeMontageModal" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium">
-              Fermer
-            </button>
-            <button @click="saveMontageCalculation" class="px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors font-medium">
-              Enregistrer le calcul
-            </button>
-          </div>
+          <!-- Actions moved to footer -->
+        </div>
+        <div class="app-modal__footer">
+          <button @click="closeMontageModal" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium">
+            Fermer
+          </button>
+          <button @click="saveMontageCalculation" class="px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors font-medium">
+            Enregistrer le calcul
+          </button>
         </div>
       </div>
     </div>
@@ -922,7 +946,11 @@ export default {
       this.calculateTotals();
     },
     'form.poids_brut'() {
+      this.calculatePoidsNet();
       this.calculatePoidsPalette();
+    },
+    'form.tare'() {
+      this.calculatePoidsNet();
     },
     'form.nombre_total_par_palette'() {
       this.calculatePoidsPalette();
@@ -942,6 +970,7 @@ export default {
         hs_code: '',
         actif: true,
         poids_brut: null,
+        tare: null,
         poids_net: null,
         poids_net_egoutte: null,
         ph: null,
@@ -954,6 +983,7 @@ export default {
         colis_par_palette: null,
         nombre_total_par_palette: null,
         type_palette: '',
+        sous_reserve_retour: false,
         dimension_colis_l: null,
         dimension_colis_w: null,
         dimension_colis_h: null,
@@ -997,10 +1027,29 @@ export default {
       this.form.nombre_total_par_palette = unites * colis;
       this.calculatePoidsPalette();
     },
+    calculatePoidsNet() {
+      const brut = Number(this.form.poids_brut) || 0;
+      let tare = Number(this.form.tare) || 0;
+      if (tare < 0) tare = 0;
+      if (tare > brut) {
+        tare = brut;
+        this.form.tare = tare;
+      }
+      this.form.poids_net = Math.round(Math.max(0, brut - tare) * 1000) / 1000;
+    },
     calculatePoidsPalette() {
       const poidsBrut = this.form.poids_brut || 0;
       const nombreTotal = this.form.nombre_total_par_palette || 0;
       this.form.poids_palette = parseFloat((poidsBrut * nombreTotal).toFixed(2));
+    },
+    nextCodeArticle() {
+      let max = 0;
+      this.articles.forEach((a) => {
+        const m = String(a.code_article || '').match(/(\d+)\s*$/);
+        if (m) max = Math.max(max, parseInt(m[1], 10));
+      });
+      // Also consider pagination totals indirectly via current list; backend still enforces uniqueness
+      return 'ART-' + String(max + 1).padStart(6, '0');
     },
     async duplicateArticle(id) {
       try {
@@ -1072,9 +1121,27 @@ export default {
         this.fetchArticles(1);
       }, 300);
     },
-    openCreateModal() {
+    async openCreateModal() {
       this.isEditing = false;
       this.form = this.getEmptyForm();
+      // Prefetch next code from all articles for display (backend regenerates if needed)
+      try {
+        const response = await fetch('/api/articles?per_page=500');
+        if (response.ok) {
+          const data = await response.json();
+          const list = data.data || data;
+          let max = 0;
+          (list || []).forEach((a) => {
+            const m = String(a.code_article || '').match(/(\d+)\s*$/);
+            if (m) max = Math.max(max, parseInt(m[1], 10));
+          });
+          this.form.code_article = 'ART-' + String(max + 1).padStart(6, '0');
+        } else {
+          this.form.code_article = this.nextCodeArticle();
+        }
+      } catch {
+        this.form.code_article = this.nextCodeArticle();
+      }
       this.showModal = true;
     },
     openEditModal(article) {

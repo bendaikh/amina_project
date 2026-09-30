@@ -134,22 +134,24 @@
       </div>
 
       <!-- Modal -->
-      <div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-          <div class="sticky top-0 bg-purple-50 border-b border-purple-200 px-6 py-4 z-10">
+      <div v-if="showModal" class="app-modal-overlay" @click.self="closeModal">
+        <div class="app-modal app-modal--lg" @click.stop>
+          <div class="app-modal__header">
             <div class="flex items-center gap-3">
               <div class="w-8 h-8 bg-purple-600 rounded flex items-center justify-center">
                 <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                 </svg>
               </div>
-              <h2 class="text-lg font-semibold text-purple-800">
+              <h2 class="app-modal__title">
                 Nouveau tiers (prospect, client, fournisseur)
               </h2>
             </div>
+            <button type="button" class="app-modal__close" @click="closeModal" aria-label="Fermer">&times;</button>
           </div>
           
-          <form @submit.prevent="saveFournisseur" class="p-6">
+          <form @submit.prevent="saveFournisseur">
+          <div class="app-modal__body">
             <!-- Nom du tiers -->
             <div class="mb-6">
               <label class="block text-sm font-semibold text-purple-700 mb-2">Nom du tiers</label>
@@ -174,7 +176,7 @@
             </div>
 
             <!-- Code client / Code fournisseur -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div class="app-form-grid app-form-grid--2 mb-6">
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Code client</label>
                 <div class="flex">
@@ -234,7 +236,7 @@
             </div>
 
             <!-- Code postal / Ville -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div class="app-form-grid app-form-grid--2 mb-6">
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Code postal</label>
                 <input 
@@ -294,7 +296,7 @@
             </div>
 
             <!-- Téléphone / Tél portable -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div class="app-form-grid app-form-grid--2 mb-6">
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Téléphone</label>
                 <div class="relative">
@@ -374,7 +376,7 @@
             </div>
 
             <!-- Id. prof. 1-4 -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div class="app-form-grid app-form-grid--2 mb-6">
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Id. prof. 1 (R.C.)</label>
                 <input 
@@ -426,7 +428,7 @@
             </div>
 
             <!-- Assujetti à la TVA / Numéro de TVA -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div class="app-form-grid app-form-grid--2 mb-6">
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Assujetti à la TVA</label>
                 <label class="flex items-center mt-2">
@@ -447,7 +449,7 @@
             </div>
 
             <!-- Type du tiers / Effectifs -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div class="app-form-grid app-form-grid--2 mb-6">
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Type du tiers</label>
                 <select 
@@ -517,7 +519,7 @@
             </div>
 
             <!-- Conditions de règlement / Mode de règlement -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div class="app-form-grid app-form-grid--2 mb-6">
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Conditions de règlement</label>
                 <select 
@@ -607,9 +609,10 @@
             <div v-if="errorMessage" class="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-600">
               {{ errorMessage }}
             </div>
+          </div>
 
             <!-- Form Actions -->
-            <div class="flex justify-center gap-4 pt-6 border-t border-gray-200">
+            <div class="app-modal__footer" style="justify-content: center">
               <button 
                 type="submit"
                 :disabled="saving"

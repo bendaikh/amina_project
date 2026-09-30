@@ -21,6 +21,7 @@ class Client extends Model
         'categorie',
         'devise',
         'statut',
+        'statut_prospection',
         'actif',
         'marque',
         'nomination',
@@ -28,6 +29,13 @@ class Client extends Model
         'secteur_activite',
         'groupe_categorie',
         'commercial_charge',
+        'source',
+        'produits_interesses',
+        'premier_contact',
+        'dernier_contact',
+        'prochaine_action',
+        'prochaine_action_date',
+        'converti_at',
         'site_web',
         'contact_nom',
         'contact_fonction',
@@ -46,12 +54,29 @@ class Client extends Model
         'mode_transport',
         'adresse_livraison',
         'transitaire',
+        'port_chargement',
+    ];
+
+    public const STATUTS_PROSPECTION = [
+        'Nouveau',
+        'En prospection',
+        'Contact établi',
+        'Échantillon envoyé',
+        'Offre envoyée',
+        'En négociation',
+        'Converti en client',
+        'Perdu',
+        'À relancer',
     ];
 
     protected $casts = [
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'date_creation' => 'date',
+        'premier_contact' => 'date',
+        'dernier_contact' => 'date',
+        'prochaine_action_date' => 'date',
+        'converti_at' => 'datetime',
         'delai_paiement' => 'integer',
         'plafond_credit' => 'decimal:2',
         'solde_actuel' => 'decimal:2',
@@ -64,5 +89,15 @@ class Client extends Model
         return $this->belongsToMany(Article::class, 'article_client')
             ->withPivot('prix_negocie', 'code_barres', 'marque')
             ->withTimestamps();
+    }
+
+    public function exportations()
+    {
+        return $this->hasMany(Exportation::class);
+    }
+
+    public function dossiersEmballages()
+    {
+        return $this->hasMany(DossierEmballage::class);
     }
 }

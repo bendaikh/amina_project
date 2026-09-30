@@ -30,6 +30,7 @@ class Parametre extends Model
     const TYPE_EMBALLAGE_PRIMAIRE = 'type_emballage_primaire';
     const TYPE_EMBALLAGE_SECONDAIRE = 'type_emballage_secondaire';
     const TYPE_PALETTE = 'type_palette';
+    const TYPE_COMPAGNIE_MARITIME = 'compagnie_maritime';
     const TYPE_UNITE_FACTURATION = 'unite_facturation';
     const TYPE_DEVISE = 'devise';
     const TYPE_TAUX_TVA = 'taux_tva';
@@ -47,7 +48,8 @@ class Parametre extends Model
             self::TYPE_CALIBRE => 'Calibres',
             self::TYPE_EMBALLAGE_PRIMAIRE => 'Types emballage primaire',
             self::TYPE_EMBALLAGE_SECONDAIRE => 'Types emballage secondaire',
-            self::TYPE_PALETTE => 'Types de palette',
+            self::TYPE_PALETTE => 'Références d\'emballage',
+            self::TYPE_COMPAGNIE_MARITIME => 'Compagnies maritimes',
             self::TYPE_UNITE_FACTURATION => 'Unités de facturation',
             self::TYPE_DEVISE => 'Devises',
             self::TYPE_TAUX_TVA => 'Taux TVA',

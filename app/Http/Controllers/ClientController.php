@@ -2,51 +2,21 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AuditLog;
 use App\Models\Client;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 class ClientController extends Controller
 {
-    /**
-     * Display a listing of the clients.
-     */
-    public function index(Request $request)
+    private function prospectStatutRules(): array
     {
-        $query = Client::query();
-
-        // Search functionality
-        if ($request->has('search') && $request->search) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('nom', 'like', "%{$search}%")
-                  ->orWhere('ice_cin', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('telephone', 'like', "%{$search}%");
-            });
-        }
-
-        // Filter by status
-        if ($request->has('statut') && $request->statut) {
-            $query->where('statut', $request->statut);
-        }
-
-        // Filter by category
-        if ($request->has('categorie') && $request->categorie) {
-            $query->where('categorie', $request->categorie);
-        }
-
-        $clients = $query->orderBy('created_at', 'desc')->paginate(15);
-
-        return response()->json($clients);
+        return ['nullable', 'string', Rule::in(Client::STATUTS_PROSPECTION)];
     }
 
-    /**
-     * Store a newly created client in storage.
-     */
-    public function store(Request $request)
+    private function clientValidationRules(bool $forUpdate = false): array
     {
-        $validated = $request->validate([
+        return [
             'code_client' => 'nullable|string|max:255',
             'ice_cin' => 'nullable|string|max:255',
             'nom' => 'required|string|max:255',
@@ -58,6 +28,7 @@ class ClientController extends Controller
             'categorie' => 'nullable|string|max:50',
             'devise' => 'nullable|string|max:10',
             'statut' => 'nullable|in:client,prospect',
+            'statut_prospection' => $this->prospectStatutRules(),
             'actif' => 'nullable|boolean',
             'marque' => 'nullable|boolean',
             'nomination' => 'nullable|string|max:255',
@@ -65,6 +36,12 @@ class ClientController extends Controller
             'secteur_activite' => 'nullable|string|max:255',
             'groupe_categorie' => 'nullable|string|max:255',
             'commercial_charge' => 'nullable|string|max:255',
+            'source' => 'nullable|string|max:255',
+            'produits_interesses' => 'nullable|string',
+            'premier_contact' => 'nullable|date',
+            'dernier_contact' => 'nullable|date',
+            'prochaine_action' => 'nullable|string|max:500',
+            'prochaine_action_date' => 'nullable|date',
             'site_web' => 'nullable|string|max:255',
             'contact_nom' => 'nullable|string|max:255',
             'contact_fonction' => 'nullable|string|max:255',
@@ -83,12 +60,72 @@ class ClientController extends Controller
             'mode_transport' => 'nullable|string|max:50',
             'adresse_livraison' => 'nullable|string',
             'transitaire' => 'nullable|string',
-        ]);
+            'port_chargement' => 'nullable|string|max:255',
+        ];
+    }
+
+    /**
+     * Display a listing of the clients.
+     */
+    public function index(Request $request)
+    {
+        $query = Client::query();
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('nom', 'like', "%{$search}%")
+                  ->orWhere('ice_cin', 'like', "%{$search}%")
+                  ->orWhere('code_client', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('telephone', 'like', "%{$search}%")
+                  ->orWhere('contact_nom', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('statut')) {
+            $query->where('statut', $request->statut);
+        }
+
+        if ($request->filled('statut_prospection')) {
+            $query->where('statut_prospection', $request->statut_prospection);
+        }
+
+        if ($request->filled('categorie')) {
+            $query->where('categorie', $request->categorie);
+        }
+
+        if ($request->filled('commercial')) {
+            $query->where('commercial_charge', 'like', '%' . $request->commercial . '%');
+        }
+
+        $perPage = min((int) $request->get('per_page', 15), 100);
+        $clients = $query->orderBy('created_at', 'desc')->paginate($perPage);
+
+        return response()->json($clients);
+    }
+
+    /**
+     * Store a newly created client in storage.
+     */
+    public function store(Request $request)
+    {
+        $validated = $request->validate($this->clientValidationRules());
+
+        if (($validated['statut'] ?? null) === 'prospect' && empty($validated['statut_prospection'])) {
+            $validated['statut_prospection'] = 'Nouveau';
+        }
 
         $client = Client::create($validated);
 
+        if ($client->statut === 'prospect') {
+            AuditLog::record($client, 'prospect_cree', 'statut_prospection', null, $client->statut_prospection);
+        }
+
         return response()->json([
-            'message' => 'Client créé avec succès',
+            'message' => $client->statut === 'prospect'
+                ? 'Prospect créé avec succès'
+                : 'Client créé avec succès',
             'client' => $client
         ], 201);
     }
@@ -106,50 +143,65 @@ class ClientController extends Controller
      */
     public function update(Request $request, Client $client)
     {
-        $validated = $request->validate([
-            'code_client' => 'nullable|string|max:255',
-            'ice_cin' => 'nullable|string|max:255',
-            'nom' => 'required|string|max:255',
-            'email' => 'nullable|email|max:255',
-            'telephone' => 'nullable|string|max:50',
-            'adresse' => 'nullable|string',
-            'ville' => 'nullable|string|max:255',
-            'pays' => 'nullable|string|max:100',
-            'categorie' => 'nullable|string|max:50',
-            'devise' => 'nullable|string|max:10',
-            'statut' => 'nullable|in:client,prospect',
-            'actif' => 'nullable|boolean',
-            'marque' => 'nullable|boolean',
-            'nomination' => 'nullable|string|max:255',
-            'date_creation' => 'nullable|date',
-            'secteur_activite' => 'nullable|string|max:255',
-            'groupe_categorie' => 'nullable|string|max:255',
-            'commercial_charge' => 'nullable|string|max:255',
-            'site_web' => 'nullable|string|max:255',
-            'contact_nom' => 'nullable|string|max:255',
-            'contact_fonction' => 'nullable|string|max:255',
-            'contact_telephone' => 'nullable|string|max:50',
-            'contact_email' => 'nullable|email|max:255',
-            'numero_tva' => 'nullable|string|max:255',
-            'numero_rc' => 'nullable|string|max:255',
-            'eori' => 'nullable|string|max:255',
-            'pays_eori' => 'nullable|string|max:255',
-            'incoterm' => 'nullable|string|max:50',
-            'langue' => 'nullable|string|max:50',
-            'delai_paiement' => 'nullable|integer|min:0',
-            'delai_paiement_type' => 'nullable|string|max:50',
-            'plafond_credit' => 'nullable|numeric|min:0',
-            'solde_actuel' => 'nullable|numeric',
-            'mode_transport' => 'nullable|string|max:50',
-            'adresse_livraison' => 'nullable|string',
-            'transitaire' => 'nullable|string',
-        ]);
+        $validated = $request->validate($this->clientValidationRules(true));
 
+        $oldStatutProspection = $client->statut_prospection;
         $client->update($validated);
 
+        if (
+            array_key_exists('statut_prospection', $validated)
+            && $oldStatutProspection !== $client->statut_prospection
+        ) {
+            AuditLog::record(
+                $client,
+                'statut_prospection_change',
+                'statut_prospection',
+                $oldStatutProspection,
+                $client->statut_prospection
+            );
+        }
+
         return response()->json([
-            'message' => 'Client mis à jour avec succès',
+            'message' => $client->statut === 'prospect'
+                ? 'Prospect mis à jour avec succès'
+                : 'Client mis à jour avec succès',
             'client' => $client
+        ]);
+    }
+
+    /**
+     * Convert a prospect into a client without re-entering data.
+     */
+    public function convert(Client $client)
+    {
+        if ($client->statut === 'client') {
+            return response()->json([
+                'message' => 'Ce tiers est déjà un client',
+                'client' => $client
+            ]);
+        }
+
+        $oldStatut = $client->statut;
+        $oldPipeline = $client->statut_prospection;
+
+        $client->update([
+            'statut' => 'client',
+            'statut_prospection' => 'Converti en client',
+            'converti_at' => now(),
+            'dernier_contact' => $client->dernier_contact ?: now()->toDateString(),
+        ]);
+
+        AuditLog::record(
+            $client,
+            'conversion_client',
+            'statut',
+            $oldStatut . ' / ' . ($oldPipeline ?: '—'),
+            'client / Converti en client'
+        );
+
+        return response()->json([
+            'message' => 'Prospect converti en client avec succès. L\'historique a été conservé.',
+            'client' => $client->fresh()
         ]);
     }
 
@@ -161,7 +213,7 @@ class ClientController extends Controller
         $client->delete();
 
         return response()->json([
-            'message' => 'Client supprimé avec succès'
+            'message' => 'Suppression effectuée avec succès'
         ]);
     }
 

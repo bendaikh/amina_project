@@ -126,8 +126,8 @@
             🔐 Identifiants de démo
           </p>
           <div class="text-xs text-teal-600 space-y-1">
-            <p><strong>Email:</strong> admin@system.com</p>
-            <p><strong>Mot de passe:</strong> password</p>
+            <p><strong>Email:</strong> admin@batixper.site</p>
+            <p><strong>Mot de passe:</strong> Admin@123</p>
           </div>
         </div>
 

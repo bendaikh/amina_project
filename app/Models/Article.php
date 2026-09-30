@@ -33,6 +33,7 @@ class Article extends Model
         'poids_net_egoutte_unitaire',
         'poids_net_egoutte_total',
         'poids_brut',
+        'tare',
         'poids_net',
         'poids_net_egoutte',
         'ph',
@@ -46,6 +47,7 @@ class Article extends Model
         'colis_par_palette',
         'nombre_total_par_palette',
         'type_palette',
+        'sous_reserve_retour',
         'dimension_carton_l',
         'dimension_carton_w',
         'dimension_carton_h',
@@ -59,6 +61,7 @@ class Article extends Model
         'prix_vente',
         'unite_facturation',
         'devise',
+        'origine',
         'taux_tva',
         'marche',
         'minimum_commande',
@@ -69,6 +72,7 @@ class Article extends Model
     protected $casts = [
         'date_production' => 'date',
         'actif' => 'boolean',
+        'sous_reserve_retour' => 'boolean',
         'total_colis_palet' => 'integer',
         'total_colis_carton' => 'integer',
         'emballage_tare' => 'decimal:2',
@@ -81,6 +85,7 @@ class Article extends Model
         'poids_net_egoutte_unitaire' => 'decimal:2',
         'poids_net_egoutte_total' => 'decimal:2',
         'poids_brut' => 'decimal:2',
+        'tare' => 'decimal:3',
         'poids_net' => 'decimal:2',
         'poids_net_egoutte' => 'decimal:2',
         'ph' => 'decimal:2',
@@ -108,6 +113,22 @@ class Article extends Model
     public function getTotalColisAttribute()
     {
         return $this->total_colis_palet + $this->total_colis_carton;
+    }
+
+    public static function nextCodeArticle(): string
+    {
+        $codes = static::whereNotNull('code_article')
+            ->where('code_article', '!=', '')
+            ->pluck('code_article');
+
+        $max = 0;
+        foreach ($codes as $code) {
+            if (preg_match('/(\d+)\s*$/', (string) $code, $m)) {
+                $max = max($max, (int) $m[1]);
+            }
+        }
+
+        return 'ART-' . str_pad((string) ($max + 1), 6, '0', STR_PAD_LEFT);
     }
 
     public function clients()

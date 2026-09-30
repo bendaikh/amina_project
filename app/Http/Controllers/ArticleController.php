@@ -70,6 +70,7 @@ class ArticleController extends Controller
             'poids_net_egoutte_unitaire' => 'nullable|numeric|min:0',
             'poids_net_egoutte_total' => 'nullable|numeric|min:0',
             'poids_brut' => 'nullable|numeric|min:0',
+            'tare' => 'nullable|numeric|min:0',
             'poids_net' => 'nullable|numeric|min:0',
             'poids_net_egoutte' => 'nullable|numeric|min:0',
             'ph' => 'nullable|numeric|min:0|max:14',
@@ -83,6 +84,7 @@ class ArticleController extends Controller
             'colis_par_palette' => 'nullable|integer|min:0',
             'nombre_total_par_palette' => 'nullable|integer|min:0',
             'type_palette' => 'nullable|string|max:100',
+            'sous_reserve_retour' => 'nullable|boolean',
             'dimension_carton_l' => 'nullable|numeric|min:0',
             'dimension_carton_w' => 'nullable|numeric|min:0',
             'dimension_carton_h' => 'nullable|numeric|min:0',
@@ -106,6 +108,20 @@ class ArticleController extends Controller
         if ($request->hasFile('photo')) {
             $path = $request->file('photo')->store('articles', 'public');
             $validated['photo'] = $path;
+        }
+
+        if (empty($validated['code_article'])) {
+            $validated['code_article'] = Article::nextCodeArticle();
+        }
+
+        if (isset($validated['poids_brut']) || isset($validated['tare'])) {
+            $brut = (float) ($validated['poids_brut'] ?? 0);
+            $tare = (float) ($validated['tare'] ?? 0);
+            if ($tare > $brut) {
+                $tare = $brut;
+                $validated['tare'] = $tare;
+            }
+            $validated['poids_net'] = round(max(0, $brut - $tare), 3);
         }
 
         $article = Article::create($validated);
@@ -162,6 +178,7 @@ class ArticleController extends Controller
             'poids_net_egoutte_unitaire' => 'nullable|numeric|min:0',
             'poids_net_egoutte_total' => 'nullable|numeric|min:0',
             'poids_brut' => 'nullable|numeric|min:0',
+            'tare' => 'nullable|numeric|min:0',
             'poids_net' => 'nullable|numeric|min:0',
             'poids_net_egoutte' => 'nullable|numeric|min:0',
             'ph' => 'nullable|numeric|min:0|max:14',
@@ -175,6 +192,7 @@ class ArticleController extends Controller
             'colis_par_palette' => 'nullable|integer|min:0',
             'nombre_total_par_palette' => 'nullable|integer|min:0',
             'type_palette' => 'nullable|string|max:100',
+            'sous_reserve_retour' => 'nullable|boolean',
             'dimension_carton_l' => 'nullable|numeric|min:0',
             'dimension_carton_w' => 'nullable|numeric|min:0',
             'dimension_carton_h' => 'nullable|numeric|min:0',
@@ -201,6 +219,16 @@ class ArticleController extends Controller
             }
             $path = $request->file('photo')->store('articles', 'public');
             $validated['photo'] = $path;
+        }
+
+        if (isset($validated['poids_brut']) || isset($validated['tare'])) {
+            $brut = (float) ($validated['poids_brut'] ?? $article->poids_brut ?? 0);
+            $tare = (float) ($validated['tare'] ?? $article->tare ?? 0);
+            if ($tare > $brut) {
+                $tare = $brut;
+                $validated['tare'] = $tare;
+            }
+            $validated['poids_net'] = round(max(0, $brut - $tare), 3);
         }
 
         $article->update($validated);
@@ -238,24 +266,7 @@ class ArticleController extends Controller
     public function duplicate(Article $article)
     {
         $newArticle = $article->replicate();
-        
-        // Generate unique code_article
-        if ($article->code_article) {
-            $baseCode = $article->code_article;
-            $counter = 1;
-            $newCode = $baseCode . '-COPIE';
-            
-            // Check if code already exists, if so increment counter
-            while (Article::where('code_article', $newCode)->exists()) {
-                $counter++;
-                $newCode = $baseCode . '-COPIE-' . $counter;
-            }
-            
-            $newArticle->code_article = $newCode;
-        } else {
-            $newArticle->code_article = null;
-        }
-        
+        $newArticle->code_article = Article::nextCodeArticle();
         $newArticle->designation = $article->designation . ' (Copie)';
         $newArticle->created_at = now();
         $newArticle->updated_at = now();
