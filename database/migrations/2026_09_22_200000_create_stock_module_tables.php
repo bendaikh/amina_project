@@ -9,25 +9,31 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // Emplacements: keep existing stock_locations; ensure quarantine exists
-        if (Schema::hasTable('stock_locations')) {
-            $exists = DB::table('stock_locations')->where('code', 'quarantaine')->exists();
-            if (!$exists) {
+        if (!Schema::hasTable('stock_locations')) {
+            Schema::create('stock_locations', function (Blueprint $table) {
+                $table->id();
+                $table->string('code')->unique();
+                $table->string('nom');
+                $table->string('type', 40)->default('depot');
+                $table->boolean('actif')->default(true);
+                $table->timestamps();
+            });
+        }
+
+        $defaults = [
+            ['code' => 'depot', 'nom' => 'Dépôt', 'type' => 'depot'],
+            ['code' => 'gros', 'nom' => 'Gros', 'type' => 'depot'],
+            ['code' => 'quarantaine', 'nom' => 'Quarantaine', 'type' => 'quarantaine'],
+            ['code' => 'transit', 'nom' => 'Transit', 'type' => 'transit'],
+            ['code' => 'endommage', 'nom' => 'Endommagé', 'type' => 'endommage'],
+        ];
+
+        foreach ($defaults as $loc) {
+            if (!DB::table('stock_locations')->where('code', $loc['code'])->exists()) {
                 DB::table('stock_locations')->insert([
-                    'code' => 'quarantaine',
-                    'nom' => 'Quarantaine',
-                    'type' => 'quarantaine',
-                    'actif' => 1,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-            }
-            $existsTransit = DB::table('stock_locations')->where('code', 'transit')->exists();
-            if (!$existsTransit) {
-                DB::table('stock_locations')->insert([
-                    'code' => 'transit',
-                    'nom' => 'Transit',
-                    'type' => 'transit',
+                    'code' => $loc['code'],
+                    'nom' => $loc['nom'],
+                    'type' => $loc['type'],
                     'actif' => 1,
                     'created_at' => now(),
                     'updated_at' => now(),
@@ -167,28 +173,6 @@ return new class extends Migration
         Schema::dropIfExists('bons_reception');
         Schema::dropIfExists('stock_movements');
         Schema::dropIfExists('stock_balances');
-
-        // Restore minimal legacy shapes
-        Schema::create('stock_balances', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('article_id')->constrained('articles')->cascadeOnDelete();
-            $table->foreignId('stock_location_id')->constrained('stock_locations')->cascadeOnDelete();
-            $table->integer('quantite_pcs')->default(0);
-            $table->timestamps();
-            $table->unique(['article_id', 'stock_location_id']);
-        });
-        Schema::create('stock_movements', function (Blueprint $table) {
-            $table->id();
-            $table->string('type', 40);
-            $table->foreignId('article_id')->constrained('articles')->cascadeOnDelete();
-            $table->foreignId('from_location_id')->nullable()->constrained('stock_locations')->nullOnDelete();
-            $table->foreignId('to_location_id')->nullable()->constrained('stock_locations')->nullOnDelete();
-            $table->integer('quantite_pcs');
-            $table->nullableMorphs('reference');
-            $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
-            $table->string('raison')->nullable();
-            $table->boolean('annule')->default(false);
-            $table->timestamps();
-        });
+        Schema::dropIfExists('stock_locations');
     }
 };

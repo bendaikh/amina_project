@@ -167,6 +167,9 @@ Route::prefix('commandes')->group(function () {
     Route::delete('/{commande}', [CommandeController::class, 'destroy']);
     Route::post('/{commande}/statut', [CommandeController::class, 'changeStatut']);
     Route::post('/{commande}/pieces', [CommandeController::class, 'uploadPiece']);
+    Route::post('/{commande}/marquer-a-facturer', [CommandeController::class, 'marquerAFacturer']);
+    Route::get('/{commande}/documents', [CommandeController::class, 'listDocuments']);
+    Route::post('/{commande}/documents', [CommandeController::class, 'generateDocument']);
 });
 
 Route::get('/productions/meta', [OrdreProductionController::class, 'meta']);
@@ -190,6 +193,7 @@ Route::prefix('livraisons')->group(function () {
     Route::post('/{livraison}/statut', [LivraisonController::class, 'changeStatut']);
     Route::post('/{livraison}/pieces', [LivraisonController::class, 'uploadPiece']);
     Route::post('/{livraison}/cin-scan', [LivraisonController::class, 'uploadCinScan']);
+    Route::delete('/{livraison}/conteneurs/{conteneur}', [LivraisonController::class, 'destroyConteneur']);
 });
 
 // Bons de livraison (ventes locales) — transformation commande → BL

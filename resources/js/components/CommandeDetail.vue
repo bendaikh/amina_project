@@ -43,38 +43,34 @@
         </div>
       </div>
 
-      <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-6 overflow-x-auto">
-        <div class="flex items-center gap-1 min-w-max">
-          <template v-for="(step, i) in processus" :key="step.key">
-            <span
-              class="px-3 py-1.5 rounded-lg text-xs font-medium"
-              :class="stepIndex(commande.statut) >= i ? 'bg-teal-600 text-white' : 'bg-gray-100 text-gray-500'"
-            >{{ step.label }}</span>
-            <span v-if="i < processus.length - 1" class="text-gray-300 px-1">→</span>
-          </template>
-        </div>
+      <!-- Tabs -->
+      <div class="border-b border-gray-200 mb-6">
+        <nav class="flex gap-6 overflow-x-auto">
+          <button
+            v-for="tab in tabs"
+            :key="tab.key"
+            type="button"
+            @click="activeTab = tab.key"
+            class="pb-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors"
+            :class="activeTab === tab.key
+              ? 'border-teal-600 text-teal-700'
+              : 'border-transparent text-gray-500 hover:text-gray-800'"
+          >
+            {{ tab.label }}
+            <span v-if="tab.key === 'chargement' && conteneurCards.length"> · {{ conteneurCards.length }}</span>
+          </button>
+        </nav>
       </div>
 
-      <div class="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-3 mb-6">
-        <div class="bg-white border border-gray-100 rounded-xl p-4 shadow-sm"><p class="text-xs text-gray-500">Total HT</p><p class="text-lg font-bold">{{ formatMoney(commande.total_ht) }}</p></div>
-        <div class="bg-white border border-gray-100 rounded-xl p-4 shadow-sm"><p class="text-xs text-gray-500">TVA</p><p class="text-lg font-bold">{{ formatMoney(commande.total_tva) }}</p></div>
-        <div class="bg-white border border-gray-100 rounded-xl p-4 shadow-sm"><p class="text-xs text-gray-500">Total TTC</p><p class="text-lg font-bold text-teal-700">{{ formatMoney(commande.total_ttc) }}</p></div>
-        <div class="bg-white border border-gray-100 rounded-xl p-4 shadow-sm"><p class="text-xs text-gray-500">Marge estimée</p><p class="text-lg font-bold">{{ formatMoney(commande.marge_estimee) }}</p></div>
-        <div class="bg-white border border-gray-100 rounded-xl p-4 shadow-sm"><p class="text-xs text-gray-500">Livrée</p><p class="text-lg font-bold">{{ commande.quantite_livree || 0 }}</p></div>
-        <div class="bg-white border border-gray-100 rounded-xl p-4 shadow-sm"><p class="text-xs text-gray-500">Restante</p><p class="text-lg font-bold">{{ commande.quantite_restante || 0 }}</p></div>
-        <div class="bg-white border border-gray-100 rounded-xl p-4 shadow-sm"><p class="text-xs text-gray-500">Facturée</p><p class="text-lg font-bold">{{ formatMoney(form.montant_facture) }}</p></div>
-        <div class="bg-white border border-gray-100 rounded-xl p-4 shadow-sm"><p class="text-xs text-gray-500">Solde</p><p class="text-lg font-bold">{{ formatMoney((form.montant_facture || 0) - (form.montant_regle || 0)) }}</p></div>
-      </div>
+      <p v-if="error" class="text-red-600 text-sm mb-4">{{ error }}</p>
+      <p v-if="message" class="text-teal-600 text-sm mb-4">{{ message }}</p>
 
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div class="lg:col-span-2 space-y-6">
+      <!-- TAB: Commande -->
+      <div v-show="activeTab === 'commande'" class="space-y-6">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <section class="bg-white border border-gray-100 rounded-xl p-5 shadow-sm">
             <h2 class="font-semibold text-lg mb-4">Informations</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div>
-                <label class="text-xs text-gray-500">Date</label>
-                <input type="date" v-model="form.date_commande" class="w-full border border-gray-300 rounded-lg px-3 py-2" />
-              </div>
               <div>
                 <label class="text-xs text-gray-500">Client</label>
                 <select v-model="form.client_id" class="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white">
@@ -87,189 +83,228 @@
                 <input v-model="form.reference_client" class="w-full border border-gray-300 rounded-lg px-3 py-2" />
               </div>
               <div>
-                <label class="text-xs text-gray-500">Commercial</label>
-                <input v-model="form.commercial" class="w-full border border-gray-300 rounded-lg px-3 py-2" />
-              </div>
-              <div>
-                <label class="text-xs text-gray-500">Type</label>
-                <input :value="form.type === 'export' ? 'Export' : 'Local'" readonly class="w-full border border-gray-200 rounded-lg px-3 py-2 bg-gray-50 text-gray-600" />
+                <label class="text-xs text-gray-500">Date</label>
+                <input type="date" v-model="form.date_commande" class="w-full border border-gray-300 rounded-lg px-3 py-2" />
               </div>
               <div>
                 <label class="text-xs text-gray-500">Devise</label>
-                <input :value="form.devise" readonly class="w-full border border-gray-200 rounded-lg px-3 py-2 bg-gray-50 text-gray-600" />
-              </div>
-              <div>
-                <label class="text-xs text-gray-500">Paiement</label>
-                <input :value="form.mode_paiement || '—'" readonly class="w-full border border-gray-200 rounded-lg px-3 py-2 bg-gray-50 text-gray-600" />
-              </div>
-              <div>
-                <label class="text-xs text-gray-500">Date souhaitée</label>
-                <input type="date" v-model="form.date_souhaitee" class="w-full border border-gray-300 rounded-lg px-3 py-2" />
-              </div>
-              <div>
-                <label class="text-xs text-gray-500">Priorité</label>
-                <select v-model="form.priorite" class="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white">
-                  <option value="basse">Basse</option>
-                  <option value="normale">Normale</option>
-                  <option value="haute">Haute</option>
-                  <option value="urgente">Urgente</option>
+                <select v-model="form.devise" class="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white">
+                  <option value="EUR">EUR</option>
+                  <option value="USD">USD</option>
+                  <option value="MAD">MAD</option>
                 </select>
-              </div>
-              <div>
-                <label class="text-xs text-gray-500">Facturée</label>
-                <input type="number" step="0.01" v-model.number="form.montant_facture" class="w-full border border-gray-300 rounded-lg px-3 py-2" />
-              </div>
-              <div>
-                <label class="text-xs text-gray-500">Réglée</label>
-                <input type="number" step="0.01" v-model.number="form.montant_regle" class="w-full border border-gray-300 rounded-lg px-3 py-2" />
-              </div>
-              <div class="md:col-span-2">
-                <label class="text-xs text-gray-500">Adresse</label>
-                <textarea v-model="form.adresse" rows="2" class="w-full border border-gray-300 rounded-lg px-3 py-2"></textarea>
-              </div>
-              <div class="md:col-span-2">
-                <label class="text-xs text-gray-500">Observation</label>
-                <textarea v-model="form.observations" rows="2" class="w-full border border-gray-300 rounded-lg px-3 py-2"></textarea>
               </div>
             </div>
           </section>
 
           <section class="bg-white border border-gray-100 rounded-xl p-5 shadow-sm">
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-              <h2 class="font-semibold text-lg">Lignes</h2>
-              <div class="flex flex-wrap items-center gap-2">
-                <div class="relative">
-                  <button
-                    type="button"
-                    @click="showColumnPicker = !showColumnPicker"
-                    class="px-3 py-1.5 border border-gray-300 rounded-lg text-sm bg-white hover:bg-gray-50 inline-flex items-center gap-2"
-                  >
-                    <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h10M4 18h14" />
-                    </svg>
-                    Colonnes
-                  </button>
-                  <div
-                    v-if="showColumnPicker"
-                    class="absolute right-0 mt-2 w-72 bg-white border border-gray-200 rounded-xl shadow-lg z-20 p-3"
-                    @click.stop
-                  >
-                    <div class="flex items-center justify-between mb-2">
-                      <p class="text-sm font-semibold text-gray-800">Paramètres colonnes</p>
-                      <button type="button" class="text-xs text-teal-600" @click="resetColumns">Réinit.</button>
-                    </div>
-                    <div class="max-h-64 overflow-y-auto space-y-1">
-                      <label
-                        v-for="col in allColumns"
-                        :key="col.key"
-                        class="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-50 cursor-pointer text-sm"
-                      >
-                        <input type="checkbox" v-model="visibleColumns" :value="col.key" class="rounded text-teal-600" />
-                        <span>{{ col.label }}</span>
-                      </label>
-                    </div>
-                    <p class="text-[11px] text-gray-400 mt-2">Ces colonnes s’appliquent à l’affichage et à l’impression.</p>
-                  </div>
-                </div>
-                <button @click="addLigne" type="button" class="px-3 py-1.5 text-sm font-medium text-teal-600 hover:bg-teal-50 rounded-lg">+ Ligne</button>
+            <h2 class="font-semibold text-lg mb-4">Résumé</h2>
+            <div class="space-y-2 text-sm text-gray-700">
+              <p><span class="font-semibold">{{ conteneurCards.length }}</span> conteneur(s)</p>
+              <p><span class="font-semibold">{{ (form.lignes || []).length }}</span> article(s)</p>
+              <p>
+                <span class="font-semibold">{{ formatMoney(totalTtc) }} {{ form.devise }}</span>
+                total commande
+              </p>
+              <div class="pt-2">
+                <span
+                  class="inline-flex px-3 py-1 rounded-full text-xs font-semibold"
+                  :class="isFacturee ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'"
+                >
+                  {{ isFacturee ? 'Facturée' : 'À facturer' }}
+                </span>
               </div>
-            </div>
-
-            <div class="overflow-x-auto border border-gray-100 rounded-lg">
-              <table class="w-full text-sm min-w-max">
-                <thead class="bg-gray-50">
-                  <tr class="text-left text-gray-500 border-b border-gray-100">
-                    <th
-                      v-for="col in activeColumns"
-                      :key="col.key"
-                      class="py-2.5 px-3 whitespace-nowrap text-xs font-medium uppercase tracking-wide"
-                    >{{ col.label }}</th>
-                    <th class="py-2.5 px-3 w-10"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-if="!form.lignes?.length">
-                    <td :colspan="activeColumns.length + 1" class="py-8 text-center text-gray-400">Aucune ligne</td>
-                  </tr>
-                  <tr v-for="(ligne, idx) in form.lignes" :key="idx" class="border-b border-gray-50 hover:bg-gray-50/60">
-                    <td
-                      v-for="col in activeColumns"
-                      :key="col.key"
-                      class="py-2 px-3 whitespace-nowrap align-middle"
-                    >
-                      <template v-if="col.key === 'article'">
-                        <select v-model="ligne.article_id" @change="fillArticle(ligne)" class="border border-gray-300 rounded px-2 py-1 w-24 text-xs bg-white">
-                          <option :value="null">—</option>
-                          <option v-for="a in articles" :key="a.id" :value="a.id">{{ a.code_article }}</option>
-                        </select>
-                      </template>
-                      <template v-else-if="col.key === 'date_production'">
-                        <input type="date" v-model="ligne.date_production" class="border border-gray-300 rounded px-2 py-1 w-32 text-xs" />
-                      </template>
-                      <template v-else-if="col.editable">
-                        <input
-                          v-if="col.input === 'number'"
-                          type="number"
-                          :step="col.step || '0.01'"
-                          v-model.number="ligne[col.field]"
-                          class="border border-gray-300 rounded px-2 py-1 w-20 text-xs"
-                        />
-                        <input
-                          v-else
-                          v-model="ligne[col.field]"
-                          class="border border-gray-300 rounded px-2 py-1 w-28 text-xs"
-                        />
-                      </template>
-                      <template v-else>
-                        <span class="text-xs text-gray-800">{{ cellValue(ligne, col) }}</span>
-                      </template>
-                    </td>
-                    <td class="py-2 px-3 text-right">
-                      <button type="button" @click="form.lignes.splice(idx,1)" class="text-red-500 hover:text-red-700 text-lg leading-none" title="Supprimer">×</button>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
             </div>
           </section>
         </div>
 
-        <div class="space-y-6">
-          <section class="bg-white border border-gray-100 rounded-xl p-5 shadow-sm">
-            <div class="flex items-center justify-between mb-3">
-              <h2 class="font-semibold">Logistique</h2>
-              <div class="flex gap-2">
-                <router-link to="/ventes/commandes/logistique" class="text-xs text-gray-500 hover:text-teal-600">Voir tout</router-link>
-                <button @click="createLivraison" :disabled="creatingLiv" class="text-sm text-teal-600">+ Livraison</button>
-              </div>
-            </div>
-            <div v-if="!commande.livraisons?.length" class="text-sm text-gray-500">Aucune livraison</div>
-            <ul class="space-y-2">
-              <li v-for="l in commande.livraisons" :key="l.id" class="text-sm border border-gray-100 rounded-lg p-3">
-                <p class="font-medium text-teal-700">{{ l.numero }}</p>
-                <p class="text-gray-500">{{ l.transporteur || '—' }} · {{ labelLiv(l.statut) }}</p>
-              </li>
-            </ul>
-          </section>
+        <section class="bg-white border border-gray-100 rounded-xl p-5 shadow-sm">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+            <h2 class="font-semibold text-lg">Articles commandés</h2>
+            <button @click="addLigne" type="button" class="px-3 py-1.5 text-sm font-medium text-teal-600 hover:bg-teal-50 rounded-lg">+ Ligne</button>
+          </div>
+          <div class="overflow-x-auto border border-gray-100 rounded-lg">
+            <table class="w-full text-sm min-w-max">
+              <thead class="bg-gray-50">
+                <tr class="text-left text-gray-500 border-b border-gray-100">
+                  <th class="py-2.5 px-3 text-xs font-medium uppercase tracking-wide">Code article</th>
+                  <th class="py-2.5 px-3 text-xs font-medium uppercase tracking-wide">Désignation</th>
+                  <th class="py-2.5 px-3 text-xs font-medium uppercase tracking-wide">HS CODE</th>
+                  <th class="py-2.5 px-3 text-xs font-medium uppercase tracking-wide">Commandé</th>
+                  <th class="py-2.5 px-3 text-xs font-medium uppercase tracking-wide">Réparti</th>
+                  <th class="py-2.5 px-3 text-xs font-medium uppercase tracking-wide">Reste</th>
+                  <th class="py-2.5 px-3 text-xs font-medium uppercase tracking-wide">Prix</th>
+                  <th class="py-2.5 px-3 text-xs font-medium uppercase tracking-wide">Total</th>
+                  <th class="py-2.5 px-3 w-10"></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-if="!form.lignes?.length">
+                  <td colspan="9" class="py-8 text-center text-gray-400">Aucune ligne</td>
+                </tr>
+                <tr v-for="(ligne, idx) in form.lignes" :key="idx" class="border-b border-gray-50 hover:bg-gray-50/60">
+                  <td class="py-2 px-3">
+                    <select v-model="ligne.article_id" @change="fillArticle(ligne)" class="border border-gray-300 rounded px-2 py-1 w-28 text-xs bg-white">
+                      <option :value="null">—</option>
+                      <option v-for="a in articles" :key="a.id" :value="a.id">{{ a.code_article }}</option>
+                    </select>
+                  </td>
+                  <td class="py-2 px-3">
+                    <input v-model="ligne.designation" class="border border-gray-300 rounded px-2 py-1 w-44 text-xs" />
+                  </td>
+                  <td class="py-2 px-3 text-xs text-gray-600">{{ ligneHsCode(ligne) || '—' }}</td>
+                  <td class="py-2 px-3">
+                    <div class="flex items-center gap-1">
+                      <input type="number" step="0.001" v-model.number="ligne.quantite" class="border border-gray-300 rounded px-2 py-1 w-20 text-xs" />
+                      <input v-model="ligne.unite" class="border border-gray-300 rounded px-2 py-1 w-16 text-xs" />
+                    </div>
+                  </td>
+                  <td class="py-2 px-3 text-xs">{{ Number(ligne.quantite_livree || 0) }}</td>
+                  <td class="py-2 px-3 text-xs">{{ Math.max(0, Number(ligne.quantite || 0) - Number(ligne.quantite_livree || 0)) }}</td>
+                  <td class="py-2 px-3">
+                    <input type="number" step="0.01" v-model.number="ligne.prix" class="border border-gray-300 rounded px-2 py-1 w-20 text-xs" />
+                  </td>
+                  <td class="py-2 px-3 text-xs font-medium whitespace-nowrap">{{ formatMoney(ligneHt(ligne)) }} {{ form.devise }}</td>
+                  <td class="py-2 px-3 text-right">
+                    <button type="button" @click="form.lignes.splice(idx,1)" class="text-red-500 hover:text-red-700 text-lg leading-none" title="Supprimer">×</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
 
-          <section class="bg-white border border-gray-100 rounded-xl p-5 shadow-sm">
-            <h2 class="font-semibold mb-3">Pièces jointes</h2>
-            <input type="file" @change="uploadPiece" class="text-sm w-full mb-3" />
-            <ul class="space-y-1">
-              <li v-for="p in commande.pieces_jointes || []" :key="p.id" class="text-sm text-gray-700 truncate">
-                {{ p.nom_fichier }}
-              </li>
-            </ul>
-            <p v-if="!(commande.pieces_jointes || []).length" class="text-sm text-gray-500">Aucun fichier</p>
-          </section>
+      <!-- TAB: Chargement -->
+      <div v-show="activeTab === 'chargement'">
+        <div v-if="!conteneurCards.length" class="bg-white border border-gray-100 rounded-xl p-10 text-center shadow-sm">
+          <p class="text-gray-500 mb-4">Aucun conteneur. Créez une livraison avec réservation booking.</p>
+          <div class="flex flex-wrap justify-center gap-3">
+            <button @click="createLivraison" :disabled="creatingLiv" type="button" class="px-4 py-2 bg-teal-600 text-white rounded-lg text-sm">
+              {{ creatingLiv ? 'Création…' : '+ Livraison' }}
+            </button>
+            <router-link to="/ventes/commandes/logistique" class="px-4 py-2 border border-gray-300 rounded-lg text-sm bg-white hover:bg-gray-50">
+              Ouvrir logistique
+            </router-link>
+          </div>
+        </div>
+        <div v-else class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <article
+            v-for="card in conteneurCards"
+            :key="card.key"
+            class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm flex flex-col"
+          >
+            <div class="flex items-start justify-between gap-3 mb-2">
+              <h3 class="font-semibold text-gray-900 truncate">{{ card.numero_conteneur || 'Conteneur sans N°' }}</h3>
+              <span class="shrink-0 px-2.5 py-0.5 rounded-full text-xs font-semibold" :class="card.badgeClass">
+                {{ card.statutLabel }}
+              </span>
+            </div>
+            <p class="text-xs text-gray-500 mb-3">
+              {{ card.typeLabel }} · capacité {{ card.capacite }} palettes · Plomb {{ card.plomb || '—' }}
+            </p>
+            <p class="text-sm font-semibold text-gray-900">{{ card.palettesChargees }} / {{ card.capacite }} palettes</p>
+            <p class="text-sm font-semibold text-gray-900 mb-3">{{ card.poidsEstime }} kg estimés</p>
+            <div class="text-xs text-gray-600 space-y-1 mb-4">
+              <p>Articles sélectionnés : {{ card.articlesCount }}</p>
+              <p>Booking : {{ card.booking || '—' }}</p>
+              <p>Transport : {{ card.transport }}</p>
+            </div>
+            <div class="mt-auto space-y-2">
+              <div class="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  @click="ouvrirLivraison(card.livraison_id)"
+                  class="px-3 py-1.5 bg-teal-700 text-white rounded-lg text-sm font-medium hover:bg-teal-800"
+                >Ouvrir</button>
+                <button
+                  type="button"
+                  @click="ouvrirListeColisage()"
+                  :disabled="creatingColisage"
+                  class="px-3 py-1.5 border border-gray-300 bg-white rounded-lg text-sm inline-flex items-center gap-1.5 hover:bg-gray-50 disabled:opacity-50"
+                >
+                  <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Liste de colisage
+                </button>
+              </div>
+              <button
+                v-if="card.conteneur_id"
+                type="button"
+                @click="supprimerConteneur(card)"
+                class="px-3 py-1.5 border border-gray-200 bg-white rounded-lg text-sm text-red-600 hover:bg-red-50"
+              >Supprimer</button>
+            </div>
+          </article>
         </div>
       </div>
 
-      <p v-if="error" class="text-red-600 text-sm mt-4">{{ error }}</p>
-      <p v-if="message" class="text-teal-600 text-sm mt-4">{{ message }}</p>
+      <!-- TAB: Facturation -->
+      <div v-show="activeTab === 'facturation'">
+        <section class="bg-white border border-gray-100 rounded-xl p-6 shadow-sm max-w-3xl">
+          <h2 class="font-semibold text-lg mb-4">Facturation globale</h2>
+          <div class="mb-5 p-3 rounded-lg bg-emerald-50 border border-emerald-100 text-sm text-emerald-800">
+            La facture est liée à la commande entière, même si la commande contient plusieurs conteneurs.
+          </div>
+          <div class="space-y-2 text-sm text-gray-700 mb-6">
+            <p>Commande : <span class="font-semibold">{{ commande.numero }}</span></p>
+            <p>Conteneurs : <span class="font-semibold">{{ conteneurCards.length }}</span></p>
+            <p class="text-2xl font-bold text-gray-900 pt-1">{{ formatMoney(totalTtc) }} {{ form.devise }}</p>
+            <div class="pt-1">
+              <span
+                class="inline-flex px-3 py-1 rounded-full text-xs font-semibold"
+                :class="isFacturee ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'"
+              >
+                {{ isFacturee ? 'Facturée' : 'À facturer' }}
+              </span>
+            </div>
+          </div>
+          <button
+            type="button"
+            @click="marquerAFacturer"
+            :disabled="markingFacture"
+            class="px-4 py-2 bg-teal-700 text-white rounded-lg text-sm font-medium hover:bg-teal-800 disabled:opacity-50"
+          >
+            {{ markingFacture ? 'Mise à jour…' : (isFacturee ? 'Mettre à jour facturation' : 'Marquer à facturer') }}
+          </button>
+        </section>
+      </div>
+
+      <!-- TAB: Documents -->
+      <div v-show="activeTab === 'documents'">
+        <h2 class="font-semibold text-lg mb-4">Documents export</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <section
+            v-for="doc in documentCards"
+            :key="doc.type"
+            class="bg-white border border-gray-100 rounded-xl p-5 shadow-sm flex flex-col"
+          >
+            <h3 class="font-semibold text-gray-900 mb-2">{{ doc.title }}</h3>
+            <p class="text-sm text-gray-500 mb-4 flex-1">{{ doc.description }}</p>
+            <button
+              type="button"
+              @click="generateDocument(doc.type)"
+              :disabled="generatingDoc === doc.type"
+              class="self-start px-4 py-2 bg-teal-700 text-white rounded-lg text-sm font-medium hover:bg-teal-800 disabled:opacity-50"
+            >
+              {{ generatingDoc === doc.type ? 'Génération…' : doc.button }}
+            </button>
+          </section>
+        </div>
+        <section v-if="generatedDocs.length" class="bg-white border border-gray-100 rounded-xl p-5 shadow-sm">
+          <h3 class="font-semibold mb-3">Documents générés</h3>
+          <ul class="space-y-2">
+            <li v-for="d in generatedDocs" :key="d.id" class="flex items-center justify-between text-sm border border-gray-100 rounded-lg px-3 py-2">
+              <span>{{ d.titre }} <span class="text-gray-400">v{{ d.version }}</span></span>
+              <a :href="`/api/documents/${d.id}/download`" target="_blank" class="text-teal-600 hover:underline">Télécharger</a>
+            </li>
+          </ul>
+        </section>
+      </div>
     </div>
 
-    <!-- Print layout (only visible when printing) -->
+    <!-- Print layout -->
     <div class="print-only">
       <div class="print-header">
         <h1>Commande {{ commande.numero }}</h1>
@@ -286,26 +321,31 @@
           <div><strong>Paiement :</strong> {{ form.mode_paiement || '—' }}</div>
         </div>
       </div>
-
       <table class="print-table">
         <thead>
           <tr>
-            <th v-for="col in activeColumns" :key="'p-'+col.key">{{ col.label }}</th>
+            <th>Code</th>
+            <th>Désignation</th>
+            <th>Qté</th>
+            <th>Prix</th>
+            <th>Total</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="(ligne, idx) in form.lignes" :key="'pl-'+idx">
-            <td v-for="col in activeColumns" :key="'pc-'+col.key">{{ cellValue(ligne, col) }}</td>
+            <td>{{ articleLabel(ligne.article_id) }}</td>
+            <td>{{ ligne.designation || '—' }}</td>
+            <td>{{ ligne.quantite }} {{ ligne.unite }}</td>
+            <td>{{ formatMoney(ligne.prix) }}</td>
+            <td>{{ formatMoney(ligneHt(ligne)) }}</td>
           </tr>
         </tbody>
       </table>
-
       <div class="print-totals">
         <div>HT : <strong>{{ formatMoney(totalHt) }}</strong></div>
         <div>TVA : <strong>{{ formatMoney(totalTva) }}</strong></div>
         <div>TTC : <strong>{{ formatMoney(totalTtc) }} {{ form.devise }}</strong></div>
       </div>
-      <p v-if="form.observations" class="print-obs"><strong>Observation :</strong> {{ form.observations }}</p>
     </div>
   </div>
   <div v-else class="p-10 text-center text-gray-500">Chargement…</div>
@@ -325,41 +365,42 @@ const PROCESSUS = [
   { key: 'cloturee', label: 'Clôturée' },
 ];
 
-const LIV_LABELS = {
-  a_preparer: 'À préparer', en_preparation: 'En préparation', pret: 'Prêt',
-  charge: 'Chargé', livre: 'Livré', expedie: 'Expédié', annule: 'Annulé',
+const LIV_STATUS_UI = {
+  a_preparer: { label: 'À préparer', class: 'bg-gray-100 text-gray-700' },
+  en_preparation: { label: 'À préparer', class: 'bg-gray-100 text-gray-700' },
+  pret: { label: 'À charger', class: 'bg-amber-100 text-amber-800' },
+  charge: { label: 'Chargé', class: 'bg-emerald-100 text-emerald-800' },
+  livre: { label: 'Chargé', class: 'bg-emerald-100 text-emerald-800' },
+  expedie: { label: 'Chargé', class: 'bg-emerald-100 text-emerald-800' },
+  annule: { label: 'Annulé', class: 'bg-red-100 text-red-700' },
 };
 
-const ALL_COLUMNS = [
-  { key: 'article', label: 'Article', field: 'article_id', editable: true },
-  { key: 'designation', label: 'Désignation', field: 'designation', editable: true },
-  { key: 'calibre', label: 'Calibre', field: 'calibre' },
-  { key: 'type_emballage_primaire', label: 'Emb. primaire', field: 'type_emballage_primaire' },
-  { key: 'reference_emballage', label: 'Réf. emballage', field: 'reference_emballage' },
-  { key: 'type_emballage_secondaire', label: 'Emb. secondaire', field: 'type_emballage_secondaire' },
-  { key: 'unites_par_colis', label: 'Unités/colis', field: 'unites_par_colis' },
-  { key: 'colis_par_palette', label: 'Colis/palette', field: 'colis_par_palette' },
-  { key: 'nombre_total_par_palette', label: 'Total/palette', field: 'nombre_total_par_palette' },
-  { key: 'poids_net_egoutte', label: 'Poids net ég.', field: 'poids_net_egoutte' },
-  { key: 'quantite', label: 'Qté', field: 'quantite', editable: true, input: 'number', step: '0.001' },
-  { key: 'unite', label: 'Unité', field: 'unite', editable: true },
-  { key: 'prix', label: 'Prix', field: 'prix', editable: true, input: 'number', step: '0.01' },
-  { key: 'date_production', label: 'Date de production', field: 'date_production', editable: true, input: 'date' },
-  { key: 'lot', label: 'N° de lot', field: 'lot', editable: true },
-  { key: 'tva_taux', label: 'TVA %', field: 'tva_taux', editable: true, input: 'number', step: '0.01' },
-  { key: 'ht', label: 'HT', field: 'ht', computed: true },
-  { key: 'disponible', label: 'Disponible', field: 'quantite_disponible' },
-  { key: 'reservee', label: 'Réservée', field: 'quantite_reservee' },
-  { key: 'a_produire', label: 'À produire', field: 'quantite_a_produire' },
-  { key: 'livree', label: 'Livrée', field: 'quantite_livree' },
+const DOCUMENT_CARDS = [
+  {
+    type: 'solas_vgm',
+    title: 'VGM',
+    description: 'Généré depuis le volet logistique + liste de colisage.',
+    button: 'Générer VGM',
+  },
+  {
+    type: 'fiche_chauffeur',
+    title: 'Fiche Transporteur',
+    description: 'Chauffeur, chargement, BL, marchandises et poids repris automatiquement.',
+    button: 'Générer fiche',
+  },
+  {
+    type: 'attestation_conditionnement',
+    title: 'Attestation de conditionnement',
+    description: 'Tableau automatique de la liste de colisage du conteneur.',
+    button: 'Générer attestation',
+  },
+  {
+    type: 'instructions_bl',
+    title: 'Instructions de BL',
+    description: 'Les champs seront préparés automatiquement. Le modèle Excel sera appliqué dès réception de votre fichier.',
+    button: 'Générer instructions BL',
+  },
 ];
-
-const DEFAULT_COLUMNS = [
-  'article', 'designation', 'calibre', 'reference_emballage',
-  'quantite', 'unite', 'prix', 'date_production', 'lot', 'tva_taux', 'ht',
-];
-
-const COLUMNS_STORAGE_KEY = 'commande_detail_visible_columns';
 
 export default {
   name: 'CommandeDetail',
@@ -373,19 +414,24 @@ export default {
       saving: false,
       creatingLiv: false,
       creatingBl: false,
+      creatingColisage: false,
+      markingFacture: false,
+      generatingDoc: null,
+      generatedDocs: [],
       error: '',
       message: '',
       processus: PROCESSUS,
-      incoterms: ['EXW', 'FCA', 'FOB', 'CIF', 'CFR', 'DAP', 'DDP', 'CPT', 'CIP'],
-      allColumns: ALL_COLUMNS,
-      visibleColumns: [...DEFAULT_COLUMNS],
-      showColumnPicker: false,
+      activeTab: 'commande',
+      tabs: [
+        { key: 'commande', label: 'Commande' },
+        { key: 'chargement', label: 'Chargement' },
+        { key: 'facturation', label: 'Facturation' },
+        { key: 'documents', label: 'Documents' },
+      ],
+      documentCards: DOCUMENT_CARDS,
     };
   },
   computed: {
-    activeColumns() {
-      return this.allColumns.filter(c => this.visibleColumns.includes(c.key));
-    },
     clientName() {
       const c = this.clients.find(x => x.id === this.form.client_id);
       return c?.nom || this.commande?.client?.nom || '—';
@@ -399,53 +445,73 @@ export default {
     totalTtc() {
       return this.totalHt + this.totalTva;
     },
+    isFacturee() {
+      return Number(this.form.montant_facture || this.commande?.montant_facture || 0) > 0;
+    },
+    conteneurCards() {
+      const cards = [];
+      const livraisons = this.commande?.livraisons || [];
+      for (const liv of livraisons) {
+        const conteneurs = Array.isArray(liv.conteneurs) ? liv.conteneurs : [];
+        if (conteneurs.length) {
+          for (const c of conteneurs) {
+            cards.push(this.buildConteneurCard(liv, c));
+          }
+        } else if (liv.numero_conteneur || liv.reservation_booking) {
+          cards.push(this.buildConteneurCard(liv, {
+            id: null,
+            numero_conteneur: liv.numero_conteneur,
+            numero_plomb: liv.numero_plomb,
+            tare_conteneur: liv.tare_conteneur,
+            transporteur: liv.transporteur,
+            matricule_camion: liv.matricule_camion || liv.vehicule,
+            chauffeur: liv.chauffeur,
+          }));
+        }
+      }
+      return cards;
+    },
   },
   watch: {
-    visibleColumns: {
-      deep: true,
-      handler(val) {
-        try {
-          localStorage.setItem(COLUMNS_STORAGE_KEY, JSON.stringify(val));
-        } catch { /* ignore */ }
-      },
+    activeTab(val) {
+      if (val === 'documents') this.loadDocuments();
     },
   },
   mounted() {
-    this.loadColumnPrefs();
     this.load();
     this.loadLookups();
-    document.addEventListener('click', this.closeColumnPicker);
-  },
-  beforeUnmount() {
-    document.removeEventListener('click', this.closeColumnPicker);
   },
   methods: {
-    loadColumnPrefs() {
-      try {
-        const raw = localStorage.getItem(COLUMNS_STORAGE_KEY);
-        if (!raw) return;
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed) && parsed.length) {
-          this.visibleColumns = parsed.filter(k => ALL_COLUMNS.some(c => c.key === k));
-        }
-      } catch { /* ignore */ }
+    buildConteneurCard(liv, c) {
+      const ui = LIV_STATUS_UI[liv.statut] || LIV_STATUS_UI.a_preparer;
+      const transporteur = c.transporteur || liv.transporteur || '—';
+      const matricule = c.matricule_camion || liv.matricule_camion || liv.vehicule || '—';
+      const tare = Number(String(c.tare_conteneur || liv.tare_conteneur || '').replace(',', '.'));
+      return {
+        key: c.id ? `c-${c.id}` : `l-${liv.id}-legacy`,
+        conteneur_id: c.id || null,
+        livraison_id: liv.id,
+        numero_conteneur: c.numero_conteneur || '',
+        plomb: c.numero_plomb || liv.numero_plomb || '',
+        booking: liv.numero_booking || liv.numero_reservation || '',
+        transport: `${transporteur} / ${matricule}`,
+        statutLabel: ui.label,
+        badgeClass: ui.class,
+        typeLabel: "40' HC",
+        capacite: 28,
+        palettesChargees: 0,
+        poidsEstime: Number.isFinite(tare) && tare > 0 ? Math.round(tare).toLocaleString('fr-FR') : '0',
+        articlesCount: 0,
+      };
     },
-    resetColumns() {
-      this.visibleColumns = [...DEFAULT_COLUMNS];
-    },
-    closeColumnPicker(e) {
-      if (!this.showColumnPicker) return;
-      if (e?.target?.closest?.('.relative')) return;
-      this.showColumnPicker = false;
-    },
-    stepIndex(s) {
-      const i = PROCESSUS.findIndex(p => p.key === s);
-      return i < 0 ? 0 : i;
-    },
-    labelLiv(s) { return LIV_LABELS[s] || s; },
     articleLabel(id) {
       const a = this.articles.find(x => x.id === id);
       return a ? a.code_article : '—';
+    },
+    ligneHsCode(ligne) {
+      if (ligne.hs_code) return ligne.hs_code;
+      const a = this.articles.find(x => x.id === ligne.article_id);
+      return a?.hs_code || '';
     },
     ligneHt(l) {
       const brut = (Number(l.quantite) || 0) * (Number(l.prix) || 0);
@@ -457,16 +523,7 @@ export default {
     formatMoney(v) {
       return Number(v || 0).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     },
-    cellValue(ligne, col) {
-      if (col.key === 'article') return this.articleLabel(ligne.article_id);
-      if (col.key === 'ht' || col.computed) return this.formatMoney(this.ligneHt(ligne));
-      if (col.key === 'prix') return this.formatMoney(ligne.prix);
-      const val = ligne[col.field];
-      if (val === null || val === undefined || val === '') return '—';
-      return val;
-    },
     printCommande() {
-      this.showColumnPicker = false;
       this.$nextTick(() => window.print());
     },
     async load() {
@@ -492,6 +549,7 @@ export default {
         lignes: (data.lignes || []).map(l => ({
           article_id: l.article_id,
           designation: l.designation || '',
+          hs_code: l.article?.hs_code || '',
           calibre: l.calibre || '',
           type_emballage_primaire: l.type_emballage_primaire || '',
           reference_emballage: l.reference_emballage || '',
@@ -524,9 +582,17 @@ export default {
       this.clients = c.data.data || c.data;
       this.articles = a.data.data || a.data;
     },
+    async loadDocuments() {
+      try {
+        const { data } = await axios.get(`/api/commandes/${this.commande.id}/documents`);
+        this.generatedDocs = data.data || data || [];
+      } catch {
+        this.generatedDocs = [];
+      }
+    },
     addLigne() {
       this.form.lignes.push({
-        article_id: null, designation: '', calibre: '', type_emballage_primaire: '',
+        article_id: null, designation: '', hs_code: '', calibre: '', type_emballage_primaire: '',
         reference_emballage: '', type_emballage_secondaire: '',
         unites_par_colis: null, colis_par_palette: null, nombre_total_par_palette: null,
         poids_net_egoutte: null, quantite: 1, unite: 'kg', prix: 0,
@@ -539,6 +605,7 @@ export default {
       const a = this.articles.find(x => x.id === ligne.article_id);
       if (!a) return;
       ligne.designation = a.designation || '';
+      ligne.hs_code = a.hs_code || '';
       ligne.calibre = a.calibre || '';
       ligne.type_emballage_primaire = a.type_emballage_primaire || '';
       ligne.reference_emballage = a.type_palette || '';
@@ -562,7 +629,7 @@ export default {
         const { data } = await axios.put(`/api/commandes/${this.commande.id}`, this.form);
         this.commande = data;
         this.message = 'Commande enregistrée';
-        this.load();
+        await this.load();
       } catch (e) {
         this.error = e.response?.data?.message || 'Erreur enregistrement';
       } finally {
@@ -580,6 +647,7 @@ export default {
     },
     async createLivraison() {
       this.creatingLiv = true;
+      this.error = '';
       try {
         await axios.post('/api/livraisons', {
           commande_id: this.commande.id,
@@ -588,13 +656,84 @@ export default {
           quantite_a_livrer: this.commande.quantite_restante || 0,
           date_prevue: this.commande.date_souhaitee?.slice?.(0, 10) || null,
           statut: 'a_preparer',
+          reservation_booking: true,
+          conteneurs: [{}],
         });
-        this.message = 'Livraison créée';
+        this.message = 'Livraison créée — complétez le booking en logistique';
+        this.activeTab = 'chargement';
         await this.load();
       } catch (e) {
         this.error = e.response?.data?.message || 'Erreur création livraison';
       } finally {
         this.creatingLiv = false;
+      }
+    },
+    ouvrirLivraison(livraisonId) {
+      this.$router.push({ path: '/ventes/commandes/logistique', query: { open: livraisonId } });
+    },
+    async ouvrirListeColisage() {
+      this.creatingColisage = true;
+      this.error = '';
+      try {
+        const exports = this.commande.exportations || [];
+        let exportId = exports[0]?.id;
+        if (!exportId) {
+          const { data } = await axios.post(`/api/exportations/from-commande/${this.commande.id}`);
+          exportId = data.id;
+          await this.load();
+        }
+        this.$router.push(`/exportations/${exportId}`);
+      } catch (e) {
+        this.error = e.response?.data?.message || 'Erreur ouverture liste de colisage';
+      } finally {
+        this.creatingColisage = false;
+      }
+    },
+    async supprimerConteneur(card) {
+      if (!card.conteneur_id || !card.livraison_id) return;
+      if (!confirm('Supprimer ce conteneur ?')) return;
+      this.error = '';
+      try {
+        await axios.delete(`/api/livraisons/${card.livraison_id}/conteneurs/${card.conteneur_id}`);
+        this.message = 'Conteneur supprimé';
+        await this.load();
+      } catch (e) {
+        this.error = e.response?.data?.message || 'Erreur suppression conteneur';
+      }
+    },
+    async marquerAFacturer() {
+      this.markingFacture = true;
+      this.error = '';
+      try {
+        const { data } = await axios.post(`/api/commandes/${this.commande.id}/marquer-a-facturer`);
+        this.commande = data;
+        this.form.montant_facture = Number(data.montant_facture || 0);
+        this.message = 'Commande marquée à facturer';
+      } catch (e) {
+        this.error = e.response?.data?.message || 'Erreur facturation';
+      } finally {
+        this.markingFacture = false;
+      }
+    },
+    async generateDocument(type) {
+      this.generatingDoc = type;
+      this.error = '';
+      this.message = '';
+      try {
+        const first = this.conteneurCards[0];
+        const { data } = await axios.post(`/api/commandes/${this.commande.id}/documents`, {
+          type,
+          conteneur_id: first?.conteneur_id || null,
+        });
+        this.message = `${data.titre || 'Document'} généré`;
+        await this.loadDocuments();
+        if (data.id) {
+          window.open(`/api/documents/${data.id}/download`, '_blank');
+        }
+      } catch (e) {
+        this.error = e.response?.data?.message || 'Erreur génération document';
+      } finally {
+        this.generatingDoc = null;
       }
     },
     async transformerEnBl() {
@@ -615,20 +754,6 @@ export default {
       } finally {
         this.creatingBl = false;
       }
-    },
-    async uploadPiece(e) {
-      const file = e.target.files?.[0];
-      if (!file) return;
-      const fd = new FormData();
-      fd.append('fichier', file);
-      try {
-        await axios.post(`/api/commandes/${this.commande.id}/pieces`, fd);
-        this.message = 'Fichier ajouté';
-        await this.load();
-      } catch (err) {
-        this.error = err.response?.data?.message || 'Erreur upload';
-      }
-      e.target.value = '';
     },
   },
 };
@@ -693,11 +818,6 @@ export default {
     gap: 24px;
     font-size: 13px;
     justify-content: flex-end;
-  }
-
-  .print-obs {
-    margin-top: 16px;
-    font-size: 12px;
   }
 }
 </style>

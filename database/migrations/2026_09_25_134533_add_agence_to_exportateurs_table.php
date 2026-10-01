@@ -10,13 +10,13 @@ return new class extends Migration
     {
         if (Schema::hasTable('exportateurs') && !Schema::hasColumn('exportateurs', 'agence')) {
             Schema::table('exportateurs', function (Blueprint $table) {
-                $table->string('agence')->nullable()->after('banque');
+                $table->string('agence')->nullable();
             });
         }
 
         if (Schema::hasTable('exportations') && !Schema::hasColumn('exportations', 'agence')) {
             Schema::table('exportations', function (Blueprint $table) {
-                $table->string('agence')->nullable()->after('banque');
+                $table->string('agence')->nullable();
             });
         }
     }

@@ -4,10 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\Article;
 use App\Models\AuditLog;
-use App\Models\Client;
 use App\Models\Commande;
 use App\Models\CommandeLigne;
+use App\Models\DocumentGenere;
+use App\Models\Exportation;
+use App\Models\LivraisonConteneur;
 use App\Models\StockBalance;
+use App\Services\DocumentGenerationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -67,14 +70,7 @@ class CommandeController extends Controller
 
     public function show(Commande $commande)
     {
-        $commande->load([
-            'client',
-            'lignes.article',
-            'productions.article',
-            'livraisons',
-            'bonLivraison',
-            'piecesJointes',
-        ]);
+        $commande->load($this->detailRelations());
 
         return response()->json($commande);
     }
@@ -119,9 +115,7 @@ class CommandeController extends Controller
             AuditLog::record($commande, 'update', null, null, $commande->numero, $request->user()?->id);
         });
 
-        return response()->json($commande->fresh()->load([
-            'client', 'lignes.article', 'productions.article', 'livraisons', 'piecesJointes',
-        ]));
+        return response()->json($commande->fresh()->load($this->detailRelations()));
     }
 
     public function destroy(Commande $commande)
@@ -141,7 +135,52 @@ class CommandeController extends Controller
         $commande->update(['statut' => $request->statut]);
         AuditLog::record($commande, 'update', 'statut', $old, $request->statut, $request->user()?->id);
 
-        return response()->json($commande->fresh());
+        return response()->json($commande->fresh()->load($this->detailRelations()));
+    }
+
+    public function marquerAFacturer(Request $request, Commande $commande)
+    {
+        $commande->loadMissing('lignes');
+        $total = (float) ($commande->total_ttc ?: $commande->lignes->sum('montant_ttc'));
+        $commande->update(['montant_facture' => $total]);
+        AuditLog::record($commande, 'update', 'montant_facture', null, (string) $total, $request->user()?->id);
+
+        return response()->json($commande->fresh()->load($this->detailRelations()));
+    }
+
+    public function listDocuments(Commande $commande)
+    {
+        $exportIds = $commande->exportations()->pluck('id');
+        $docs = DocumentGenere::whereIn('exportation_id', $exportIds)
+            ->orderByDesc('generated_at')
+            ->orderByDesc('id')
+            ->get();
+
+        return response()->json(['data' => $docs]);
+    }
+
+    public function generateDocument(Request $request, Commande $commande, DocumentGenerationService $service)
+    {
+        $request->validate([
+            'type' => 'required|in:solas_vgm,fiche_chauffeur,attestation_conditionnement,instructions_bl',
+            'conteneur_id' => 'nullable|integer|exists:livraison_conteneurs,id',
+        ]);
+
+        try {
+            $commande->load(['client', 'lignes.article', 'livraisons.conteneurs', 'exportations']);
+            $export = $this->resolveOrCreateExportation($commande, $request->user()?->id);
+            $this->syncExportFromCommandeLogistique($export, $commande, $request->input('conteneur_id'));
+
+            if ($request->type === 'solas_vgm') {
+                $this->ensureVgmReady($export, $commande, $request->input('conteneur_id'));
+            }
+
+            $doc = $service->generate($export->fresh(), $request->type, $request->user()?->id);
+
+            return response()->json($doc, 201);
+        } catch (\Throwable $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
     }
 
     public function uploadPiece(Request $request, Commande $commande)
@@ -175,6 +214,108 @@ class CommandeController extends Controller
         }
 
         return Storage::disk('local')->download($piece->chemin, $piece->nom_fichier);
+    }
+
+    private function detailRelations(): array
+    {
+        return [
+            'client',
+            'lignes.article',
+            'productions.article',
+            'livraisons.conteneurs',
+            'exportations',
+            'bonLivraison',
+            'piecesJointes',
+        ];
+    }
+
+    private function resolveOrCreateExportation(Commande $commande, ?int $userId = null): Exportation
+    {
+        $existing = $commande->exportations()->orderByDesc('id')->first();
+        if ($existing) {
+            return $existing->loadMissing(['client', 'exportateur', 'lignes']);
+        }
+
+        /** @var ExportationController $exportCtrl */
+        $exportCtrl = app(ExportationController::class);
+        $response = $exportCtrl->fromCommande(request(), $commande);
+        $payload = $response->getData(true);
+
+        return Exportation::with(['client', 'exportateur', 'lignes'])->findOrFail($payload['id']);
+    }
+
+    private function syncExportFromCommandeLogistique(Exportation $export, Commande $commande, $conteneurId = null): void
+    {
+        $liv = $commande->livraisons->sortByDesc('id')->first();
+        if (!$liv) {
+            return;
+        }
+
+        $conteneur = null;
+        if ($conteneurId) {
+            $conteneur = LivraisonConteneur::where('id', $conteneurId)
+                ->where('livraison_id', $liv->id)
+                ->first();
+        }
+        if (!$conteneur) {
+            $conteneur = $liv->relationLoaded('conteneurs')
+                ? $liv->conteneurs->sortBy('ordre')->first()
+                : $liv->conteneurs()->orderBy('ordre')->orderBy('id')->first();
+        }
+
+        $updates = array_filter([
+            'booking' => $liv->numero_booking ?: $liv->numero_reservation,
+            'numero_swb_bl' => $liv->numero_bl_swb,
+            'compagnie_maritime' => $liv->compagnie_maritime,
+            'navire' => $liv->navire,
+            'port_chargement' => $liv->port_depart,
+            'port_destination' => $liv->port_arrivee,
+            'etd' => optional($liv->etd)->format('Y-m-d'),
+            'eta' => optional($liv->eta)->format('Y-m-d'),
+            'conteneur' => $conteneur?->numero_conteneur ?: $liv->numero_conteneur,
+            'plomb_scelle' => $conteneur?->numero_plomb ?: $liv->numero_plomb,
+            'transporteur' => $conteneur?->transporteur ?: $liv->transporteur,
+            'chauffeur' => $conteneur?->chauffeur ?: $liv->chauffeur,
+            'chauffeur_cin' => $conteneur?->cin_chauffeur ?: $liv->cin_chauffeur,
+            'immatriculation' => $conteneur?->matricule_camion ?: $liv->matricule_camion,
+            'mode_transport' => $commande->type === 'export' ? 'maritime' : $export->mode_transport,
+        ], fn ($v) => $v !== null && $v !== '');
+
+        if (!empty($updates)) {
+            $export->update($updates);
+        }
+    }
+
+    private function ensureVgmReady(Exportation $export, Commande $commande, $conteneurId = null): void
+    {
+        if ($export->vgm_valide) {
+            return;
+        }
+
+        $liv = $commande->livraisons->sortByDesc('id')->first();
+        $conteneur = null;
+        if ($liv && $conteneurId) {
+            $conteneur = $liv->conteneurs->firstWhere('id', (int) $conteneurId);
+        }
+        if ($liv && !$conteneur) {
+            $conteneur = $liv->conteneurs->sortBy('ordre')->first();
+        }
+
+        $tare = $conteneur?->tare_conteneur ?: $liv?->tare_conteneur;
+        $hasConteneur = filled($conteneur?->numero_conteneur ?: $liv?->numero_conteneur ?: $export->conteneur);
+        $poids = $export->vgm_poids;
+        if ((!$poids || (float) $poids <= 0) && is_numeric($tare)) {
+            $poids = (float) $tare;
+        }
+
+        if (!$hasConteneur && (!$poids || (float) $poids <= 0)) {
+            throw new \RuntimeException('VGM nécessite un N° de conteneur ou une tare/poids renseigné en logistique.');
+        }
+
+        $export->update([
+            'vgm_valide' => true,
+            'vgm_poids' => $poids ?: $export->vgm_poids ?: 0,
+        ]);
     }
 
     private function validateCommande(Request $request, bool $creating = true): array

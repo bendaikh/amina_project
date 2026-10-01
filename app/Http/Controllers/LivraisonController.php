@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\AuditLog;
 use App\Models\Commande;
 use App\Models\Livraison;
+use App\Models\LivraisonConteneur;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -13,7 +14,7 @@ class LivraisonController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Livraison::with(['commande.client'])
+        $query = Livraison::with(['commande.client', 'conteneurs'])
             ->orderByDesc('created_at');
 
         if ($search = $request->get('search')) {
@@ -66,34 +67,25 @@ class LivraisonController extends Controller
 
     public function show(Livraison $livraison)
     {
-        $livraison->load(['commande.client', 'commande.lignes', 'piecesJointes']);
+        $livraison->load(['commande.client', 'commande.lignes', 'piecesJointes', 'conteneurs']);
 
         return response()->json($livraison);
     }
 
     public function store(Request $request)
     {
-        foreach (['reservation_booking', 'changement_plomb'] as $boolField) {
-            if ($request->has($boolField)) {
-                $request->merge([
-                    $boolField => filter_var($request->input($boolField), FILTER_VALIDATE_BOOLEAN),
-                ]);
-            }
-        }
+        $this->normalizeBooleanFields($request);
 
         $data = $this->validateLivraison($request);
+        $conteneurs = $this->extractConteneurs($request);
 
-        $livraison = DB::transaction(function () use ($data, $request) {
+        $livraison = DB::transaction(function () use ($data, $request, $conteneurs) {
             $data['numero'] = $data['numero'] ?? Livraison::nextNumero();
             $data['created_by'] = $request->user()?->id;
             $data['statut'] = $data['statut'] ?? 'a_preparer';
 
-            if (!empty($data['matricule_camion']) && empty($data['vehicule'])) {
-                $data['vehicule'] = $data['matricule_camion'];
-            }
-            if (!empty($data['numero_booking']) && empty($data['numero_reservation'])) {
-                $data['numero_reservation'] = $data['numero_booking'];
-            }
+            $this->applyLegacyAliases($data);
+            $this->mirrorFirstConteneur($data, $conteneurs);
 
             $cmd = !empty($data['commande_id']) ? Commande::find($data['commande_id']) : null;
 
@@ -110,6 +102,7 @@ class LivraisonController extends Controller
             }
 
             $livraison = Livraison::create($data);
+            $this->syncConteneurs($livraison, $conteneurs);
 
             if ($livraison->commande_id) {
                 $cmd = Commande::find($livraison->commande_id);
@@ -123,26 +116,19 @@ class LivraisonController extends Controller
             return $livraison;
         });
 
-        return response()->json($livraison->load(['commande.client']), 201);
+        return response()->json($livraison->load(['commande.client', 'conteneurs']), 201);
     }
 
     public function update(Request $request, Livraison $livraison)
     {
-        foreach (['reservation_booking', 'changement_plomb'] as $boolField) {
-            if ($request->has($boolField)) {
-                $request->merge([
-                    $boolField => filter_var($request->input($boolField), FILTER_VALIDATE_BOOLEAN),
-                ]);
-            }
-        }
+        $this->normalizeBooleanFields($request);
 
         $data = $this->validateLivraison($request, false);
+        $conteneurs = $request->has('conteneurs') ? $this->extractConteneurs($request) : null;
 
-        if (!empty($data['matricule_camion']) && empty($data['vehicule'])) {
-            $data['vehicule'] = $data['matricule_camion'];
-        }
-        if (!empty($data['numero_booking']) && empty($data['numero_reservation'])) {
-            $data['numero_reservation'] = $data['numero_booking'];
+        $this->applyLegacyAliases($data);
+        if (is_array($conteneurs)) {
+            $this->mirrorFirstConteneur($data, $conteneurs);
         }
 
         // Date de livraison prévue = date souhaitée de la commande (automatique)
@@ -154,9 +140,13 @@ class LivraisonController extends Controller
             }
         }
 
-        DB::transaction(function () use ($livraison, $data, $request) {
+        DB::transaction(function () use ($livraison, $data, $request, $conteneurs) {
             $oldStatut = $livraison->statut;
             $livraison->update($data);
+
+            if (is_array($conteneurs)) {
+                $this->syncConteneurs($livraison, $conteneurs);
+            }
 
             if (isset($data['statut']) && in_array($data['statut'], ['livre', 'expedie'], true)
                 && $livraison->commande_id
@@ -168,7 +158,7 @@ class LivraisonController extends Controller
             AuditLog::record($livraison, 'update', null, null, $livraison->numero, $request->user()?->id);
         });
 
-        return response()->json($livraison->fresh()->load(['commande.client', 'piecesJointes']));
+        return response()->json($livraison->fresh()->load(['commande.client', 'piecesJointes', 'conteneurs']));
     }
 
     public function destroy(Livraison $livraison)
@@ -176,6 +166,52 @@ class LivraisonController extends Controller
         $livraison->delete();
 
         return response()->json(['message' => 'Livraison supprimée']);
+    }
+
+    public function destroyConteneur(Livraison $livraison, LivraisonConteneur $conteneur)
+    {
+        if ((int) $conteneur->livraison_id !== (int) $livraison->id) {
+            return response()->json(['message' => 'Conteneur introuvable pour cette livraison'], 404);
+        }
+
+        if ($conteneur->cin_chauffeur_scan) {
+            Storage::disk('public')->delete($conteneur->cin_chauffeur_scan);
+        }
+
+        $conteneur->delete();
+
+        $first = $livraison->conteneurs()->orderBy('ordre')->orderBy('id')->first();
+        if ($first) {
+            $data = [];
+            $this->mirrorFirstConteneur($data, [[
+                'numero_conteneur' => $first->numero_conteneur,
+                'tare_conteneur' => $first->tare_conteneur,
+                'numero_plomb' => $first->numero_plomb,
+                'changement_plomb' => $first->changement_plomb,
+                'raison_changement_plomb' => $first->raison_changement_plomb,
+                'nouveau_plomb' => $first->nouveau_plomb,
+                'matricule_camion' => $first->matricule_camion,
+                'chauffeur' => $first->chauffeur,
+                'transporteur' => $first->transporteur,
+                'cin_chauffeur' => $first->cin_chauffeur,
+                'cin_chauffeur_scan' => $first->cin_chauffeur_scan,
+            ]]);
+            $livraison->update($data);
+        } else {
+            $livraison->update([
+                'numero_conteneur' => null,
+                'tare_conteneur' => null,
+                'numero_plomb' => null,
+                'changement_plomb' => false,
+                'raison_changement_plomb' => null,
+                'nouveau_plomb' => null,
+            ]);
+        }
+
+        return response()->json([
+            'message' => 'Conteneur supprimé',
+            'conteneurs' => $livraison->fresh()->load('conteneurs')->conteneurs,
+        ]);
     }
 
     public function changeStatut(Request $request, Livraison $livraison)
@@ -222,18 +258,36 @@ class LivraisonController extends Controller
     {
         $request->validate([
             'fichier' => 'required|file|mimes:jpeg,jpg,png,pdf,webp|max:5120',
+            'conteneur_id' => 'nullable|integer|exists:livraison_conteneurs,id',
         ]);
 
-        if ($livraison->cin_chauffeur_scan) {
-            Storage::disk('public')->delete($livraison->cin_chauffeur_scan);
+        $conteneur = null;
+        if ($request->filled('conteneur_id')) {
+            $conteneur = $livraison->conteneurs()->where('id', $request->conteneur_id)->firstOrFail();
+        }
+
+        $target = $conteneur ?: $livraison;
+        if ($target->cin_chauffeur_scan) {
+            Storage::disk('public')->delete($target->cin_chauffeur_scan);
         }
 
         $path = $request->file('fichier')->store("livraisons/cin/{$livraison->numero}", 'public');
-        $livraison->update(['cin_chauffeur_scan' => $path]);
+        $target->update(['cin_chauffeur_scan' => $path]);
+
+        // Garder le premier conteneur synchronisé sur la livraison
+        if ($conteneur && (int) $livraison->conteneurs()->orderBy('ordre')->orderBy('id')->value('id') === (int) $conteneur->id) {
+            $livraison->update(['cin_chauffeur_scan' => $path]);
+        } elseif (!$conteneur) {
+            $first = $livraison->conteneurs()->orderBy('ordre')->orderBy('id')->first();
+            if ($first) {
+                $first->update(['cin_chauffeur_scan' => $path]);
+            }
+        }
 
         return response()->json([
             'message' => 'Scan CIN enregistré',
             'cin_chauffeur_scan' => $path,
+            'conteneur_id' => $conteneur?->id,
             'url' => Storage::disk('public')->url($path),
         ]);
     }
@@ -271,7 +325,7 @@ class LivraisonController extends Controller
 
     private function validateLivraison(Request $request, bool $creating = true): array
     {
-        return $request->validate([
+        $data = $request->validate([
             'numero' => ($creating ? 'nullable' : 'sometimes') . '|string|max:50',
             'commande_id' => 'nullable|exists:commandes,id',
             'reservation_booking' => 'nullable|boolean',
@@ -309,6 +363,142 @@ class LivraisonController extends Controller
             'statut' => 'nullable|in:' . implode(',', Livraison::STATUTS),
             'observations' => 'nullable|string',
             'documents' => 'nullable|string',
+            'conteneurs' => 'nullable|array',
+            'conteneurs.*.id' => 'nullable|integer',
+            'conteneurs.*.numero_conteneur' => 'nullable|string|max:100',
+            'conteneurs.*.tare_conteneur' => 'nullable|string|max:100',
+            'conteneurs.*.numero_plomb' => 'nullable|string|max:100',
+            'conteneurs.*.changement_plomb' => 'nullable|boolean',
+            'conteneurs.*.raison_changement_plomb' => 'nullable|string',
+            'conteneurs.*.nouveau_plomb' => 'nullable|string|max:100',
+            'conteneurs.*.matricule_camion' => 'nullable|string|max:100',
+            'conteneurs.*.chauffeur' => 'nullable|string|max:100',
+            'conteneurs.*.transporteur' => 'nullable|string|max:150',
+            'conteneurs.*.cin_chauffeur' => 'nullable|string|max:100',
+            'conteneurs.*.cin_chauffeur_scan' => 'nullable|string|max:255',
         ]);
+
+        unset($data['conteneurs']);
+
+        return $data;
+    }
+
+    private function normalizeBooleanFields(Request $request): void
+    {
+        foreach (['reservation_booking', 'changement_plomb'] as $boolField) {
+            if ($request->has($boolField)) {
+                $request->merge([
+                    $boolField => filter_var($request->input($boolField), FILTER_VALIDATE_BOOLEAN),
+                ]);
+            }
+        }
+
+        $conteneurs = $request->input('conteneurs');
+        if (!is_array($conteneurs)) {
+            return;
+        }
+
+        foreach ($conteneurs as $i => $c) {
+            if (!is_array($c) || !array_key_exists('changement_plomb', $c)) {
+                continue;
+            }
+            $conteneurs[$i]['changement_plomb'] = filter_var($c['changement_plomb'], FILTER_VALIDATE_BOOLEAN);
+        }
+        $request->merge(['conteneurs' => $conteneurs]);
+    }
+
+    private function extractConteneurs(Request $request): array
+    {
+        $conteneurs = $request->input('conteneurs', []);
+        if (!is_array($conteneurs)) {
+            return [];
+        }
+
+        return array_values(array_map(function ($c, $index) {
+            $c = is_array($c) ? $c : [];
+
+            return [
+                'id' => isset($c['id']) ? (int) $c['id'] : null,
+                'ordre' => $index,
+                'numero_conteneur' => $c['numero_conteneur'] ?? null,
+                'tare_conteneur' => $c['tare_conteneur'] ?? null,
+                'numero_plomb' => $c['numero_plomb'] ?? null,
+                'changement_plomb' => !empty($c['changement_plomb']),
+                'raison_changement_plomb' => $c['raison_changement_plomb'] ?? null,
+                'nouveau_plomb' => $c['nouveau_plomb'] ?? null,
+                'matricule_camion' => $c['matricule_camion'] ?? null,
+                'chauffeur' => $c['chauffeur'] ?? null,
+                'transporteur' => $c['transporteur'] ?? null,
+                'cin_chauffeur' => $c['cin_chauffeur'] ?? null,
+                'cin_chauffeur_scan' => $c['cin_chauffeur_scan'] ?? null,
+            ];
+        }, $conteneurs, array_keys($conteneurs)));
+    }
+
+    private function applyLegacyAliases(array &$data): void
+    {
+        if (!empty($data['matricule_camion']) && empty($data['vehicule'])) {
+            $data['vehicule'] = $data['matricule_camion'];
+        }
+        if (!empty($data['numero_booking']) && empty($data['numero_reservation'])) {
+            $data['numero_reservation'] = $data['numero_booking'];
+        }
+    }
+
+    private function mirrorFirstConteneur(array &$data, array $conteneurs): void
+    {
+        $first = $conteneurs[0] ?? null;
+        if (!$first) {
+            return;
+        }
+
+        $fields = [
+            'numero_conteneur', 'tare_conteneur', 'numero_plomb',
+            'changement_plomb', 'raison_changement_plomb', 'nouveau_plomb',
+            'matricule_camion', 'chauffeur', 'transporteur',
+            'cin_chauffeur', 'cin_chauffeur_scan',
+        ];
+
+        foreach ($fields as $field) {
+            if (array_key_exists($field, $first)) {
+                $data[$field] = $first[$field];
+            }
+        }
+
+        if (!empty($data['matricule_camion']) && empty($data['vehicule'])) {
+            $data['vehicule'] = $data['matricule_camion'];
+        }
+    }
+
+    private function syncConteneurs(Livraison $livraison, array $conteneurs): void
+    {
+        $keepIds = [];
+
+        foreach ($conteneurs as $payload) {
+            $id = $payload['id'] ?? null;
+            unset($payload['id']);
+
+            if ($id) {
+                $existing = $livraison->conteneurs()->where('id', $id)->first();
+                if ($existing) {
+                    $existing->update($payload);
+                    $keepIds[] = $existing->id;
+                    continue;
+                }
+            }
+
+            $created = $livraison->conteneurs()->create($payload);
+            $keepIds[] = $created->id;
+        }
+
+        $livraison->conteneurs()
+            ->when(count($keepIds), fn ($q) => $q->whereNotIn('id', $keepIds), fn ($q) => $q)
+            ->get()
+            ->each(function (LivraisonConteneur $c) {
+                if ($c->cin_chauffeur_scan) {
+                    Storage::disk('public')->delete($c->cin_chauffeur_scan);
+                }
+                $c->delete();
+            });
     }
 }

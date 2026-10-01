@@ -81,6 +81,11 @@ class Commande extends Model
         return $this->hasMany(Livraison::class);
     }
 
+    public function exportations(): HasMany
+    {
+        return $this->hasMany(Exportation::class);
+    }
+
     public function bonLivraison(): HasOne
     {
         return $this->hasOne(BonLivraison::class);

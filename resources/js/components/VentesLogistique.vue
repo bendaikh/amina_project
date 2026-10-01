@@ -204,47 +204,124 @@
                   <label class="text-sm text-gray-600">ETD</label>
                   <input type="date" v-model="form.etd" class="w-full border border-gray-300 rounded-lg px-3 py-2" />
                 </div>
-                <div>
-                  <label class="text-sm text-gray-600">N° de conteneur</label>
-                  <input v-model="form.numero_conteneur" class="w-full border border-gray-300 rounded-lg px-3 py-2" />
+              </div>
+
+              <div class="pt-2 space-y-4">
+                <div class="flex items-center justify-between gap-3">
+                  <h4 class="text-sm font-semibold text-gray-800">Conteneurs</h4>
+                  <button
+                    type="button"
+                    @click="addConteneur"
+                    class="px-3 py-1.5 text-sm font-medium text-teal-700 bg-teal-50 hover:bg-teal-100 rounded-lg"
+                  >
+                    + Ajouter un conteneur
+                  </button>
                 </div>
-                <div>
-                  <label class="text-sm text-gray-600">Tare conteneur</label>
-                  <input v-model="form.tare_conteneur" class="w-full border border-gray-300 rounded-lg px-3 py-2" />
-                </div>
-                <div>
-                  <label class="text-sm text-gray-600">N° de plomb</label>
-                  <input v-model="form.numero_plomb" class="w-full border border-gray-300 rounded-lg px-3 py-2" />
-                </div>
-                <div class="md:col-span-2 lg:col-span-3">
-                  <div class="flex flex-wrap items-center gap-3 p-3 bg-white border border-gray-200 rounded-lg">
-                    <span class="text-sm font-medium text-gray-700">Changement du plomb</span>
+
+                <div
+                  v-for="(conteneur, idx) in form.conteneurs"
+                  :key="conteneur._key || conteneur.id || idx"
+                  class="bg-white border border-gray-200 rounded-lg p-4 space-y-4"
+                >
+                  <div class="flex items-center justify-between gap-3">
+                    <p class="text-sm font-semibold text-gray-800">Conteneur {{ idx + 1 }}</p>
                     <button
+                      v-if="form.conteneurs.length > 1"
                       type="button"
-                      @click="form.changement_plomb = !form.changement_plomb"
-                      class="px-4 py-1.5 rounded-lg text-sm font-medium transition-colors"
-                      :class="form.changement_plomb ? 'bg-amber-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
+                      @click="removeConteneur(idx)"
+                      class="text-sm text-red-600 hover:underline"
                     >
-                      {{ form.changement_plomb ? 'Activé' : 'Activer' }}
+                      Supprimer
                     </button>
                   </div>
+
+                  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div>
+                      <label class="text-sm text-gray-600">N° de conteneur</label>
+                      <input v-model="conteneur.numero_conteneur" class="w-full border border-gray-300 rounded-lg px-3 py-2" />
+                    </div>
+                    <div>
+                      <label class="text-sm text-gray-600">Tare conteneur</label>
+                      <input v-model="conteneur.tare_conteneur" class="w-full border border-gray-300 rounded-lg px-3 py-2" />
+                    </div>
+                    <div>
+                      <label class="text-sm text-gray-600">N° de plomb</label>
+                      <input v-model="conteneur.numero_plomb" class="w-full border border-gray-300 rounded-lg px-3 py-2" />
+                    </div>
+                    <div class="md:col-span-2 lg:col-span-3">
+                      <div class="flex flex-wrap items-center gap-3 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                        <span class="text-sm font-medium text-gray-700">Changement du plomb</span>
+                        <button
+                          type="button"
+                          @click="conteneur.changement_plomb = !conteneur.changement_plomb"
+                          class="px-4 py-1.5 rounded-lg text-sm font-medium transition-colors"
+                          :class="conteneur.changement_plomb ? 'bg-amber-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
+                        >
+                          {{ conteneur.changement_plomb ? 'Activé' : 'Activer' }}
+                        </button>
+                      </div>
+                    </div>
+                    <template v-if="conteneur.changement_plomb">
+                      <div class="md:col-span-2">
+                        <label class="text-sm text-gray-600">Raisons</label>
+                        <textarea v-model="conteneur.raison_changement_plomb" rows="2" class="w-full border border-gray-300 rounded-lg px-3 py-2" placeholder="Motif du changement de plomb…"></textarea>
+                      </div>
+                      <div>
+                        <label class="text-sm text-gray-600">Renseigner le nouveau plomb</label>
+                        <input v-model="conteneur.nouveau_plomb" class="w-full border border-gray-300 rounded-lg px-3 py-2" />
+                      </div>
+                    </template>
+                  </div>
+
+                  <div class="border-t border-gray-100 pt-4">
+                    <h5 class="text-sm font-semibold text-gray-800 mb-3">Transport routier — Conteneur {{ idx + 1 }}</h5>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <div>
+                        <label class="text-sm text-gray-600">Matricule camion</label>
+                        <input v-model="conteneur.matricule_camion" class="w-full border border-gray-300 rounded-lg px-3 py-2" />
+                      </div>
+                      <div>
+                        <label class="text-sm text-gray-600">Chauffeur</label>
+                        <input v-model="conteneur.chauffeur" class="w-full border border-gray-300 rounded-lg px-3 py-2" />
+                      </div>
+                      <div>
+                        <label class="text-sm text-gray-600">Transporteur</label>
+                        <input v-model="conteneur.transporteur" class="w-full border border-gray-300 rounded-lg px-3 py-2" />
+                      </div>
+                      <div>
+                        <label class="text-sm text-gray-600">CIN chauffeur</label>
+                        <input v-model="conteneur.cin_chauffeur" class="w-full border border-gray-300 rounded-lg px-3 py-2" placeholder="N° CIN" />
+                      </div>
+                      <div class="md:col-span-2">
+                        <label class="text-sm text-gray-600">Scanner CIN chauffeur</label>
+                        <div class="flex flex-col sm:flex-row gap-3 items-start">
+                          <input
+                            type="file"
+                            accept="image/*,.pdf"
+                            capture="environment"
+                            @change="onConteneurCinScanSelect($event, idx)"
+                            class="block w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100"
+                          />
+                          <a
+                            v-if="conteneurCinScanUrl(conteneur)"
+                            :href="conteneurCinScanUrl(conteneur)"
+                            target="_blank"
+                            class="text-sm text-teal-600 hover:underline whitespace-nowrap"
+                          >Voir le scan</a>
+                        </div>
+                        <p v-if="conteneur._cinScanFile" class="text-xs text-gray-500 mt-1">
+                          Fichier sélectionné : {{ conteneur._cinScanFile.name }}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <template v-if="form.changement_plomb">
-                  <div class="md:col-span-2">
-                    <label class="text-sm text-gray-600">Raisons</label>
-                    <textarea v-model="form.raison_changement_plomb" rows="2" class="w-full border border-gray-300 rounded-lg px-3 py-2" placeholder="Motif du changement de plomb…"></textarea>
-                  </div>
-                  <div>
-                    <label class="text-sm text-gray-600">Renseigner le nouveau plomb</label>
-                    <input v-model="form.nouveau_plomb" class="w-full border border-gray-300 rounded-lg px-3 py-2" />
-                  </div>
-                </template>
               </div>
               </div>
             </section>
 
-            <!-- Partie 3 -->
-            <section class="bg-gray-50 rounded-lg p-5 border border-gray-200">
+            <!-- Partie 3 — Transport routier (sans booking) -->
+            <section v-if="!form.reservation_booking" class="bg-gray-50 rounded-lg p-5 border border-gray-200">
               <h3 class="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
                 <span class="w-6 h-6 bg-teal-600 text-white rounded-full flex items-center justify-center text-xs">3</span>
                 Transport routier
@@ -321,6 +398,61 @@ const STATUTS = [
   { key: 'annule', label: 'Annulé' },
 ];
 
+function createEmptyConteneur(overrides = {}) {
+  return {
+    id: null,
+    _key: `c-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    numero_conteneur: '',
+    tare_conteneur: '',
+    numero_plomb: '',
+    changement_plomb: false,
+    raison_changement_plomb: '',
+    nouveau_plomb: '',
+    matricule_camion: '',
+    chauffeur: '',
+    transporteur: '',
+    cin_chauffeur: '',
+    cin_chauffeur_scan: '',
+    _cinScanFile: null,
+    ...overrides,
+  };
+}
+
+function createEmptyForm() {
+  return {
+    id: null,
+    commande_id: null,
+    reservation_booking: false,
+    type_livraison: 'locale',
+    date_prevue: '',
+    date_chargement: '',
+    date_cutoff: '',
+    numero_booking: '',
+    numero_bl_swb: '',
+    compagnie_maritime: '',
+    navire: '',
+    port_depart: '',
+    port_arrivee: '',
+    eta: '',
+    etd: '',
+    conteneurs: [createEmptyConteneur()],
+    numero_conteneur: '',
+    tare_conteneur: '',
+    numero_plomb: '',
+    changement_plomb: false,
+    raison_changement_plomb: '',
+    nouveau_plomb: '',
+    matricule_camion: '',
+    chauffeur: '',
+    transporteur: '',
+    cin_chauffeur: '',
+    cin_chauffeur_scan: '',
+    statut: 'a_preparer',
+    observations: '',
+    adresse: '',
+  };
+}
+
 export default {
   name: 'VentesLogistique',
   data() {
@@ -338,7 +470,7 @@ export default {
       timer: null,
       statutSteps: STATUTS,
       cinScanFile: null,
-      form: this.emptyForm(),
+      form: createEmptyForm(),
     };
   },
   computed: {
@@ -357,43 +489,62 @@ export default {
       return `/storage/${this.form.cin_chauffeur_scan}`;
     },
   },
-  mounted() {
-    this.load();
-    this.loadLookups();
+  async mounted() {
+    await Promise.all([this.load(), this.loadLookups()]);
+    const openId = Number(this.$route.query.open);
+    if (openId) {
+      const item = this.items.find(i => i.id === openId);
+      if (item) {
+        await this.openEdit(item);
+      } else {
+        try {
+          const { data } = await axios.get(`/api/livraisons/${openId}`);
+          await this.openEdit(data);
+        } catch { /* ignore */ }
+      }
+    }
   },
   methods: {
+    emptyConteneur() {
+      return createEmptyConteneur();
+    },
     emptyForm() {
-      return {
-        id: null,
-        commande_id: null,
-        reservation_booking: false,
-        type_livraison: 'locale',
-        date_prevue: '',
-        date_chargement: '',
-        date_cutoff: '',
-        numero_booking: '',
-        numero_bl_swb: '',
-        compagnie_maritime: '',
-        navire: '',
-        port_depart: '',
-        port_arrivee: '',
-        eta: '',
-        etd: '',
-        numero_conteneur: '',
-        tare_conteneur: '',
-        numero_plomb: '',
-        changement_plomb: false,
-        raison_changement_plomb: '',
-        nouveau_plomb: '',
-        matricule_camion: '',
-        chauffeur: '',
-        transporteur: '',
-        cin_chauffeur: '',
-        cin_chauffeur_scan: '',
-        statut: 'a_preparer',
-        observations: '',
-        adresse: '',
-      };
+      return createEmptyForm();
+    },
+    addConteneur() {
+      this.form.conteneurs.push(createEmptyConteneur());
+    },
+    removeConteneur(idx) {
+      if (this.form.conteneurs.length <= 1) return;
+      this.form.conteneurs.splice(idx, 1);
+    },
+    mapConteneur(c = {}) {
+      return createEmptyConteneur({
+        id: c.id || null,
+        _key: c.id ? `id-${c.id}` : `c-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        numero_conteneur: c.numero_conteneur || '',
+        tare_conteneur: c.tare_conteneur || '',
+        numero_plomb: c.numero_plomb || '',
+        changement_plomb: !!c.changement_plomb,
+        raison_changement_plomb: c.raison_changement_plomb || '',
+        nouveau_plomb: c.nouveau_plomb || '',
+        matricule_camion: c.matricule_camion || '',
+        chauffeur: c.chauffeur || '',
+        transporteur: c.transporteur || '',
+        cin_chauffeur: c.cin_chauffeur || '',
+        cin_chauffeur_scan: c.cin_chauffeur_scan || '',
+        _cinScanFile: null,
+      });
+    },
+    conteneurCinScanUrl(conteneur) {
+      if (!conteneur?.cin_chauffeur_scan) return null;
+      if (String(conteneur.cin_chauffeur_scan).startsWith('http')) return conteneur.cin_chauffeur_scan;
+      return `/storage/${conteneur.cin_chauffeur_scan}`;
+    },
+    onConteneurCinScanSelect(e, idx) {
+      const file = e.target.files?.[0] || null;
+      if (!this.form.conteneurs[idx]) return;
+      this.form.conteneurs[idx]._cinScanFile = file;
     },
     sliceDate(v) {
       if (!v) return '';
@@ -472,6 +623,33 @@ export default {
       this.showModal = true;
     },
     mapItemToForm(item) {
+      let conteneurs = Array.isArray(item.conteneurs)
+        ? item.conteneurs.map(c => this.mapConteneur(c))
+        : [];
+
+      if (!conteneurs.length && (
+        item.numero_conteneur || item.tare_conteneur || item.numero_plomb
+        || item.matricule_camion || item.chauffeur || item.transporteur || item.cin_chauffeur
+      )) {
+        conteneurs = [this.mapConteneur({
+          numero_conteneur: item.numero_conteneur,
+          tare_conteneur: item.tare_conteneur,
+          numero_plomb: item.numero_plomb,
+          changement_plomb: item.changement_plomb,
+          raison_changement_plomb: item.raison_changement_plomb,
+          nouveau_plomb: item.nouveau_plomb,
+          matricule_camion: item.matricule_camion || item.vehicule,
+          chauffeur: item.chauffeur,
+          transporteur: item.transporteur,
+          cin_chauffeur: item.cin_chauffeur,
+          cin_chauffeur_scan: item.cin_chauffeur_scan,
+        })];
+      }
+
+      if (!conteneurs.length) {
+        conteneurs = [this.emptyConteneur()];
+      }
+
       return {
         id: item.id,
         commande_id: item.commande_id,
@@ -488,6 +666,7 @@ export default {
         port_arrivee: item.port_arrivee || '',
         eta: this.sliceDate(item.eta),
         etd: this.sliceDate(item.etd),
+        conteneurs,
         numero_conteneur: item.numero_conteneur || '',
         tare_conteneur: item.tare_conteneur || '',
         numero_plomb: item.numero_plomb || '',
@@ -512,7 +691,7 @@ export default {
       try {
         const { data } = await axios.get(`/api/livraisons/${item.id}`);
         this.form = this.mapItemToForm(data);
-        this.pieces = data.pieces_jointes || [];
+        this.pieces = data.pieces_jointes || data.piecesJointes || [];
       } catch {
         this.pieces = [];
       }
@@ -533,13 +712,73 @@ export default {
     onCinScanSelect(e) {
       this.cinScanFile = e.target.files?.[0] || null;
     },
-    async uploadCinScan(livraisonId) {
-      if (!this.cinScanFile || !livraisonId) return;
+    async uploadCinScan(livraisonId, conteneurId = null, file = null) {
+      const scanFile = file || this.cinScanFile;
+      if (!scanFile || !livraisonId) return null;
       const fd = new FormData();
-      fd.append('fichier', this.cinScanFile);
+      fd.append('fichier', scanFile);
+      if (conteneurId) fd.append('conteneur_id', conteneurId);
       const { data } = await axios.post(`/api/livraisons/${livraisonId}/cin-scan`, fd);
-      this.form.cin_chauffeur_scan = data.cin_chauffeur_scan;
-      this.cinScanFile = null;
+      if (!conteneurId) {
+        this.form.cin_chauffeur_scan = data.cin_chauffeur_scan;
+        this.cinScanFile = null;
+      }
+      return data;
+    },
+    async uploadConteneurCinScans(livraisonId, savedConteneurs = []) {
+      for (let i = 0; i < this.form.conteneurs.length; i++) {
+        const c = this.form.conteneurs[i];
+        if (!c?._cinScanFile) continue;
+        const saved = savedConteneurs[i];
+        const conteneurId = saved?.id || c.id || null;
+        if (!conteneurId) continue;
+        const data = await this.uploadCinScan(livraisonId, conteneurId, c._cinScanFile);
+        if (data?.cin_chauffeur_scan) {
+          c.cin_chauffeur_scan = data.cin_chauffeur_scan;
+          c._cinScanFile = null;
+        }
+      }
+    },
+    buildPayload() {
+      const payload = { ...this.form };
+      delete payload.cin_chauffeur_scan;
+
+      const conteneurs = (this.form.conteneurs || []).map(c => ({
+        id: c.id || null,
+        numero_conteneur: c.numero_conteneur || null,
+        tare_conteneur: c.tare_conteneur || null,
+        numero_plomb: c.numero_plomb || null,
+        changement_plomb: !!c.changement_plomb,
+        raison_changement_plomb: c.raison_changement_plomb || null,
+        nouveau_plomb: c.nouveau_plomb || null,
+        matricule_camion: c.matricule_camion || null,
+        chauffeur: c.chauffeur || null,
+        transporteur: c.transporteur || null,
+        cin_chauffeur: c.cin_chauffeur || null,
+      }));
+
+      if (this.form.reservation_booking) {
+        payload.conteneurs = conteneurs;
+        const first = conteneurs[0] || {};
+        payload.numero_conteneur = first.numero_conteneur || null;
+        payload.tare_conteneur = first.tare_conteneur || null;
+        payload.numero_plomb = first.numero_plomb || null;
+        payload.changement_plomb = !!first.changement_plomb;
+        payload.raison_changement_plomb = first.raison_changement_plomb || null;
+        payload.nouveau_plomb = first.nouveau_plomb || null;
+        payload.matricule_camion = first.matricule_camion || null;
+        payload.chauffeur = first.chauffeur || null;
+        payload.transporteur = first.transporteur || null;
+        payload.cin_chauffeur = first.cin_chauffeur || null;
+      } else {
+        payload.conteneurs = [];
+      }
+
+      if (this.selectedCommande?.date_souhaitee) {
+        payload.date_prevue = this.sliceDate(this.selectedCommande.date_souhaitee);
+      }
+
+      return payload;
     },
     async save() {
       this.saving = true;
@@ -550,23 +789,25 @@ export default {
           this.saving = false;
           return;
         }
-        const payload = { ...this.form };
-        delete payload.cin_chauffeur_scan;
-        // Toujours synchroniser la date prévue avec la date souhaitée de la commande
-        if (this.selectedCommande?.date_souhaitee) {
-          payload.date_prevue = this.sliceDate(this.selectedCommande.date_souhaitee);
-        }
+        const payload = this.buildPayload();
         let id = this.form.id;
+        let saved = null;
         if (id) {
-          await axios.put(`/api/livraisons/${id}`, payload);
+          const { data } = await axios.put(`/api/livraisons/${id}`, payload);
+          saved = data;
         } else {
           const { data } = await axios.post('/api/livraisons', payload);
+          saved = data;
           id = data.id;
           this.form.id = id;
         }
-        if (this.cinScanFile) {
+
+        if (this.form.reservation_booking) {
+          await this.uploadConteneurCinScans(id, saved?.conteneurs || []);
+        } else if (this.cinScanFile) {
           await this.uploadCinScan(id);
         }
+
         this.showModal = false;
         await this.load();
       } catch (e) {

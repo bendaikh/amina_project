@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class Livraison extends Model
@@ -52,6 +53,11 @@ class Livraison extends Model
     public function commande(): BelongsTo
     {
         return $this->belongsTo(Commande::class);
+    }
+
+    public function conteneurs(): HasMany
+    {
+        return $this->hasMany(LivraisonConteneur::class)->orderBy('ordre')->orderBy('id');
     }
 
     public function piecesJointes(): MorphMany
