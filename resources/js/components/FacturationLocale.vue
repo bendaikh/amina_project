@@ -73,7 +73,7 @@
       </div>
 
       <!-- Create from BL -->
-      <div v-if="showFromBl" class="app-modal-overlay" @click.self="showFromBl=false">
+      <div v-if="showFromBl" class="app-modal-overlay">
         <div class="app-modal app-modal--md" @click.stop>
           <div class="app-modal__header">
             <h2 class="app-modal__title">Facture depuis un bon de livraison</h2>
@@ -102,7 +102,7 @@
       </div>
 
       <!-- Detail / Edit -->
-      <div v-if="showModal && form" class="app-modal-overlay" @click.self="closeDetail">
+      <div v-if="showModal && form" class="app-modal-overlay">
         <div class="app-modal app-modal--xl" @click.stop>
           <div class="app-modal__header">
             <div>

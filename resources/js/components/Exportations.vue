@@ -80,7 +80,7 @@
       </div>
 
       <!-- Create modal -->
-      <div v-if="showModal" class="app-modal-overlay" @click.self="showModal=false">
+      <div v-if="showModal" class="app-modal-overlay">
         <div class="app-modal app-modal--lg" @click.stop>
           <div class="app-modal__header">
             <h2 class="app-modal__title">Nouvelle liste de colisage</h2>

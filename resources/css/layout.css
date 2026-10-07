@@ -829,6 +829,8 @@
 }
 
 /* ========== Shared app modals (works without Tailwind arbitrary utilities) ========== */
+/* Static backdrop: do not close on outside click (no @click.self on overlays).
+   Close only via explicit actions (Fermer / Annuler / croix / succès). */
 .app-modal-overlay {
   position: fixed;
   inset: 0;

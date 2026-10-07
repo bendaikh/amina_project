@@ -153,7 +153,7 @@
       </div>
 
       <!-- Create/Edit Modal -->
-      <div v-if="showModal" class="app-modal-overlay" @click.self="closeModal">
+      <div v-if="showModal" class="app-modal-overlay">
         <div class="app-modal app-modal--xl" @click.stop>
           <div class="app-modal__header">
             <h2 class="app-modal__title">
@@ -429,7 +429,7 @@
       </div>
 
       <!-- View Modal -->
-      <div v-if="showViewModal" class="app-modal-overlay" @click.self="showViewModal = false">
+      <div v-if="showViewModal" class="app-modal-overlay">
         <div class="app-modal app-modal--lg" @click.stop>
           <div class="app-modal__header">
             <h2 class="app-modal__title">Détails du Client</h2>
@@ -656,7 +656,7 @@
       </div>
 
       <!-- Affect Articles Modal -->
-      <div v-if="showAffectModal" class="app-modal-overlay" @click.self="showAffectModal = false">
+      <div v-if="showAffectModal" class="app-modal-overlay">
         <div class="app-modal app-modal--lg" @click.stop>
           <div class="app-modal__header">
             <h2 class="app-modal__title">Affecter des articles à {{ affectClient?.nom }}</h2>

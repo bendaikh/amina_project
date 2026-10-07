@@ -94,7 +94,7 @@
       </div>
 
       <!-- Create from commande -->
-      <div v-if="showCreate" class="app-modal-overlay" @click.self="showCreate=false">
+      <div v-if="showCreate" class="app-modal-overlay">
         <div class="app-modal app-modal--md" @click.stop>
           <div class="app-modal__header">
             <h2 class="app-modal__title">Transformer une commande en BL</h2>
@@ -131,7 +131,7 @@
       </div>
 
       <!-- Detail / Edit modal -->
-      <div v-if="showModal && form" class="app-modal-overlay" @click.self="closeDetail">
+      <div v-if="showModal && form" class="app-modal-overlay">
         <div class="app-modal app-modal--xl" @click.stop>
           <div class="app-modal__header no-print">
             <div>

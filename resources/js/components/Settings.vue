@@ -147,7 +147,7 @@
     </div>
 
     <!-- Create/Edit Modal -->
-    <div v-if="showModal" class="app-modal-overlay" @click.self="closeModal">
+    <div v-if="showModal" class="app-modal-overlay">
       <div class="app-modal app-modal--sm" @click.stop>
         <div class="app-modal__header">
           <h2 class="app-modal__title">

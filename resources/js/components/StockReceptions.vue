@@ -72,7 +72,7 @@
       </div>
 
       <!-- Create / Edit modal -->
-      <div v-if="showModal" class="app-modal-overlay" @click.self="showModal = false">
+      <div v-if="showModal" class="app-modal-overlay">
         <div class="app-modal app-modal--xl" @click.stop>
           <div class="app-modal__header">
             <div>

@@ -92,7 +92,7 @@
 
       <p v-if="actionError" class="mt-3 text-sm text-red-600">{{ actionError }}</p>
 
-      <div v-if="showModal" class="app-modal-overlay" @click.self="showModal=false">
+      <div v-if="showModal" class="app-modal-overlay">
         <div class="app-modal app-modal--md" @click.stop>
           <div class="app-modal__header">
             <h2 class="app-modal__title">{{ fromCommandeMode ? 'Facture depuis commande' : 'Nouvelle facture commerciale' }}</h2>

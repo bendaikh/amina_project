@@ -105,7 +105,7 @@
         </table>
       </div>
 
-      <div v-if="selected" class="app-modal-overlay" @click.self="selected=null">
+      <div v-if="selected" class="app-modal-overlay">
         <div class="app-modal app-modal--md" @click.stop>
           <div class="app-modal__header">
             <div>

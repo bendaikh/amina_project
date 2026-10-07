@@ -98,7 +98,7 @@
         </table>
       </div>
 
-      <div v-if="showModal" class="app-modal-overlay" @click.self="showModal=false">
+      <div v-if="showModal" class="app-modal-overlay">
         <div class="app-modal app-modal--lg" @click.stop>
           <div class="app-modal__header">
             <h2 class="app-modal__title">{{ form.id ? 'Ordre de production' : 'Nouvel ordre de production' }}</h2>

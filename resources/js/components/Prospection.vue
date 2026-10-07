@@ -157,7 +157,7 @@
       </div>
 
       <!-- Create / Edit modal -->
-      <div v-if="showModal" class="app-modal-overlay" @click.self="closeModal">
+      <div v-if="showModal" class="app-modal-overlay">
         <div class="app-modal app-modal--lg" @click.stop>
           <div class="app-modal__header">
             <h2 class="app-modal__title">
@@ -271,7 +271,7 @@
       </div>
 
       <!-- View modal -->
-      <div v-if="showViewModal && selected" class="app-modal-overlay" @click.self="showViewModal = false">
+      <div v-if="showViewModal && selected" class="app-modal-overlay">
         <div class="app-modal app-modal--lg" @click.stop>
           <div class="app-modal__header">
             <div>

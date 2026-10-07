@@ -72,7 +72,7 @@
         </table>
       </div>
 
-      <div v-if="showModal" class="app-modal-overlay" @click.self="showModal = false">
+      <div v-if="showModal" class="app-modal-overlay">
         <div class="app-modal app-modal--md" @click.stop>
           <div class="app-modal__header">
             <div>

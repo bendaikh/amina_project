@@ -64,7 +64,7 @@
       </div>
 
       <!-- Create -->
-      <div v-if="showCreate" class="app-modal-overlay" @click.self="showCreate = false">
+      <div v-if="showCreate" class="app-modal-overlay">
         <div class="app-modal app-modal--md" @click.stop>
           <div class="app-modal__header">
             <div>
@@ -125,7 +125,7 @@
       </div>
 
       <!-- Detail / saisie -->
-      <div v-if="showDetail && current" class="app-modal-overlay" @click.self="showDetail = false">
+      <div v-if="showDetail && current" class="app-modal-overlay">
         <div class="app-modal app-modal--xl" @click.stop>
           <div class="app-modal__header">
             <div>

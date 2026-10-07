@@ -99,7 +99,7 @@
         </table>
       </div>
 
-      <div v-if="showModal" class="app-modal-overlay" @click.self="showModal=false">
+      <div v-if="showModal" class="app-modal-overlay">
         <div class="app-modal app-modal--xl" @click.stop>
           <div class="app-modal__header">
             <h2 class="app-modal__title">{{ editingId ? 'Réclamation ' + form.numero : 'Nouvelle réclamation' }}</h2>

@@ -129,7 +129,7 @@
       </div>
 
       <!-- Create modal -->
-      <div v-if="showModal" class="app-modal-overlay" @click.self="showModal=false">
+      <div v-if="showModal" class="app-modal-overlay">
         <div class="app-modal app-modal--xl" @click.stop>
           <div class="app-modal__header">
             <h2 class="app-modal__title">Nouvelle commande</h2>
@@ -384,7 +384,7 @@
       </div>
 
       <!-- Add lignes modal -->
-      <div v-if="showAddLignesModal" class="app-modal-overlay" @click.self="showAddLignesModal=false">
+      <div v-if="showAddLignesModal" class="app-modal-overlay">
         <div class="app-modal app-modal--xl" @click.stop>
           <div class="app-modal__header">
             <h2 class="app-modal__title">Ajouter des lignes — {{ addLignesCommande?.numero }}</h2>

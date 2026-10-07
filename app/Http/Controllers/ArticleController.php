@@ -31,12 +31,7 @@ class ArticleController extends Controller
 
     public function store(Request $request)
     {
-        // Convert actif to boolean if it's a string
-        if ($request->has('actif')) {
-            $request->merge([
-                'actif' => filter_var($request->actif, FILTER_VALIDATE_BOOLEAN)
-            ]);
-        }
+        $this->normalizeBooleanFields($request);
 
         $validated = $request->validate([
             'code_article' => [
@@ -114,6 +109,9 @@ class ArticleController extends Controller
             $validated['code_article'] = Article::nextCodeArticle();
         }
 
+        $validated['actif'] = $validated['actif'] ?? true;
+        $validated['sous_reserve_retour'] = $validated['sous_reserve_retour'] ?? false;
+
         if (isset($validated['poids_brut']) || isset($validated['tare'])) {
             $brut = (float) ($validated['poids_brut'] ?? 0);
             $tare = (float) ($validated['tare'] ?? 0);
@@ -139,12 +137,7 @@ class ArticleController extends Controller
 
     public function update(Request $request, Article $article)
     {
-        // Convert actif to boolean if it's a string
-        if ($request->has('actif')) {
-            $request->merge([
-                'actif' => filter_var($request->actif, FILTER_VALIDATE_BOOLEAN)
-            ]);
-        }
+        $this->normalizeBooleanFields($request);
 
         $validated = $request->validate([
             'code_article' => [
@@ -291,5 +284,31 @@ class ArticleController extends Controller
             'message' => $article->actif ? 'Article activé' : 'Article désactivé',
             'article' => $article
         ]);
+    }
+
+    /**
+     * Normalize boolean fields from FormData / JSON (e.g. "true", "false", "on", "1", "0").
+     * Empty string (unchecked / blank) becomes false. Absent fields are left untouched.
+     */
+    private function normalizeBooleanFields(Request $request, array $fields = ['actif', 'sous_reserve_retour']): void
+    {
+        $merged = [];
+
+        foreach ($fields as $field) {
+            if (!$request->exists($field)) {
+                continue;
+            }
+
+            $value = $request->input($field);
+            if ($value === '' || $value === null) {
+                $merged[$field] = false;
+            } else {
+                $merged[$field] = filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? false;
+            }
+        }
+
+        if ($merged !== []) {
+            $request->merge($merged);
+        }
     }
 }

@@ -178,7 +178,7 @@
     </div>
 
     <!-- Create/Edit Modal -->
-    <div v-if="showModal" class="app-modal-overlay" @click.self="closeModal">
+    <div v-if="showModal" class="app-modal-overlay">
       <div class="app-modal app-modal--xl" @click.stop>
         <div class="app-modal__header">
           <h2 class="app-modal__title">
@@ -189,6 +189,12 @@
 
         <div class="app-modal__body">
         <form @submit.prevent="submitForm">
+          <div v-if="Object.keys(formErrors).length" class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            <p class="font-medium mb-1">Veuillez corriger les erreurs ci-dessous.</p>
+            <ul class="list-disc list-inside space-y-0.5">
+              <li v-for="(msgs, field) in formErrors" :key="field">{{ Array.isArray(msgs) ? msgs[0] : msgs }}</li>
+            </ul>
+          </div>
           <!-- Section 1: Informations générales -->
           <div class="mb-8 bg-gray-50 rounded-lg p-6 border border-gray-200">
             <h4 class="text-lg font-semibold text-gray-900 mb-6 flex items-center gap-2">
@@ -203,9 +209,11 @@
                   type="text"
                   readonly
                   class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600"
+                  :class="{ 'border-red-500': formErrors.code_article }"
                   placeholder="Généré automatiquement"
                 />
                 <p class="text-xs text-gray-500 mt-1">Généré automatiquement</p>
+                <p v-if="formErrors.code_article" class="text-xs text-red-600 mt-1">{{ formErrors.code_article[0] }}</p>
               </div>
               <div class="app-span-full">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Désignation *</label>
@@ -214,8 +222,10 @@
                   type="text"
                   required
                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                  :class="{ 'border-red-500': formErrors.designation }"
                   placeholder="Olives Vertes Dénoyautées 16/18"
                 />
+                <p v-if="formErrors.designation" class="text-xs text-red-600 mt-1">{{ formErrors.designation[0] }}</p>
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Calibre</label>
@@ -281,6 +291,7 @@
                   <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-teal-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-600"></div>
                   <span class="ml-3 text-sm font-medium text-gray-700">{{ form.actif ? 'Oui' : 'Non' }}</span>
                 </label>
+                <p v-if="formErrors.actif" class="text-xs text-red-600 mt-1">{{ formErrors.actif[0] }}</p>
               </div>
               <div class="md:col-span-1 md:row-span-2">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Photo produit</label>
@@ -474,11 +485,13 @@
                 <select
                   v-model="form.sous_reserve_retour"
                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-white"
+                  :class="{ 'border-red-500': formErrors.sous_reserve_retour }"
                 >
                   <option :value="false">Non</option>
                   <option :value="true">Oui</option>
                 </select>
                 <p class="text-xs text-gray-500 mt-1">Si Oui → suivi auto des emballages expédiés / retournés / restants (par client)</p>
+                <p v-if="formErrors.sous_reserve_retour" class="text-xs text-red-600 mt-1">{{ formErrors.sous_reserve_retour[0] }}</p>
               </div>
               <div class="app-span-full">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Dimensions colis (L x l x H) cm</label>
@@ -658,7 +671,7 @@
     </div>
 
     <!-- Delete Confirmation Modal -->
-    <div v-if="showDeleteModal" class="app-modal-overlay" @click.self="showDeleteModal = false">
+    <div v-if="showDeleteModal" class="app-modal-overlay">
       <div class="app-modal app-modal--sm" @click.stop>
         <div class="app-modal__header">
           <h2 class="app-modal__title">Confirmer la suppression</h2>
@@ -691,7 +704,7 @@
     </div>
 
     <!-- Montage de Prix Modal -->
-    <div v-if="showMontageModal" class="app-modal-overlay" @click.self="closeMontageModal">
+    <div v-if="showMontageModal" class="app-modal-overlay">
       <div class="app-modal app-modal--lg" @click.stop>
         <div class="app-modal__header">
           <h2 class="app-modal__title">
@@ -858,6 +871,7 @@ export default {
       articleToDelete: null,
       montageArticle: null,
       form: this.getEmptyForm(),
+      formErrors: {},
       photoFile: null,
       photoPreview: null,
       parametres: {
@@ -1124,6 +1138,7 @@ export default {
     async openCreateModal() {
       this.isEditing = false;
       this.form = this.getEmptyForm();
+      this.formErrors = {};
       // Prefetch next code from all articles for display (backend regenerates if needed)
       try {
         const response = await fetch('/api/articles?per_page=500');
@@ -1146,7 +1161,11 @@ export default {
     },
     openEditModal(article) {
       this.isEditing = true;
+      this.formErrors = {};
       this.form = { ...article };
+      // Ensure booleans stay real booleans (API may return 0/1)
+      this.form.actif = !!article.actif;
+      this.form.sous_reserve_retour = !!article.sous_reserve_retour;
       if (this.form.date_production) {
         this.form.date_production = this.form.date_production.split('T')[0];
       }
@@ -1155,6 +1174,7 @@ export default {
     closeModal() {
       this.showModal = false;
       this.form = this.getEmptyForm();
+      this.formErrors = {};
       this.photoFile = null;
       this.photoPreview = null;
     },
@@ -1180,19 +1200,23 @@ export default {
     },
     async submitForm() {
       this.submitting = true;
+      this.formErrors = {};
       try {
         const url = this.isEditing ? `/api/articles/${this.form.id}` : '/api/articles';
         
         const formData = new FormData();
+        const booleanFields = ['actif', 'sous_reserve_retour'];
         
         Object.keys(this.form).forEach(key => {
-          if (key !== 'id' && key !== 'photo' && this.form[key] !== null && this.form[key] !== '') {
-            // Convert boolean to "1"/"0" for proper Laravel handling
-            if (key === 'actif') {
-              formData.append(key, this.form[key] ? '1' : '0');
-            } else {
-              formData.append(key, this.form[key]);
-            }
+          if (key === 'id' || key === 'photo') return;
+
+          if (booleanFields.includes(key)) {
+            formData.append(key, this.form[key] ? '1' : '0');
+            return;
+          }
+
+          if (this.form[key] !== null && this.form[key] !== '') {
+            formData.append(key, this.form[key]);
           }
         });
         
@@ -1218,6 +1242,11 @@ export default {
           this.fetchStats();
         } else {
           const error = await response.json();
+          if (response.status === 422 && error.errors) {
+            this.formErrors = error.errors;
+            // Keep popup open — user must fix fields explicitly
+            return;
+          }
           alert(error.message || 'Une erreur est survenue');
         }
       } catch (error) {
