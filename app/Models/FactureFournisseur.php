@@ -79,6 +79,12 @@ class FactureFournisseur extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    public function affectations(): HasMany
+    {
+        return $this->hasMany(ReglementLigne::class, 'facture_id')
+            ->where('reglement_lignes.facture_type', ReglementLigne::FOURNISSEUR);
+    }
+
     public function getSuiviCompletAttribute(): bool
     {
         return $this->suivi_facture

@@ -100,4 +100,9 @@ class Client extends Model
     {
         return $this->hasMany(DossierEmballage::class);
     }
+
+    public function reglements()
+    {
+        return $this->hasMany(Reglement::class);
+    }
 }

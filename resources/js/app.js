@@ -34,6 +34,15 @@ import StockInventaire from './components/StockInventaire.vue';
 import Exportateurs from './components/Exportateurs.vue';
 import FacturationExport from './components/FacturationExport.vue';
 import FactureCommercialeDetail from './components/FactureCommercialeDetail.vue';
+import Reglements from './components/Reglements.vue';
+import Echeances from './components/Echeances.vue';
+import Lettrage from './components/Lettrage.vue';
+import Banque from './components/Banque.vue';
+import RapprochementBancaire from './components/RapprochementBancaire.vue';
+import RapportFactures from './components/RapportFactures.vue';
+import RapportStock from './components/RapportStock.vue';
+import RapportFinance from './components/RapportFinance.vue';
+import RapportExport from './components/RapportExport.vue';
 
 const router = createRouter({
     history: createWebHistory(),
@@ -91,19 +100,19 @@ const router = createRouter({
         { path: '/export', redirect: '/ventes/export/colisage' },
 
         // 7. Finance
-        { path: '/finance/reglements-clients', name: 'ReglementsClients', component: Placeholder, meta: { requiresAuth: true, title: 'Règlements clients' } },
-        { path: '/finance/reglements-fournisseurs', name: 'ReglementsFournisseurs', component: Placeholder, meta: { requiresAuth: true, title: 'Règlements fournisseurs' } },
-        { path: '/finance/echeances', name: 'Echeances', component: Placeholder, meta: { requiresAuth: true, title: 'Échéances' } },
-        { path: '/finance/lettrage', name: 'Lettrage', component: Placeholder, meta: { requiresAuth: true, title: 'Lettrage' } },
-        { path: '/finance/banque', name: 'Banque', component: Placeholder, meta: { requiresAuth: true, title: 'Banque' } },
-        { path: '/finance/rapprochement', name: 'Rapprochement', component: Placeholder, meta: { requiresAuth: true, title: 'Rapprochement bancaire' } },
+        { path: '/finance/reglements-clients', name: 'ReglementsClients', component: Reglements, props: { sens: 'client' }, meta: { requiresAuth: true, title: 'Règlements clients' } },
+        { path: '/finance/reglements-fournisseurs', name: 'ReglementsFournisseurs', component: Reglements, props: { sens: 'fournisseur' }, meta: { requiresAuth: true, title: 'Règlements fournisseurs' } },
+        { path: '/finance/echeances', name: 'Echeances', component: Echeances, meta: { requiresAuth: true, title: 'Échéances' } },
+        { path: '/finance/lettrage', name: 'Lettrage', component: Lettrage, meta: { requiresAuth: true, title: 'Lettrage' } },
+        { path: '/finance/banque', name: 'Banque', component: Banque, meta: { requiresAuth: true, title: 'Banque' } },
+        { path: '/finance/rapprochement', name: 'Rapprochement', component: RapprochementBancaire, meta: { requiresAuth: true, title: 'Rapprochement bancaire' } },
 
         // 8. Rapports
-        { path: '/rapports/ventes', name: 'RapportsVentes', component: Placeholder, meta: { requiresAuth: true, title: 'Rapports ventes' } },
-        { path: '/rapports/achats', name: 'RapportsAchats', component: Placeholder, meta: { requiresAuth: true, title: 'Rapports achats' } },
-        { path: '/rapports/stock', name: 'RapportsStock', component: Placeholder, meta: { requiresAuth: true, title: 'Rapports stock' } },
-        { path: '/rapports/finance', name: 'RapportsFinance', component: Placeholder, meta: { requiresAuth: true, title: 'Rapports finance' } },
-        { path: '/rapports/export', name: 'RapportsExport', component: Placeholder, meta: { requiresAuth: true, title: 'Rapports export' } },
+        { path: '/rapports/ventes', name: 'RapportsVentes', component: RapportFactures, props: { kind: 'ventes' }, meta: { requiresAuth: true, title: 'Rapports ventes' } },
+        { path: '/rapports/achats', name: 'RapportsAchats', component: RapportFactures, props: { kind: 'achats' }, meta: { requiresAuth: true, title: 'Rapports achats' } },
+        { path: '/rapports/stock', name: 'RapportsStock', component: RapportStock, meta: { requiresAuth: true, title: 'Rapports stock' } },
+        { path: '/rapports/finance', name: 'RapportsFinance', component: RapportFinance, meta: { requiresAuth: true, title: 'Rapports finance' } },
+        { path: '/rapports/export', name: 'RapportsExport', component: RapportExport, meta: { requiresAuth: true, title: 'Export' } },
 
         // 9. Paramètre
         { path: '/parametre/exportateurs', name: 'Exportateurs', component: Exportateurs, meta: { requiresAuth: true, title: 'Exportateurs' } },

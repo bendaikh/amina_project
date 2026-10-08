@@ -23,6 +23,11 @@ use App\Http\Controllers\ReclamationController;
 use App\Http\Controllers\NoteCreditController;
 use App\Http\Controllers\SuiviVentesController;
 use App\Http\Controllers\ExportateurController;
+use App\Http\Controllers\FinanceReglementController;
+use App\Http\Controllers\FinanceEcheanceController;
+use App\Http\Controllers\FinanceLettrageController;
+use App\Http\Controllers\FinanceBanqueController;
+use App\Http\Controllers\RapportController;
 
 Route::get('/dashboard/kpis', [DashboardController::class, 'kpis']);
 Route::get('/search', [DashboardController::class, 'search']);
@@ -247,7 +252,44 @@ Route::prefix('notes-credit')->group(function () {
 Route::get('/suivi-ventes/meta', [SuiviVentesController::class, 'meta']);
 Route::get('/suivi-ventes', [SuiviVentesController::class, 'index']);
 
-// 9. Paramètre — Exportateurs
+// 7. Finance
+Route::get('/finance/meta', [FinanceReglementController::class, 'meta']);
+Route::get('/finance/tiers', [FinanceReglementController::class, 'tiers']);
+Route::get('/finance/factures-ouvertes', [FinanceReglementController::class, 'facturesOuvertes']);
+Route::get('/finance/reglements', [FinanceReglementController::class, 'index']);
+Route::post('/finance/reglements', [FinanceReglementController::class, 'store']);
+Route::get('/finance/reglements/{reglement}', [FinanceReglementController::class, 'show']);
+Route::put('/finance/reglements/{reglement}', [FinanceReglementController::class, 'update']);
+Route::delete('/finance/reglements/{reglement}', [FinanceReglementController::class, 'destroy']);
+
+Route::get('/finance/echeances', [FinanceEcheanceController::class, 'index']);
+
+Route::get('/finance/lettrage', [FinanceLettrageController::class, 'index']);
+Route::post('/finance/lettrage/auto', [FinanceLettrageController::class, 'auto']);
+Route::post('/finance/lettrage', [FinanceLettrageController::class, 'store']);
+Route::delete('/finance/lettrage/{ligne}', [FinanceLettrageController::class, 'destroy']);
+
+Route::get('/finance/banque/comptes', [FinanceBanqueController::class, 'index']);
+Route::post('/finance/banque/comptes', [FinanceBanqueController::class, 'store']);
+Route::get('/finance/banque/comptes/{compte}', [FinanceBanqueController::class, 'show']);
+Route::put('/finance/banque/comptes/{compte}', [FinanceBanqueController::class, 'update']);
+Route::delete('/finance/banque/comptes/{compte}', [FinanceBanqueController::class, 'destroy']);
+Route::get('/finance/banque/comptes/{compte}/export', [FinanceBanqueController::class, 'exportMouvements']);
+Route::post('/finance/banque/comptes/{compte}/mouvements', [FinanceBanqueController::class, 'storeMouvement']);
+Route::post('/finance/banque/comptes/{compte}/import', [FinanceBanqueController::class, 'import']);
+Route::delete('/finance/banque/mouvements/{mouvement}', [FinanceBanqueController::class, 'destroyMouvement']);
+Route::get('/finance/banque/comptes/{compte}/rapprochement', [FinanceBanqueController::class, 'rapprochement']);
+Route::post('/finance/banque/comptes/{compte}/rapprochement/auto', [FinanceBanqueController::class, 'autoRapprochement']);
+Route::post('/finance/banque/comptes/{compte}/rapprochement', [FinanceBanqueController::class, 'storeRapprochement']);
+Route::delete('/finance/banque/rapprochement/{ligne}', [FinanceBanqueController::class, 'destroyRapprochement']);
+
+// 8. Rapports
+Route::get('/rapports/meta', [RapportController::class, 'meta']);
+Route::get('/rapports/ventes', [RapportController::class, 'ventes']);
+Route::get('/rapports/achats', [RapportController::class, 'achats']);
+Route::get('/rapports/stock', [RapportController::class, 'stock']);
+Route::get('/rapports/finance', [RapportController::class, 'finance']);
+
 Route::prefix('exportateurs')->group(function () {
     Route::get('/', [ExportateurController::class, 'index']);
     Route::post('/', [ExportateurController::class, 'store']);

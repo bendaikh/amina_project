@@ -21,10 +21,17 @@ class Fournisseur extends Model
         'pays',
         'categorie',
         'devise',
+        'solde_actuel',
     ];
 
     protected $casts = [
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
+        'solde_actuel' => 'decimal:2',
     ];
+
+    public function reglements()
+    {
+        return $this->hasMany(Reglement::class);
+    }
 }
