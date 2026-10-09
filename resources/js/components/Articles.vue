@@ -344,11 +344,10 @@
                   type="number"
                   step="0.001"
                   min="0"
-                  :max="form.poids_brut || undefined"
                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                   placeholder="0.200"
                 />
-                <p class="text-xs text-gray-500 mt-1">Entre 0 et le poids brut</p>
+                <p v-if="(Number(form.tare) || 0) > (Number(form.poids_brut) || 0)" class="text-xs text-amber-600 mt-1">Supérieure au poids brut : le poids net est ramené à 0</p>
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Poids net (Kg)</label>
@@ -1043,12 +1042,7 @@ export default {
     },
     calculatePoidsNet() {
       const brut = Number(this.form.poids_brut) || 0;
-      let tare = Number(this.form.tare) || 0;
-      if (tare < 0) tare = 0;
-      if (tare > brut) {
-        tare = brut;
-        this.form.tare = tare;
-      }
+      const tare = Math.max(0, Number(this.form.tare) || 0);
       this.form.poids_net = Math.round(Math.max(0, brut - tare) * 1000) / 1000;
     },
     calculatePoidsPalette() {

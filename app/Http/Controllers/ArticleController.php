@@ -115,10 +115,6 @@ class ArticleController extends Controller
         if (isset($validated['poids_brut']) || isset($validated['tare'])) {
             $brut = (float) ($validated['poids_brut'] ?? 0);
             $tare = (float) ($validated['tare'] ?? 0);
-            if ($tare > $brut) {
-                $tare = $brut;
-                $validated['tare'] = $tare;
-            }
             $validated['poids_net'] = round(max(0, $brut - $tare), 3);
         }
 
@@ -217,10 +213,6 @@ class ArticleController extends Controller
         if (isset($validated['poids_brut']) || isset($validated['tare'])) {
             $brut = (float) ($validated['poids_brut'] ?? $article->poids_brut ?? 0);
             $tare = (float) ($validated['tare'] ?? $article->tare ?? 0);
-            if ($tare > $brut) {
-                $tare = $brut;
-                $validated['tare'] = $tare;
-            }
             $validated['poids_net'] = round(max(0, $brut - $tare), 3);
         }
 

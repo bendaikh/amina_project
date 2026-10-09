@@ -257,7 +257,14 @@
                   </div>
                   <div>
                     <label class="text-xs text-gray-500">Poids net égoutté</label>
-                    <input v-model.number="ligneDraft.poids_net_egoutte" readonly class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-gray-50" />
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.001"
+                      v-model.number="ligneDraft.poids_net_egoutte"
+                      @input="onPackagingChange(ligneDraft)"
+                      class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                    />
                   </div>
                 </div>
 
@@ -340,22 +347,53 @@
                       <td colspan="19" class="py-6 text-center text-gray-400">Aucune ligne ajoutée</td>
                     </tr>
                     <tr v-for="(ligne, idx) in form.lignes" :key="idx" class="border-t border-gray-50">
-                      <td class="py-2 px-3 whitespace-nowrap">{{ articleLabel(ligne.article_id) }}</td>
-                      <td class="py-2 px-3 whitespace-nowrap">{{ ligne.designation || '—' }}</td>
-                      <td class="py-2 px-3 whitespace-nowrap">{{ ligne.calibre || '—' }}</td>
-                      <td class="py-2 px-3 whitespace-nowrap">{{ ligne.type_emballage_primaire || '—' }}</td>
-                      <td class="py-2 px-3 whitespace-nowrap">{{ ligne.reference_emballage || '—' }}</td>
-                      <td class="py-2 px-3 whitespace-nowrap">{{ ligne.type_emballage_secondaire || '—' }}</td>
-                      <td class="py-2 px-3 whitespace-nowrap">{{ ligne.unites_par_colis ?? '—' }}</td>
-                      <td class="py-2 px-3 whitespace-nowrap">{{ ligne.colis_par_palette ?? '—' }}</td>
+                      <td class="py-2 px-2">
+                        <select v-model="ligne.article_id" @change="fillArticle(ligne)" class="border border-gray-300 rounded px-2 py-1 text-xs min-w-[6.5rem] bg-white">
+                          <option :value="null">—</option>
+                          <option v-for="a in articles" :key="a.id" :value="a.id">{{ a.code_article }}</option>
+                        </select>
+                      </td>
+                      <td class="py-2 px-2">
+                        <input v-model="ligne.designation" class="border border-gray-300 rounded px-2 py-1 text-xs min-w-[8rem] bg-white" />
+                      </td>
+                      <td class="py-2 px-2">
+                        <input v-model="ligne.calibre" class="border border-gray-300 rounded px-2 py-1 text-xs w-20 bg-white" />
+                      </td>
+                      <td class="py-2 px-2">
+                        <input v-model="ligne.type_emballage_primaire" class="border border-gray-300 rounded px-2 py-1 text-xs min-w-[6rem] bg-white" />
+                      </td>
+                      <td class="py-2 px-2">
+                        <input v-model="ligne.reference_emballage" class="border border-gray-300 rounded px-2 py-1 text-xs min-w-[6rem] bg-white" />
+                      </td>
+                      <td class="py-2 px-2">
+                        <input v-model="ligne.type_emballage_secondaire" class="border border-gray-300 rounded px-2 py-1 text-xs min-w-[6rem] bg-white" />
+                      </td>
+                      <td class="py-2 px-2">
+                        <input type="number" min="0" step="1" v-model.number="ligne.unites_par_colis" @input="onPackagingChange(ligne)" class="border border-gray-300 rounded px-2 py-1 text-xs w-20 bg-white" />
+                      </td>
+                      <td class="py-2 px-2">
+                        <input type="number" min="0" step="1" v-model.number="ligne.colis_par_palette" @input="onPackagingChange(ligne)" class="border border-gray-300 rounded px-2 py-1 text-xs w-20 bg-white" />
+                      </td>
                       <td class="py-2 px-3 whitespace-nowrap">{{ ligne.nombre_total_par_palette ?? '—' }}</td>
-                      <td class="py-2 px-3 whitespace-nowrap">{{ ligne.poids_net_egoutte ?? '—' }}</td>
+                      <td class="py-2 px-2">
+                        <input type="number" min="0" step="0.001" v-model.number="ligne.poids_net_egoutte" @input="onPackagingChange(ligne)" class="border border-gray-300 rounded px-2 py-1 text-xs w-24 bg-white" />
+                      </td>
                       <td class="py-2 px-3 whitespace-nowrap">{{ ligne.quantite }}</td>
-                      <td class="py-2 px-3 whitespace-nowrap">{{ ligne.unite || '—' }}</td>
-                      <td class="py-2 px-3 whitespace-nowrap">{{ formatMoney(ligne.prix) }}</td>
-                      <td class="py-2 px-3 whitespace-nowrap">{{ ligne.date_production || '—' }}</td>
-                      <td class="py-2 px-3 whitespace-nowrap">{{ ligne.lot || '—' }}</td>
-                      <td class="py-2 px-3 whitespace-nowrap">{{ ligne.tva_taux ?? 20 }}</td>
+                      <td class="py-2 px-2">
+                        <input v-model="ligne.unite" class="border border-gray-300 rounded px-2 py-1 text-xs w-16 bg-white" />
+                      </td>
+                      <td class="py-2 px-2">
+                        <input type="number" step="0.01" v-model.number="ligne.prix" class="border border-gray-300 rounded px-2 py-1 text-xs w-24 bg-white" />
+                      </td>
+                      <td class="py-2 px-2">
+                        <input type="date" v-model="ligne.date_production" class="border border-gray-300 rounded px-2 py-1 text-xs bg-white" />
+                      </td>
+                      <td class="py-2 px-2">
+                        <input v-model="ligne.lot" class="border border-gray-300 rounded px-2 py-1 text-xs w-24 bg-white" />
+                      </td>
+                      <td class="py-2 px-2">
+                        <input type="number" step="0.01" v-model.number="ligne.tva_taux" class="border border-gray-300 rounded px-2 py-1 text-xs w-16 bg-white" />
+                      </td>
                       <td class="py-2 px-3 whitespace-nowrap font-medium">{{ formatMoney(ligneHt(ligne)) }}</td>
                       <td class="py-2 px-3 whitespace-nowrap">{{ ligne.quantite_disponible || 0 }}</td>
                       <td class="py-2 px-3 text-right">
@@ -500,7 +538,14 @@
                 </div>
                 <div>
                   <label class="text-xs text-gray-500">Poids net égoutté</label>
-                  <input v-model.number="ligneDraft.poids_net_egoutte" readonly class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-gray-50" />
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.001"
+                    v-model.number="ligneDraft.poids_net_egoutte"
+                    @input="onPackagingChange(ligneDraft)"
+                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                  />
                 </div>
               </div>
               <div class="achat-grid-4 mb-3">
@@ -563,21 +608,50 @@
                 </thead>
                 <tbody>
                   <tr v-for="(ligne, idx) in newLignes" :key="'new-'+idx" class="border-t border-gray-50">
-                    <td class="py-2 px-3 whitespace-nowrap">{{ articleLabel(ligne.article_id) }}</td>
-                    <td class="py-2 px-3 whitespace-nowrap">{{ ligne.designation || '—' }}</td>
-                    <td class="py-2 px-3 whitespace-nowrap">{{ ligne.calibre || '—' }}</td>
-                    <td class="py-2 px-3 whitespace-nowrap">{{ ligne.type_emballage_primaire || '—' }}</td>
-                    <td class="py-2 px-3 whitespace-nowrap">{{ ligne.reference_emballage || '—' }}</td>
-                    <td class="py-2 px-3 whitespace-nowrap">{{ ligne.type_emballage_secondaire || '—' }}</td>
-                    <td class="py-2 px-3 whitespace-nowrap">{{ ligne.unites_par_colis ?? '—' }}</td>
-                    <td class="py-2 px-3 whitespace-nowrap">{{ ligne.colis_par_palette ?? '—' }}</td>
+                    <td class="py-2 px-2">
+                      <select v-model="ligne.article_id" @change="fillArticle(ligne)" class="border border-gray-300 rounded px-2 py-1 text-xs min-w-[6.5rem] bg-white">
+                        <option :value="null">—</option>
+                        <option v-for="a in articles" :key="a.id" :value="a.id">{{ a.code_article }}</option>
+                      </select>
+                    </td>
+                    <td class="py-2 px-2">
+                      <input v-model="ligne.designation" class="border border-gray-300 rounded px-2 py-1 text-xs min-w-[8rem] bg-white" />
+                    </td>
+                    <td class="py-2 px-2">
+                      <input v-model="ligne.calibre" class="border border-gray-300 rounded px-2 py-1 text-xs w-20 bg-white" />
+                    </td>
+                    <td class="py-2 px-2">
+                      <input v-model="ligne.type_emballage_primaire" class="border border-gray-300 rounded px-2 py-1 text-xs min-w-[6rem] bg-white" />
+                    </td>
+                    <td class="py-2 px-2">
+                      <input v-model="ligne.reference_emballage" class="border border-gray-300 rounded px-2 py-1 text-xs min-w-[6rem] bg-white" />
+                    </td>
+                    <td class="py-2 px-2">
+                      <input v-model="ligne.type_emballage_secondaire" class="border border-gray-300 rounded px-2 py-1 text-xs min-w-[6rem] bg-white" />
+                    </td>
+                    <td class="py-2 px-2">
+                      <input type="number" min="0" step="1" v-model.number="ligne.unites_par_colis" @input="onPackagingChange(ligne)" class="border border-gray-300 rounded px-2 py-1 text-xs w-20 bg-white" />
+                    </td>
+                    <td class="py-2 px-2">
+                      <input type="number" min="0" step="1" v-model.number="ligne.colis_par_palette" @input="onPackagingChange(ligne)" class="border border-gray-300 rounded px-2 py-1 text-xs w-20 bg-white" />
+                    </td>
                     <td class="py-2 px-3 whitespace-nowrap">{{ ligne.nombre_total_par_palette ?? '—' }}</td>
-                    <td class="py-2 px-3 whitespace-nowrap">{{ ligne.poids_net_egoutte ?? '—' }}</td>
+                    <td class="py-2 px-2">
+                      <input type="number" min="0" step="0.001" v-model.number="ligne.poids_net_egoutte" @input="onPackagingChange(ligne)" class="border border-gray-300 rounded px-2 py-1 text-xs w-24 bg-white" />
+                    </td>
                     <td class="py-2 px-3 whitespace-nowrap">{{ ligne.quantite }}</td>
-                    <td class="py-2 px-3 whitespace-nowrap">{{ ligne.unite || '—' }}</td>
-                    <td class="py-2 px-3 whitespace-nowrap">{{ formatMoney(ligne.prix) }}</td>
-                    <td class="py-2 px-3 whitespace-nowrap">{{ ligne.date_production || '—' }}</td>
-                    <td class="py-2 px-3 whitespace-nowrap">{{ ligne.lot || '—' }}</td>
+                    <td class="py-2 px-2">
+                      <input v-model="ligne.unite" class="border border-gray-300 rounded px-2 py-1 text-xs w-16 bg-white" />
+                    </td>
+                    <td class="py-2 px-2">
+                      <input type="number" step="0.01" v-model.number="ligne.prix" class="border border-gray-300 rounded px-2 py-1 text-xs w-24 bg-white" />
+                    </td>
+                    <td class="py-2 px-2">
+                      <input type="date" v-model="ligne.date_production" class="border border-gray-300 rounded px-2 py-1 text-xs bg-white" />
+                    </td>
+                    <td class="py-2 px-2">
+                      <input v-model="ligne.lot" class="border border-gray-300 rounded px-2 py-1 text-xs w-24 bg-white" />
+                    </td>
                     <td class="py-2 px-3 whitespace-nowrap">{{ formatMoney(ligneHt(ligne)) }}</td>
                     <td class="py-2 px-3 text-right">
                       <button type="button" @click="newLignes.splice(idx,1)" class="text-red-500 text-xs">Supprimer</button>
