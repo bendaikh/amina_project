@@ -177,7 +177,7 @@
     <div class="att-foot">
         @if(!empty($pied['forme']) || !empty($pied['capital']))
             {{ $pied['forme'] ?: 'Société' }}@if(!empty($pied['capital'])) au capital de {{ $pied['capital'] }} DH @endif
-            · Siège social : {{ $pied['adresse'] ?: '—' }}@if(!empty($pied['ville'])) – {{ $pied['ville'] }}@endif@if(!empty($pied['pays'])) – {{ $pied['pays'] }}@endif
+            · Siège social : {{ $pied['adresse'] ?: '—' }}@if(!empty($pied['ville'])) – {{ $pied['ville'] }}@endif @if(!empty($pied['pays'])) – {{ $pied['pays'] }}@endif
             <br>
         @elseif(!empty($pied['societe']))
             {{ $pied['societe'] }}@if(!empty($pied['adresse'])) · {{ $pied['adresse'] }}@endif
