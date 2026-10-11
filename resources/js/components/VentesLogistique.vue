@@ -185,8 +185,16 @@
                   <input type="date" v-model="form.date_cutoff" required class="w-full border border-gray-300 rounded-lg px-3 py-2" :class="{ 'border-amber-400 ring-1 ring-amber-300': !form.date_cutoff }" />
                 </div>
                 <div>
-                  <label class="text-sm text-gray-600">Nom du navire / voyage</label>
+                  <label class="text-sm text-gray-600">Nom du navire</label>
                   <input v-model="form.navire" class="w-full border border-gray-300 rounded-lg px-3 py-2" />
+                </div>
+                <div>
+                  <label class="text-sm text-gray-600">Voyage</label>
+                  <input v-model="form.voyage" class="w-full border border-gray-300 rounded-lg px-3 py-2" />
+                </div>
+                <div>
+                  <label class="text-sm text-gray-600">Terminal</label>
+                  <input v-model="form.terminal" class="w-full border border-gray-300 rounded-lg px-3 py-2" />
                 </div>
                 <div>
                   <label class="text-sm text-gray-600">Port de départ</label>
@@ -237,12 +245,36 @@
 
                   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div>
+                      <label class="text-sm text-gray-600">Type de conteneur</label>
+                      <select v-model="conteneur.type_conteneur" class="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white">
+                        <option value="">—</option>
+                        <option value="20">20'</option>
+                        <option value="40">40'</option>
+                        <option value="45">45'</option>
+                      </select>
+                    </div>
+                    <div>
                       <label class="text-sm text-gray-600">N° de conteneur</label>
                       <input v-model="conteneur.numero_conteneur" class="w-full border border-gray-300 rounded-lg px-3 py-2" />
                     </div>
                     <div>
-                      <label class="text-sm text-gray-600">Tare conteneur</label>
+                      <label class="text-sm text-gray-600">Tare conteneur (kg)</label>
                       <input v-model="conteneur.tare_conteneur" class="w-full border border-gray-300 rounded-lg px-3 py-2" />
+                    </div>
+                    <div>
+                      <label class="text-sm text-gray-600">Poids brut marchandise (kg)</label>
+                      <input v-model="conteneur.poids_brut_marchandise" class="w-full border border-gray-300 rounded-lg px-3 py-2" placeholder="Auto si un seul conteneur" />
+                    </div>
+                    <div>
+                      <label class="text-sm text-gray-600">Méthode VGM</label>
+                      <select v-model="conteneur.vgm_methode" class="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white">
+                        <option value="2">Méthode 2 — calcul des masses</option>
+                        <option value="1">Méthode 1 — pesée du conteneur chargé</option>
+                      </select>
+                    </div>
+                    <div v-if="conteneur.vgm_methode === '1'">
+                      <label class="text-sm text-gray-600">Poids VGM pesé (kg)</label>
+                      <input v-model="conteneur.vgm_poids" class="w-full border border-gray-300 rounded-lg px-3 py-2" />
                     </div>
                     <div>
                       <label class="text-sm text-gray-600">N° de plomb</label>
@@ -281,12 +313,16 @@
                         <input v-model="conteneur.matricule_camion" class="w-full border border-gray-300 rounded-lg px-3 py-2" />
                       </div>
                       <div>
-                        <label class="text-sm text-gray-600">Chauffeur</label>
-                        <input v-model="conteneur.chauffeur" class="w-full border border-gray-300 rounded-lg px-3 py-2" />
+                        <label class="text-sm text-gray-600">Transporteur</label>
+                        <input v-model="conteneur.transporteur" list="transporteurs-list" class="w-full border border-gray-300 rounded-lg px-3 py-2" placeholder="Liste ou saisie" />
                       </div>
                       <div>
-                        <label class="text-sm text-gray-600">Transporteur</label>
-                        <input v-model="conteneur.transporteur" class="w-full border border-gray-300 rounded-lg px-3 py-2" />
+                        <label class="text-sm text-gray-600">Chauffeur</label>
+                        <input v-model="conteneur.chauffeur" list="chauffeurs-list" @change="applyChauffeur(conteneur)" class="w-full border border-gray-300 rounded-lg px-3 py-2" placeholder="Liste — identité reprise automatiquement" />
+                      </div>
+                      <div>
+                        <label class="text-sm text-gray-600">Téléphone chauffeur</label>
+                        <input v-model="conteneur.telephone_chauffeur" class="w-full border border-gray-300 rounded-lg px-3 py-2" />
                       </div>
                       <div>
                         <label class="text-sm text-gray-600">CIN chauffeur</label>
@@ -314,6 +350,33 @@
                         </p>
                       </div>
                     </div>
+                    <div class="md:col-span-2 lg:col-span-3 border-t border-gray-100 pt-4">
+                      <h5 class="text-sm font-semibold text-gray-800 mb-3">Itinéraire et contrôle — Conteneur {{ idx + 1 }}</h5>
+                      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div>
+                          <label class="text-sm text-gray-600">Lieu de chargement</label>
+                          <input v-model="conteneur.lieu_chargement" list="lieux-list" class="w-full border border-gray-300 rounded-lg px-3 py-2" />
+                        </div>
+                        <div>
+                          <label class="text-sm text-gray-600">Arrivée usine</label>
+                          <input type="datetime-local" v-model="conteneur.arrivee_usine" class="w-full border border-gray-300 rounded-lg px-3 py-2" />
+                          <p class="text-xs text-gray-500 mt-1">Reprise à la création, modifiable</p>
+                        </div>
+                        <div>
+                          <label class="text-sm text-gray-600">Départ usine</label>
+                          <input type="datetime-local" v-model="conteneur.depart_usine" class="w-full border border-gray-300 rounded-lg px-3 py-2" />
+                        </div>
+                        <div class="md:col-span-2 lg:col-span-3 flex flex-col gap-2 text-sm text-gray-700">
+                          <label class="inline-flex items-center gap-2"><input type="checkbox" v-model="conteneur.ctrl_conteneur" class="rounded text-teal-600" /> Numéro du conteneur contrôlé</label>
+                          <label class="inline-flex items-center gap-2"><input type="checkbox" v-model="conteneur.ctrl_plomb" class="rounded text-teal-600" /> Plomb posé et numéro vérifié</label>
+                          <label class="inline-flex items-center gap-2"><input type="checkbox" v-model="conteneur.ctrl_documents" class="rounded text-teal-600" /> Chargement et documents validés</label>
+                        </div>
+                        <div class="md:col-span-2 lg:col-span-3">
+                          <label class="text-sm text-gray-600">Observations / réserves</label>
+                          <textarea v-model="conteneur.observations_controle" rows="2" class="w-full border border-gray-300 rounded-lg px-3 py-2"></textarea>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -332,16 +395,32 @@
                   <input v-model="form.matricule_camion" class="w-full border border-gray-300 rounded-lg px-3 py-2" />
                 </div>
                 <div>
-                  <label class="text-sm text-gray-600">Chauffeur</label>
-                  <input v-model="form.chauffeur" class="w-full border border-gray-300 rounded-lg px-3 py-2" />
+                  <label class="text-sm text-gray-600">Transporteur</label>
+                  <input v-model="form.transporteur" list="transporteurs-list" class="w-full border border-gray-300 rounded-lg px-3 py-2" />
                 </div>
                 <div>
-                  <label class="text-sm text-gray-600">Transporteur</label>
-                  <input v-model="form.transporteur" class="w-full border border-gray-300 rounded-lg px-3 py-2" />
+                  <label class="text-sm text-gray-600">Chauffeur</label>
+                  <input v-model="form.chauffeur" list="chauffeurs-list" @change="applyChauffeur(form)" class="w-full border border-gray-300 rounded-lg px-3 py-2" />
+                </div>
+                <div>
+                  <label class="text-sm text-gray-600">Téléphone chauffeur</label>
+                  <input v-model="form.telephone_chauffeur" class="w-full border border-gray-300 rounded-lg px-3 py-2" />
                 </div>
                 <div>
                   <label class="text-sm text-gray-600">CIN chauffeur</label>
                   <input v-model="form.cin_chauffeur" class="w-full border border-gray-300 rounded-lg px-3 py-2" placeholder="N° CIN" />
+                </div>
+                <div>
+                  <label class="text-sm text-gray-600">Lieu de chargement</label>
+                  <input v-model="form.lieu_chargement" list="lieux-list" class="w-full border border-gray-300 rounded-lg px-3 py-2" />
+                </div>
+                <div>
+                  <label class="text-sm text-gray-600">Arrivée usine</label>
+                  <input type="datetime-local" v-model="form.arrivee_usine" class="w-full border border-gray-300 rounded-lg px-3 py-2" />
+                </div>
+                <div>
+                  <label class="text-sm text-gray-600">Départ usine</label>
+                  <input type="datetime-local" v-model="form.depart_usine" class="w-full border border-gray-300 rounded-lg px-3 py-2" />
                 </div>
                 <div class="md:col-span-2">
                   <label class="text-sm text-gray-600">Scanner CIN chauffeur</label>
@@ -375,6 +454,15 @@
             </div>
           </div>
           <div class="app-modal__footer">
+            <datalist id="transporteurs-list">
+              <option v-for="nom in transporteurs" :key="nom" :value="nom" />
+            </datalist>
+            <datalist id="chauffeurs-list">
+              <option v-for="ch in chauffeurs" :key="ch.nom" :value="ch.nom" />
+            </datalist>
+            <datalist id="lieux-list">
+              <option v-for="lieu in lieuxChargement" :key="lieu" :value="lieu" />
+            </datalist>
             <p v-if="error" class="text-red-600 text-sm mr-auto">{{ error }}</p>
             <button @click="showModal=false" type="button" class="px-4 py-2 border border-gray-300 rounded-lg bg-white">Annuler</button>
             <button @click="save" type="button" :disabled="saving" class="px-5 py-2 bg-teal-600 text-white rounded-lg">{{ saving ? 'Enregistrement…' : 'Enregistrer' }}</button>
@@ -398,12 +486,27 @@ const STATUTS = [
   { key: 'annule', label: 'Annulé' },
 ];
 
+function nowDateTime() {
+  const d = new Date();
+  const p = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
+function sliceDateTime(v) {
+  if (!v) return '';
+  return String(v).replace(' ', 'T').slice(0, 16);
+}
+
 function createEmptyConteneur(overrides = {}) {
   return {
     id: null,
     _key: `c-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     numero_conteneur: '',
+    type_conteneur: '',
     tare_conteneur: '',
+    vgm_methode: '2',
+    poids_brut_marchandise: '',
+    vgm_poids: '',
     numero_plomb: '',
     changement_plomb: false,
     raison_changement_plomb: '',
@@ -412,7 +515,15 @@ function createEmptyConteneur(overrides = {}) {
     chauffeur: '',
     transporteur: '',
     cin_chauffeur: '',
+    telephone_chauffeur: '',
     cin_chauffeur_scan: '',
+    lieu_chargement: '',
+    arrivee_usine: nowDateTime(),
+    depart_usine: '',
+    ctrl_conteneur: false,
+    ctrl_plomb: false,
+    ctrl_documents: false,
+    observations_controle: '',
     _cinScanFile: null,
     ...overrides,
   };
@@ -431,6 +542,8 @@ function createEmptyForm() {
     numero_bl_swb: '',
     compagnie_maritime: '',
     navire: '',
+    voyage: '',
+    terminal: '',
     port_depart: '',
     port_arrivee: '',
     eta: '',
@@ -446,7 +559,11 @@ function createEmptyForm() {
     chauffeur: '',
     transporteur: '',
     cin_chauffeur: '',
+    telephone_chauffeur: '',
     cin_chauffeur_scan: '',
+    lieu_chargement: '',
+    arrivee_usine: '',
+    depart_usine: '',
     statut: 'a_preparer',
     observations: '',
     adresse: '',
@@ -470,6 +587,9 @@ export default {
       timer: null,
       statutSteps: STATUTS,
       cinScanFile: null,
+      transporteurs: [],
+      chauffeurs: [],
+      lieuxChargement: [],
       form: createEmptyForm(),
     };
   },
@@ -523,7 +643,11 @@ export default {
         id: c.id || null,
         _key: c.id ? `id-${c.id}` : `c-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
         numero_conteneur: c.numero_conteneur || '',
+        type_conteneur: c.type_conteneur || '',
         tare_conteneur: c.tare_conteneur || '',
+        vgm_methode: c.vgm_methode || '2',
+        poids_brut_marchandise: c.poids_brut_marchandise ?? '',
+        vgm_poids: c.vgm_poids ?? '',
         numero_plomb: c.numero_plomb || '',
         changement_plomb: !!c.changement_plomb,
         raison_changement_plomb: c.raison_changement_plomb || '',
@@ -532,7 +656,15 @@ export default {
         chauffeur: c.chauffeur || '',
         transporteur: c.transporteur || '',
         cin_chauffeur: c.cin_chauffeur || '',
+        telephone_chauffeur: c.telephone_chauffeur || '',
         cin_chauffeur_scan: c.cin_chauffeur_scan || '',
+        lieu_chargement: c.lieu_chargement || '',
+        arrivee_usine: sliceDateTime(c.arrivee_usine || c.created_at),
+        depart_usine: sliceDateTime(c.depart_usine),
+        ctrl_conteneur: !!c.ctrl_conteneur,
+        ctrl_plomb: !!c.ctrl_plomb,
+        ctrl_documents: !!c.ctrl_documents,
+        observations_controle: c.observations_controle || '',
         _cinScanFile: null,
       });
     },
@@ -612,8 +744,23 @@ export default {
       }
     },
     async loadLookups() {
-      const { data } = await axios.get('/api/commandes', { params: { per_page: 200 } });
+      const [{ data }, meta] = await Promise.all([
+        axios.get('/api/commandes', { params: { per_page: 200 } }),
+        axios.get('/api/livraisons/meta').catch(() => ({ data: {} })),
+      ]);
       this.commandes = data.data || data;
+      this.transporteurs = meta.data.transporteurs || [];
+      this.chauffeurs = meta.data.chauffeurs || [];
+      this.lieuxChargement = meta.data.lieux_chargement || [];
+    },
+    applyChauffeur(target) {
+      const nom = String(target.chauffeur || '').trim().toLowerCase();
+      if (!nom) return;
+      const found = this.chauffeurs.find(ch => String(ch.nom || '').trim().toLowerCase() === nom);
+      if (!found) return;
+      if (found.telephone) target.telephone_chauffeur = found.telephone;
+      if (found.cin) target.cin_chauffeur = found.cin;
+      if (found.immatriculation && !target.matricule_camion) target.matricule_camion = found.immatriculation;
     },
     openCreate() {
       this.form = this.emptyForm();
@@ -662,6 +809,8 @@ export default {
         numero_bl_swb: item.numero_bl_swb || '',
         compagnie_maritime: item.compagnie_maritime || '',
         navire: item.navire || '',
+        voyage: item.voyage || '',
+        terminal: item.terminal || '',
         port_depart: item.port_depart || '',
         port_arrivee: item.port_arrivee || '',
         eta: this.sliceDate(item.eta),
@@ -677,7 +826,11 @@ export default {
         chauffeur: item.chauffeur || '',
         transporteur: item.transporteur || '',
         cin_chauffeur: item.cin_chauffeur || '',
+        telephone_chauffeur: item.telephone_chauffeur || '',
         cin_chauffeur_scan: item.cin_chauffeur_scan || '',
+        lieu_chargement: item.lieu_chargement || '',
+        arrivee_usine: sliceDateTime(item.arrivee_usine || item.created_at),
+        depart_usine: sliceDateTime(item.depart_usine),
         statut: item.statut || 'a_preparer',
         observations: item.observations || '',
         adresse: item.adresse || '',
@@ -746,7 +899,11 @@ export default {
       const conteneurs = (this.form.conteneurs || []).map(c => ({
         id: c.id || null,
         numero_conteneur: c.numero_conteneur || null,
+        type_conteneur: c.type_conteneur || null,
         tare_conteneur: c.tare_conteneur || null,
+        vgm_methode: c.vgm_methode || '2',
+        poids_brut_marchandise: c.poids_brut_marchandise === '' ? null : c.poids_brut_marchandise,
+        vgm_poids: c.vgm_poids === '' ? null : c.vgm_poids,
         numero_plomb: c.numero_plomb || null,
         changement_plomb: !!c.changement_plomb,
         raison_changement_plomb: c.raison_changement_plomb || null,
@@ -755,6 +912,14 @@ export default {
         chauffeur: c.chauffeur || null,
         transporteur: c.transporteur || null,
         cin_chauffeur: c.cin_chauffeur || null,
+        telephone_chauffeur: c.telephone_chauffeur || null,
+        lieu_chargement: c.lieu_chargement || null,
+        arrivee_usine: c.arrivee_usine || null,
+        depart_usine: c.depart_usine || null,
+        ctrl_conteneur: !!c.ctrl_conteneur,
+        ctrl_plomb: !!c.ctrl_plomb,
+        ctrl_documents: !!c.ctrl_documents,
+        observations_controle: c.observations_controle || null,
       }));
 
       if (this.form.reservation_booking) {

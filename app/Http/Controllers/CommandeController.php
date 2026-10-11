@@ -171,8 +171,44 @@ class CommandeController extends Controller
             $export = $this->resolveOrCreateExportation($commande, $request->user()?->id);
             $this->syncExportFromCommandeLogistique($export, $commande, $request->input('conteneur_id'));
 
-            if ($request->type === 'solas_vgm') {
-                $this->ensureVgmReady($export, $commande, $request->input('conteneur_id'));
+            if (in_array($request->type, ['solas_vgm', 'fiche_chauffeur', 'attestation_conditionnement'], true)) {
+                $sheets = $service->sheetsForCommande($export, $commande);
+                $conteneurId = $request->input('conteneur_id');
+                if ($conteneurId) {
+                    $filtered = array_values(array_filter(
+                        $sheets,
+                        fn ($sheet) => (int) ($sheet['conteneur_id'] ?? 0) === (int) $conteneurId
+                    ));
+                    if ($filtered) {
+                        $sheets = $filtered;
+                    }
+                }
+
+                $docs = [];
+                foreach ($sheets as $sheet) {
+                    if ($request->type === 'solas_vgm' && $sheet['vgm'] !== null) {
+                        $export->update([
+                            'vgm_valide' => true,
+                            'vgm_poids' => $sheet['vgm'],
+                            'conteneur' => $sheet['numero_conteneur'] ?: $export->conteneur,
+                            'plomb_scelle' => $sheet['plomb'] ?: $export->plomb_scelle,
+                            'type_conteneur' => $sheet['type_conteneur'] ? $sheet['type_conteneur'] . "'" : $export->type_conteneur,
+                        ]);
+                    }
+                    $docs[] = $service->generate($export->fresh(), $request->type, $request->user()?->id, [
+                        'sheet' => $sheet,
+                        'reference' => $sheet['reference'],
+                    ]);
+                }
+
+                $first = $docs[0] ?? null;
+
+                return response()->json([
+                    'id' => $first?->id,
+                    'titre' => $first?->titre,
+                    'documents' => $docs,
+                    'count' => count($docs),
+                ], 201);
             }
 
             $doc = $service->generate($export->fresh(), $request->type, $request->user()?->id);
@@ -274,48 +310,18 @@ class CommandeController extends Controller
             'eta' => optional($liv->eta)->format('Y-m-d'),
             'conteneur' => $conteneur?->numero_conteneur ?: $liv->numero_conteneur,
             'plomb_scelle' => $conteneur?->numero_plomb ?: $liv->numero_plomb,
+            'voyage' => $liv->voyage,
             'transporteur' => $conteneur?->transporteur ?: $liv->transporteur,
             'chauffeur' => $conteneur?->chauffeur ?: $liv->chauffeur,
             'chauffeur_cin' => $conteneur?->cin_chauffeur ?: $liv->cin_chauffeur,
             'immatriculation' => $conteneur?->matricule_camion ?: $liv->matricule_camion,
+            'type_conteneur' => $conteneur?->type_conteneur ? $conteneur->type_conteneur . "'" : null,
             'mode_transport' => $commande->type === 'export' ? 'maritime' : $export->mode_transport,
         ], fn ($v) => $v !== null && $v !== '');
 
         if (!empty($updates)) {
             $export->update($updates);
         }
-    }
-
-    private function ensureVgmReady(Exportation $export, Commande $commande, $conteneurId = null): void
-    {
-        if ($export->vgm_valide) {
-            return;
-        }
-
-        $liv = $commande->livraisons->sortByDesc('id')->first();
-        $conteneur = null;
-        if ($liv && $conteneurId) {
-            $conteneur = $liv->conteneurs->firstWhere('id', (int) $conteneurId);
-        }
-        if ($liv && !$conteneur) {
-            $conteneur = $liv->conteneurs->sortBy('ordre')->first();
-        }
-
-        $tare = $conteneur?->tare_conteneur ?: $liv?->tare_conteneur;
-        $hasConteneur = filled($conteneur?->numero_conteneur ?: $liv?->numero_conteneur ?: $export->conteneur);
-        $poids = $export->vgm_poids;
-        if ((!$poids || (float) $poids <= 0) && is_numeric($tare)) {
-            $poids = (float) $tare;
-        }
-
-        if (!$hasConteneur && (!$poids || (float) $poids <= 0)) {
-            throw new \RuntimeException('VGM nécessite un N° de conteneur ou une tare/poids renseigné en logistique.');
-        }
-
-        $export->update([
-            'vgm_valide' => true,
-            'vgm_poids' => $poids ?: $export->vgm_poids ?: 0,
-        ]);
     }
 
     private function validateCommande(Request $request, bool $creating = true): array

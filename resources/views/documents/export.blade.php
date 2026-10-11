@@ -56,6 +56,20 @@
         .inv-bank th { background: #2d5a42; color: #fff; font-size: 8px; text-transform: uppercase; }
         .inv-bank td { font-size: 9px; font-weight: 600; }
         .inv-wrap { margin: 0; }
+        .doc-company { text-align: center; font-size: 13px; font-weight: 700; margin: 0 0 2px; text-transform: uppercase; }
+        .doc-title { text-align: center; font-size: 16px; font-weight: 700; margin: 0; letter-spacing: .06em; }
+        .doc-sub { text-align: center; font-size: 10px; letter-spacing: .08em; margin: 2px 0 12px; }
+        .sec { width: 100%; border-collapse: collapse; margin: 0 0 8px; }
+        .sec .sec-h { background: #1f4d3a; color: #fff; text-align: left; font-size: 11px; padding: 5px 8px; border: 1px solid #1f4d3a; }
+        .sec td { border: 1px solid #222; padding: 5px 8px; vertical-align: middle; }
+        .sec .lbl { width: 46%; }
+        .sec .val { font-weight: 700; }
+        .sec .muted { color: #555; font-size: 9px; font-weight: 400; }
+        .tick { display: inline-block; width: 11px; height: 11px; border: 1px solid #111; text-align: center; font-size: 8px; line-height: 11px; font-weight: 700; margin-right: 3px; }
+        .opt { display: inline-block; margin-right: 16px; }
+        .vgm-row td { background: #e7f0ea; font-weight: 700; }
+        .sign td { height: 78px; vertical-align: top; width: 50%; font-size: 10px; font-weight: 700; }
+        .note { margin-top: 8px; color: #666; font-size: 9px; }
         @@media print { body { margin: 10px; } }
     </style>
 </head>
@@ -65,118 +79,223 @@
         $expNom = $export->exp_nom_societe ?: $export->exp_nom ?: $export->exportateur?->nom_societe ?: $export->exportateur?->nom;
         $fmt = fn ($d) => $d ? (\Carbon\Carbon::parse($d)->format('d/m/Y')) : '—';
         $n = fn ($v) => number_format((float) $v, 3, ',', ' ');
+        $origine = $export->origine_marchandise ?: 'Maroc';
+        $destLabel = $export->destination
+            ?: trim(($export->port_destination ?: '') . ($export->pays ? ', ' . $export->pays : ''))
+            ?: '—';
     @endphp
 
-    <h1>Liste de colisage / Packing list</h1>
-    <div class="subtitle">
-        {{ $expNom ?: '—' }}
-        @if($expNom)
-            — Producteur &amp; Exportateur
-        @endif
-        · {{ $export->numero }}
-    </div>
-
-    <div class="parties">
-        <div>
-            <div class="box-head">Exportateur</div>
-            <div class="box-body">
-                <div class="box-row"><span class="label">Nom :</span> {{ $export->exp_nom ?: $export->exportateur?->nom ?: '—' }}</div>
-                <div class="box-row"><span class="label">Société :</span> {{ $export->exp_nom_societe ?: $export->exportateur?->nom_societe ?: $export->exp_nom ?: '—' }}</div>
-                <div class="box-row"><span class="label">Réf. Foodex :</span> {{ $export->exp_ref_foodex ?: $export->exportateur?->ref_foodex ?: '—' }}</div>
-                <div class="box-row"><span class="label">Adresse :</span> {{ $export->exp_adresse ?: $export->exportateur?->adresse ?: '—' }}</div>
-                <div class="box-row"><span class="label">Tél. :</span> {{ $export->exp_telephone ?: $export->exportateur?->telephone ?: '—' }}</div>
-                <div class="box-row"><span class="label">E-mail :</span> {{ $export->exp_email ?: $export->exportateur?->email ?: '—' }}</div>
-                <div class="box-row"><span class="label">Web :</span> {{ $export->exp_web ?: $export->exportateur?->web ?: '—' }}</div>
-            </div>
-        </div>
-        <div>
-            <div class="box-head">Destinataire</div>
-            <div class="box-body">
-                <div class="box-row"><span class="label">Nom :</span> {{ $export->dest_nom ?: $export->client?->nom ?: '—' }}</div>
-                <div class="box-row"><span class="label">Société :</span> {{ $export->dest_societe ?: $export->client?->nomination ?: $export->client?->nom ?: '—' }}</div>
-                <div class="box-row"><span class="label">Adresse :</span> {{ $export->dest_adresse ?: ($export->client?->adresse_livraison ?: $export->client?->adresse) ?: '—' }}</div>
-                <div class="box-row"><span class="label">N° TVA :</span> {{ $export->dest_tva ?: $export->client?->numero_tva ?: '—' }}</div>
-                <div class="box-row"><span class="label">EORI :</span> {{ $export->dest_eori ?: $export->client?->eori ?: '—' }}</div>
-                <div class="box-row"><span class="label">Contact :</span> {{ $export->dest_contact ?: $export->client?->contact_nom ?: '—' }}</div>
-            </div>
-        </div>
-    </div>
-
-    <div class="ship-grid">
-        <div class="ship-cell"><div class="label">Réf. client</div><div class="value">{{ $export->reference_commande_client ?: '—' }}</div></div>
-        <div class="ship-cell"><div class="label">N° Booking</div><div class="value">{{ $export->booking ?: '—' }}</div></div>
-        <div class="ship-cell"><div class="label">N° SWB / BL</div><div class="value">{{ $export->numero_swb_bl ?: '—' }}</div></div>
-        <div class="ship-cell"><div class="label">N° conteneur</div><div class="value">{{ $export->conteneur ?: '—' }}</div></div>
-        <div class="ship-cell"><div class="label">N° plomb</div><div class="value">{{ $export->plomb_scelle ?: '—' }}</div></div>
-    </div>
-    <div class="ship-grid">
-        <div class="ship-cell"><div class="label">Navire</div><div class="value">{{ $export->navire ?: '—' }}</div></div>
-        <div class="ship-cell"><div class="label">ETD</div><div class="value">{{ $fmt($export->etd) }}</div></div>
-        <div class="ship-cell"><div class="label">ETA</div><div class="value">{{ $fmt($export->eta) }}</div></div>
-        <div class="ship-cell"><div class="label">Port départ</div><div class="value">{{ $export->port_chargement ?: '—' }}</div></div>
-        <div class="ship-cell"><div class="label">Port arrivée</div><div class="value">{{ $export->port_destination ?: '—' }}</div></div>
-    </div>
-
-    <div class="weight-bar">
-        <div class="weight-cell"><div class="label">Poids brut</div><strong>{{ $n($export->total_poids_brut) }} kg</strong></div>
-        <div class="weight-cell"><div class="label">Poids net</div><strong>{{ $n($export->total_poids_net) }} kg</strong></div>
-        <div class="weight-cell"><div class="label">Poids net ég.</div><strong>{{ $n($export->total_poids_egoutte) }} kg</strong></div>
-        <div class="weight-cell"><div class="label">Total packages</div><strong>{{ $export->total_packages }}</strong></div>
-    </div>
-
-    <div class="section-title">Détail de la liste de colisage</div>
-    <table class="detail-table">
-        <thead>
+    <div class="inv-wrap">
+        <table class="inv" style="margin-bottom:0;border-bottom:none;">
             <tr>
-                <th>N° article</th>
-                <th>HS Code</th>
-                <th>Désignation</th>
-                <th>Calibre</th>
-                <th>N° de lot</th>
-                <th>Date prod.</th>
-                <th>Nb colis</th>
-                <th>Poids brut un.</th>
-                <th>Total brut</th>
-                <th>Poids net un.</th>
-                <th>Total net</th>
-                <th>Net ég. un.</th>
-                <th>Total net ég.</th>
+                <td style="width:58%;border-bottom:none;">
+                    <div class="inv-brand">{{ $expNom ?: '—' }}</div>
+                    <div class="inv-tagline">Producteur &amp; Exportateur d'olives de table et huile d'olive</div>
+                    <div class="inv-contact">
+                        {{ $export->exp_adresse ?: $export->exportateur?->adresse ?: '' }}
+                        @if($export->exp_telephone ?: $export->exportateur?->telephone)
+                            <br>Tél. : {{ $export->exp_telephone ?: $export->exportateur?->telephone }}
+                        @endif
+                        @if($export->exp_email ?: $export->exportateur?->email)
+                            <br>E-mail : {{ $export->exp_email ?: $export->exportateur?->email }}
+                        @endif
+                        @if($export->exp_web ?: $export->exportateur?->web)
+                            <br>Web : {{ $export->exp_web ?: $export->exportateur?->web }}
+                        @endif
+                    </div>
+                </td>
+                <td style="width:42%;border-bottom:none;vertical-align:middle;">
+                    <div class="inv-title">Liste de colisage</div>
+                    <div class="inv-title-en">Packing list</div>
+                </td>
             </tr>
-        </thead>
-        <tbody>
-            @forelse($export->lignes as $ligne)
-                <tr>
-                    <td>{{ $ligne->code_article }}</td>
-                    <td>{{ $ligne->hs_code }}</td>
-                    <td>{{ $ligne->designation }}</td>
-                    <td>{{ $ligne->calibre }}</td>
-                    <td>{{ $ligne->numero_lot }}</td>
-                    <td>{{ $fmt($ligne->date_production) }}</td>
-                    <td>{{ $ligne->nb_colis ?: $ligne->cartons }}</td>
-                    <td>{{ $n($ligne->poids_brut_unitaire) }}</td>
-                    <td>{{ $n($ligne->poids_brut) }}</td>
-                    <td>{{ $n($ligne->poids_net_unitaire) }}</td>
-                    <td>{{ $n($ligne->poids_net) }}</td>
-                    <td>{{ $n($ligne->poids_net_egoutte_unitaire) }}</td>
-                    <td>{{ $n($ligne->poids_egoutte) }}</td>
+        </table>
+
+        <table class="inv" style="margin-top:0;">
+            <thead>
+                <tr class="inv-head">
+                    <th style="width:50%;">Exportateur</th>
+                    <th style="width:50%;">Client / Destinataire</th>
                 </tr>
-            @empty
-                <tr><td colspan="13" style="text-align:center;color:#888;">Aucune ligne</td></tr>
-            @endforelse
-        </tbody>
-        <tfoot>
-            <tr class="tfoot">
-                <td colspan="6" style="text-align:right;">TOTAL</td>
-                <td>{{ $export->total_packages }}</td>
-                <td></td>
-                <td>{{ $n($export->total_poids_brut) }}</td>
-                <td></td>
-                <td>{{ $n($export->total_poids_net) }}</td>
-                <td></td>
-                <td>{{ $n($export->total_poids_egoutte) }}</td>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="inv-party">
+                        <strong>{{ $expNom ?: '—' }}</strong><br>
+                        {{ $export->exp_adresse ?: $export->exportateur?->adresse ?: '—' }}<br>
+                        @if($export->exp_telephone ?: $export->exportateur?->telephone)
+                            Tél. : {{ $export->exp_telephone ?: $export->exportateur?->telephone }}<br>
+                        @endif
+                        @if($export->exp_email ?: $export->exportateur?->email)
+                            E-mail : {{ $export->exp_email ?: $export->exportateur?->email }}<br>
+                        @endif
+                        @if($export->exp_web ?: $export->exportateur?->web)
+                            Web : {{ $export->exp_web ?: $export->exportateur?->web }}
+                        @endif
+                        @if($export->exp_ref_foodex ?: $export->exportateur?->ref_foodex)
+                            <br>Réf. Foodex : {{ $export->exp_ref_foodex ?: $export->exportateur?->ref_foodex }}
+                        @endif
+                    </td>
+                    <td class="inv-party">
+                        <strong>{{ $export->dest_societe ?: $export->dest_nom ?: $export->client?->nomination ?: $export->client?->nom ?: '—' }}</strong><br>
+                        {{ $export->dest_adresse ?: ($export->client?->adresse_livraison ?: $export->client?->adresse) ?: '—' }}<br>
+                        N° TVA : {{ $export->dest_tva ?: $export->client?->numero_tva ?: '—' }}<br>
+                        EORI : {{ $export->dest_eori ?: $export->client?->eori ?: '—' }}<br>
+                        Contact : {{ $export->dest_contact ?: $export->client?->contact_nom ?: '—' }}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <table class="inv" style="margin-top:0;border-top:none;">
+            <tr>
+                <td style="width:25%;">
+                    <div class="inv-label">N° liste de colisage</div>
+                    <div class="inv-val">{{ $export->numero_liste_colisage ?: $export->numero }}</div>
+                </td>
+                <td style="width:25%;">
+                    <div class="inv-label">Date</div>
+                    <div class="inv-val">{{ $fmt($export->date_creation) }}</div>
+                </td>
+                <td style="width:25%;">
+                    <div class="inv-label">Réf. client</div>
+                    <div class="inv-val">{{ $export->reference_commande_client ?: '—' }}</div>
+                </td>
+                <td style="width:25%;">
+                    <div class="inv-label">N° commande</div>
+                    <div class="inv-val">{{ $export->numero_commande ?: $export->commande?->numero ?: '—' }}</div>
+                </td>
             </tr>
-        </tfoot>
-    </table>
+            <tr>
+                <td>
+                    <div class="inv-label">Booking</div>
+                    <div class="inv-val">{{ $export->booking ?: '—' }}</div>
+                </td>
+                <td>
+                    <div class="inv-label">SWB / BL</div>
+                    <div class="inv-val">{{ $export->numero_swb_bl ?: '—' }}</div>
+                </td>
+                <td>
+                    <div class="inv-label">N° conteneur</div>
+                    <div class="inv-val">{{ $export->conteneur ?: '—' }}</div>
+                </td>
+                <td>
+                    <div class="inv-label">N° plomb</div>
+                    <div class="inv-val">{{ $export->plomb_scelle ?: '—' }}</div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <div class="inv-label">Navire</div>
+                    <div class="inv-val">{{ $export->navire ?: '—' }}</div>
+                </td>
+                <td>
+                    <div class="inv-label">ETD</div>
+                    <div class="inv-val">{{ $fmt($export->etd) }}</div>
+                </td>
+                <td>
+                    <div class="inv-label">ETA</div>
+                    <div class="inv-val">{{ $fmt($export->eta) }}</div>
+                </td>
+                <td>
+                    <div class="inv-label">Incoterm</div>
+                    <div class="inv-val">{{ trim(($export->incoterm ?: '') . ' ' . ($export->port_chargement ?: '')) ?: '—' }}</div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <div class="inv-label">Port de départ</div>
+                    <div class="inv-val">{{ $export->port_chargement ?: '—' }}</div>
+                </td>
+                <td>
+                    <div class="inv-label">Port d'arrivée</div>
+                    <div class="inv-val">{{ $export->port_destination ?: '—' }}</div>
+                </td>
+                <td>
+                    <div class="inv-label">Origine</div>
+                    <div class="inv-val">{{ $origine }}</div>
+                </td>
+                <td>
+                    <div class="inv-label">Destination</div>
+                    <div class="inv-val">{{ $destLabel }}</div>
+                </td>
+            </tr>
+        </table>
+
+        <table class="inv" style="margin-top:8px;">
+            <thead>
+                <tr class="inv-head">
+                    <th>Article</th>
+                    <th>HS</th>
+                    <th>Désignation</th>
+                    <th>Calibre</th>
+                    <th>Lot</th>
+                    <th>Date prod.</th>
+                    <th class="inv-center">Colis</th>
+                    <th class="inv-right">Brut un.</th>
+                    <th class="inv-right">Total brut</th>
+                    <th class="inv-right">Net un.</th>
+                    <th class="inv-right">Total net</th>
+                    <th class="inv-right">Net ég. un.</th>
+                    <th class="inv-right">Total net ég.</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($export->lignes as $ligne)
+                    <tr>
+                        <td>{{ $ligne->code_article }}</td>
+                        <td>{{ $ligne->hs_code }}</td>
+                        <td>{{ $ligne->designation }}</td>
+                        <td>{{ $ligne->calibre }}</td>
+                        <td>{{ $ligne->numero_lot }}</td>
+                        <td>{{ $fmt($ligne->date_production) }}</td>
+                        <td class="inv-center">{{ $ligne->nb_colis ?: $ligne->cartons }}</td>
+                        <td class="inv-right">{{ $n($ligne->poids_brut_unitaire) }}</td>
+                        <td class="inv-right">{{ $n($ligne->poids_brut) }}</td>
+                        <td class="inv-right">{{ $n($ligne->poids_net_unitaire) }}</td>
+                        <td class="inv-right">{{ $n($ligne->poids_net) }}</td>
+                        <td class="inv-right">{{ $n($ligne->poids_net_egoutte_unitaire) }}</td>
+                        <td class="inv-right">{{ $n($ligne->poids_egoutte) }}</td>
+                    </tr>
+                @empty
+                    <tr><td colspan="13" class="inv-center" style="color:#888;">Aucune ligne</td></tr>
+                @endforelse
+            </tbody>
+            <tfoot>
+                <tr class="inv-total-row">
+                    <td colspan="6" class="inv-right">TOTAL</td>
+                    <td class="inv-center">{{ $export->total_packages }}</td>
+                    <td></td>
+                    <td class="inv-right">{{ $n($export->total_poids_brut) }}</td>
+                    <td></td>
+                    <td class="inv-right">{{ $n($export->total_poids_net) }}</td>
+                    <td></td>
+                    <td class="inv-right">{{ $n($export->total_poids_egoutte) }}</td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <table class="inv" style="margin-top:0;border-top:none;">
+            <tr class="inv-grand">
+                <td style="width:25%;">
+                    <div style="font-size:8px;text-transform:uppercase;opacity:.85;">Poids brut</div>
+                    <div>{{ $n($export->total_poids_brut) }} kg</div>
+                </td>
+                <td style="width:25%;">
+                    <div style="font-size:8px;text-transform:uppercase;opacity:.85;">Poids net</div>
+                    <div>{{ $n($export->total_poids_net) }} kg</div>
+                </td>
+                <td style="width:25%;">
+                    <div style="font-size:8px;text-transform:uppercase;opacity:.85;">Poids net ég.</div>
+                    <div>{{ $n($export->total_poids_egoutte) }} kg</div>
+                </td>
+                <td style="width:25%;">
+                    <div style="font-size:8px;text-transform:uppercase;opacity:.85;">Total packages</div>
+                    <div>{{ $export->total_packages }}</div>
+                </td>
+            </tr>
+        </table>
+    </div>
 
 @elseif($type === 'facture_commerciale')
     @php
@@ -490,6 +609,12 @@
         </table>
     </div>
 
+@elseif($type === 'attestation_conditionnement')
+    @include('documents.partials.attestation_conditionnement', ['attestation' => $attestation ?? []])
+
+@elseif(in_array($type, ['solas_vgm', 'fiche_chauffeur']))
+    @include('documents.partials.vgm_fiche', ['export' => $export, 'sheet' => $sheet ?? [], 'type' => $type])
+
 @else
     <h1>{{ $meta['titre'] }}</h1>
     <div class="meta">
@@ -579,27 +704,7 @@
         </div>
     @endif
 
-    @if($type === 'fiche_chauffeur')
-        <h2 style="font-size:14px;margin:18px 0 8px;border-bottom:1px solid #ccc;padding-bottom:4px;">Chauffeur / Transport</h2>
-        <div class="grid">
-            <div><div class="label">Chauffeur</div><div class="value">{{ $export->chauffeur ?? '—' }}</div></div>
-            <div><div class="label">CIN</div><div class="value">{{ $export->chauffeur_cin ?? '—' }}</div></div>
-            <div><div class="label">Transporteur</div><div class="value">{{ $export->transporteur ?? '—' }}</div></div>
-            <div><div class="label">Immatriculation</div><div class="value">{{ $export->immatriculation ?? '—' }}</div></div>
-        </div>
-    @endif
-
-    @if($type === 'solas_vgm')
-        <h2 style="font-size:14px;margin:18px 0 8px;border-bottom:1px solid #ccc;padding-bottom:4px;">SOLAS / VGM</h2>
-        <div class="grid">
-            <div><div class="label">Conteneur</div><div class="value">{{ $export->conteneur }}</div></div>
-            <div><div class="label">Poids VGM</div><div class="value">{{ $export->vgm_poids }} kg</div></div>
-            <div><div class="label">Plomb</div><div class="value">{{ $export->plomb_scelle }}</div></div>
-            <div><div class="label">Booking / BL</div><div class="value">{{ $export->booking }} / {{ $export->numero_swb_bl }}</div></div>
-        </div>
-    @endif
-
-    @if($type === 'instructions_bl' || $type === 'fiche_booking')
+    @if($type === 'fiche_booking')
         <h2 style="font-size:14px;margin:18px 0 8px;border-bottom:1px solid #ccc;padding-bottom:4px;">Expédition</h2>
         <div class="grid">
             <div><div class="label">Shipper / Consignee</div><div class="value">{{ $export->exp_nom ?: config('app.name') }} / {{ $export->dest_nom ?: $export->client?->nom }}</div></div>

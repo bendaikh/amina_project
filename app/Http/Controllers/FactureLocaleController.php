@@ -7,6 +7,8 @@ use App\Models\BonLivraison;
 use App\Models\Client;
 use App\Models\Commande;
 use App\Models\FactureLocale;
+use App\Services\FinanceService;
+use App\Support\MontantEnLettres;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -52,6 +54,21 @@ class FactureLocaleController extends Controller
         $factureLocale->load(['client', 'commande', 'bonLivraison', 'lignes.article']);
 
         return response()->json($factureLocale);
+    }
+
+    public function downloadPdf(FactureLocale $factureLocale, FinanceService $finance)
+    {
+        $factureLocale->load(['client', 'commande', 'bonLivraison', 'lignes']);
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('documents.facture_locale', [
+            'facture' => $factureLocale,
+            'company' => $finance->company(),
+            'montantLettres' => MontantEnLettres::format((float) $factureLocale->total_ttc, (string) ($factureLocale->devise ?: 'MAD')),
+        ])->setPaper('a4', 'landscape');
+
+        $name = preg_replace('/[^A-Za-z0-9_\-]+/', '_', (string) $factureLocale->numero) ?: 'facture-locale';
+
+        return $pdf->download($name . '.pdf');
     }
 
     public function store(Request $request)

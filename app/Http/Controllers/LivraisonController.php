@@ -8,6 +8,7 @@ use App\Models\Livraison;
 use App\Models\LivraisonConteneur;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 
 class LivraisonController extends Controller
@@ -62,6 +63,10 @@ class LivraisonController extends Controller
                 'export' => 'Export',
                 'express' => 'Express',
             ],
+            'types_conteneur' => ['20', '40', '45'],
+            'transporteurs' => $this->distinctTransporteurs(),
+            'chauffeurs' => $this->knownChauffeurs(),
+            'lieux_chargement' => $this->distinctLieux(),
         ]);
     }
 
@@ -338,6 +343,7 @@ class LivraisonController extends Controller
             'transporteur' => 'nullable|string|max:150',
             'chauffeur' => 'nullable|string|max:100',
             'cin_chauffeur' => 'nullable|string|max:100',
+            'telephone_chauffeur' => 'nullable|string|max:50',
             'cin_chauffeur_scan' => 'nullable|string|max:255',
             'vehicule' => 'nullable|string|max:100',
             'matricule_camion' => 'nullable|string|max:100',
@@ -346,7 +352,9 @@ class LivraisonController extends Controller
             'numero_booking' => 'nullable|string|max:100',
             'numero_bl_swb' => 'nullable|string|max:100',
             'navire' => 'nullable|string|max:150',
+            'voyage' => 'nullable|string|max:100',
             'port_depart' => 'nullable|string|max:150',
+            'terminal' => 'nullable|string|max:150',
             'port_arrivee' => 'nullable|string|max:150',
             'eta' => 'nullable|date',
             'etd' => 'nullable|date',
@@ -357,6 +365,9 @@ class LivraisonController extends Controller
             'raison_changement_plomb' => 'nullable|string',
             'nouveau_plomb' => 'nullable|string|max:100',
             'adresse' => 'nullable|string',
+            'lieu_chargement' => 'nullable|string|max:255',
+            'arrivee_usine' => 'nullable|date',
+            'depart_usine' => 'nullable|date',
             'quantite_a_livrer' => 'nullable|numeric',
             'quantite_preparee' => 'nullable|numeric',
             'quantite_chargee' => 'nullable|numeric',
@@ -366,7 +377,11 @@ class LivraisonController extends Controller
             'conteneurs' => 'nullable|array',
             'conteneurs.*.id' => 'nullable|integer',
             'conteneurs.*.numero_conteneur' => 'nullable|string|max:100',
+            'conteneurs.*.type_conteneur' => 'nullable|in:20,40,45',
             'conteneurs.*.tare_conteneur' => 'nullable|string|max:100',
+            'conteneurs.*.vgm_methode' => 'nullable|in:1,2',
+            'conteneurs.*.poids_brut_marchandise' => 'nullable|numeric|min:0',
+            'conteneurs.*.vgm_poids' => 'nullable|numeric|min:0',
             'conteneurs.*.numero_plomb' => 'nullable|string|max:100',
             'conteneurs.*.changement_plomb' => 'nullable|boolean',
             'conteneurs.*.raison_changement_plomb' => 'nullable|string',
@@ -375,7 +390,15 @@ class LivraisonController extends Controller
             'conteneurs.*.chauffeur' => 'nullable|string|max:100',
             'conteneurs.*.transporteur' => 'nullable|string|max:150',
             'conteneurs.*.cin_chauffeur' => 'nullable|string|max:100',
+            'conteneurs.*.telephone_chauffeur' => 'nullable|string|max:50',
             'conteneurs.*.cin_chauffeur_scan' => 'nullable|string|max:255',
+            'conteneurs.*.lieu_chargement' => 'nullable|string|max:255',
+            'conteneurs.*.arrivee_usine' => 'nullable|date',
+            'conteneurs.*.depart_usine' => 'nullable|date',
+            'conteneurs.*.ctrl_conteneur' => 'nullable|boolean',
+            'conteneurs.*.ctrl_plomb' => 'nullable|boolean',
+            'conteneurs.*.ctrl_documents' => 'nullable|boolean',
+            'conteneurs.*.observations_controle' => 'nullable|string',
         ]);
 
         unset($data['conteneurs']);
@@ -399,10 +422,15 @@ class LivraisonController extends Controller
         }
 
         foreach ($conteneurs as $i => $c) {
-            if (!is_array($c) || !array_key_exists('changement_plomb', $c)) {
+            if (!is_array($c)) {
                 continue;
             }
-            $conteneurs[$i]['changement_plomb'] = filter_var($c['changement_plomb'], FILTER_VALIDATE_BOOLEAN);
+            foreach (['changement_plomb', 'ctrl_conteneur', 'ctrl_plomb', 'ctrl_documents'] as $boolField) {
+                if (!array_key_exists($boolField, $c)) {
+                    continue;
+                }
+                $conteneurs[$i][$boolField] = filter_var($c[$boolField], FILTER_VALIDATE_BOOLEAN);
+            }
         }
         $request->merge(['conteneurs' => $conteneurs]);
     }
@@ -417,11 +445,17 @@ class LivraisonController extends Controller
         return array_values(array_map(function ($c, $index) {
             $c = is_array($c) ? $c : [];
 
+            $methode = in_array((string) ($c['vgm_methode'] ?? ''), ['1', '2'], true) ? (string) $c['vgm_methode'] : '2';
+
             return [
                 'id' => isset($c['id']) ? (int) $c['id'] : null,
                 'ordre' => $index,
                 'numero_conteneur' => $c['numero_conteneur'] ?? null,
+                'type_conteneur' => $c['type_conteneur'] ?? null,
                 'tare_conteneur' => $c['tare_conteneur'] ?? null,
+                'vgm_methode' => $methode,
+                'poids_brut_marchandise' => $c['poids_brut_marchandise'] ?? null,
+                'vgm_poids' => $c['vgm_poids'] ?? null,
                 'numero_plomb' => $c['numero_plomb'] ?? null,
                 'changement_plomb' => !empty($c['changement_plomb']),
                 'raison_changement_plomb' => $c['raison_changement_plomb'] ?? null,
@@ -430,7 +464,15 @@ class LivraisonController extends Controller
                 'chauffeur' => $c['chauffeur'] ?? null,
                 'transporteur' => $c['transporteur'] ?? null,
                 'cin_chauffeur' => $c['cin_chauffeur'] ?? null,
+                'telephone_chauffeur' => $c['telephone_chauffeur'] ?? null,
                 'cin_chauffeur_scan' => $c['cin_chauffeur_scan'] ?? null,
+                'lieu_chargement' => $c['lieu_chargement'] ?? null,
+                'arrivee_usine' => $c['arrivee_usine'] ?? null,
+                'depart_usine' => $c['depart_usine'] ?? null,
+                'ctrl_conteneur' => !empty($c['ctrl_conteneur']),
+                'ctrl_plomb' => !empty($c['ctrl_plomb']),
+                'ctrl_documents' => !empty($c['ctrl_documents']),
+                'observations_controle' => $c['observations_controle'] ?? null,
             ];
         }, $conteneurs, array_keys($conteneurs)));
     }
@@ -456,7 +498,8 @@ class LivraisonController extends Controller
             'numero_conteneur', 'tare_conteneur', 'numero_plomb',
             'changement_plomb', 'raison_changement_plomb', 'nouveau_plomb',
             'matricule_camion', 'chauffeur', 'transporteur',
-            'cin_chauffeur', 'cin_chauffeur_scan',
+            'cin_chauffeur', 'telephone_chauffeur', 'cin_chauffeur_scan',
+            'lieu_chargement', 'arrivee_usine', 'depart_usine',
         ];
 
         foreach ($fields as $field) {
@@ -481,10 +524,17 @@ class LivraisonController extends Controller
             if ($id) {
                 $existing = $livraison->conteneurs()->where('id', $id)->first();
                 if ($existing) {
+                    if (empty($payload['arrivee_usine'])) {
+                        $payload['arrivee_usine'] = $existing->arrivee_usine ?: $existing->created_at;
+                    }
                     $existing->update($payload);
                     $keepIds[] = $existing->id;
                     continue;
                 }
+            }
+
+            if (empty($payload['arrivee_usine'])) {
+                $payload['arrivee_usine'] = now();
             }
 
             $created = $livraison->conteneurs()->create($payload);
@@ -500,5 +550,89 @@ class LivraisonController extends Controller
                 }
                 $c->delete();
             });
+    }
+
+    private function distinctTransporteurs(): array
+    {
+        if (!Schema::hasTable('livraison_conteneurs')) {
+            return [];
+        }
+
+        return LivraisonConteneur::query()
+            ->whereNotNull('transporteur')
+            ->where('transporteur', '!=', '')
+            ->orderBy('transporteur')
+            ->distinct()
+            ->pluck('transporteur')
+            ->merge(
+                Livraison::query()->whereNotNull('transporteur')->where('transporteur', '!=', '')->distinct()->pluck('transporteur')
+            )
+            ->map(fn ($name) => trim((string) $name))
+            ->filter()
+            ->unique(fn ($name) => mb_strtolower($name))
+            ->sort()
+            ->values()
+            ->all();
+    }
+
+    private function distinctLieux(): array
+    {
+        $values = collect();
+        if (Schema::hasTable('livraison_conteneurs') && Schema::hasColumn('livraison_conteneurs', 'lieu_chargement')) {
+            $values = $values->merge(
+                LivraisonConteneur::query()->whereNotNull('lieu_chargement')->where('lieu_chargement', '!=', '')->pluck('lieu_chargement')
+            );
+        }
+        if (Schema::hasColumn('livraisons', 'lieu_chargement')) {
+            $values = $values->merge(
+                Livraison::query()->whereNotNull('lieu_chargement')->where('lieu_chargement', '!=', '')->pluck('lieu_chargement')
+            );
+        }
+
+        return $values
+            ->map(fn ($name) => trim((string) $name))
+            ->filter()
+            ->unique(fn ($name) => mb_strtolower($name))
+            ->sort()
+            ->values()
+            ->all();
+    }
+
+    private function knownChauffeurs(): array
+    {
+        $rows = collect();
+        if (Schema::hasTable('livraison_conteneurs')) {
+            $columns = ['chauffeur', 'cin_chauffeur', 'matricule_camion'];
+            if (Schema::hasColumn('livraison_conteneurs', 'telephone_chauffeur')) {
+                $columns[] = 'telephone_chauffeur';
+            }
+            $rows = $rows->merge(LivraisonConteneur::query()->orderByDesc('id')->get($columns));
+        }
+        $rows = $rows->merge(Livraison::query()->orderByDesc('id')->get([
+            'chauffeur', 'cin_chauffeur', 'matricule_camion',
+        ]));
+
+        $byName = [];
+        foreach ($rows as $row) {
+            $nom = trim((string) $row->chauffeur);
+            if ($nom === '') {
+                continue;
+            }
+            $key = mb_strtolower($nom);
+            if (!isset($byName[$key])) {
+                $byName[$key] = [
+                    'nom' => $nom,
+                    'telephone' => $row->telephone_chauffeur ?? null,
+                    'cin' => $row->cin_chauffeur,
+                    'immatriculation' => $row->matricule_camion,
+                ];
+                continue;
+            }
+            $byName[$key]['telephone'] = $byName[$key]['telephone'] ?: ($row->telephone_chauffeur ?? null);
+            $byName[$key]['cin'] = $byName[$key]['cin'] ?: $row->cin_chauffeur;
+            $byName[$key]['immatriculation'] = $byName[$key]['immatriculation'] ?: $row->matricule_camion;
+        }
+
+        return array_values($byName);
     }
 }

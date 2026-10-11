@@ -379,25 +379,25 @@ const DOCUMENT_CARDS = [
   {
     type: 'solas_vgm',
     title: 'VGM',
-    description: 'Généré depuis le volet logistique + liste de colisage.',
+    description: 'Une fiche VGM par conteneur : type, plomb, booking, tare et poids de la liste de colisage.',
     button: 'Générer VGM',
   },
   {
     type: 'fiche_chauffeur',
-    title: 'Fiche Transporteur',
-    description: 'Chauffeur, chargement, BL, marchandises et poids repris automatiquement.',
+    title: 'Fiche chauffeur',
+    description: 'Une fiche par conteneur : transporteur, chauffeur, itinéraire et contrôle avant départ.',
     button: 'Générer fiche',
   },
   {
     type: 'attestation_conditionnement',
     title: 'Attestation de conditionnement',
-    description: 'Tableau automatique de la liste de colisage du conteneur.',
+    description: 'Une attestation par conteneur, reprise de la liste de colisage : produits, lots, emballage, plomb et poids net.',
     button: 'Générer attestation',
   },
   {
     type: 'instructions_bl',
     title: 'Instructions de BL',
-    description: 'Les champs seront préparés automatiquement. Le modèle Excel sera appliqué dès réception de votre fichier.',
+    description: 'Connaissement : shipper, destinataire, transitaire, booking, conteneurs, marchandises regroupées par code HS et conditionnement.',
     button: 'Générer instructions BL',
   },
 ];
@@ -497,12 +497,19 @@ export default {
         transport: `${transporteur} / ${matricule}`,
         statutLabel: ui.label,
         badgeClass: ui.class,
-        typeLabel: "40' HC",
+        typeLabel: this.formatTypeConteneur(c.type_conteneur),
         capacite: 28,
         palettesChargees: 0,
         poidsEstime: Number.isFinite(tare) && tare > 0 ? Math.round(tare).toLocaleString('fr-FR') : '0',
         articlesCount: 0,
       };
+    },
+    formatTypeConteneur(value) {
+      const raw = String(value || '');
+      if (raw.includes('45')) return "45'";
+      if (raw.includes('20')) return "20'";
+      if (raw.includes('40')) return "40'";
+      return 'Type non renseigné';
     },
     articleLabel(id) {
       const a = this.articles.find(x => x.id === id);
@@ -720,16 +727,15 @@ export default {
       this.error = '';
       this.message = '';
       try {
-        const first = this.conteneurCards[0];
-        const { data } = await axios.post(`/api/commandes/${this.commande.id}/documents`, {
-          type,
-          conteneur_id: first?.conteneur_id || null,
-        });
-        this.message = `${data.titre || 'Document'} généré`;
+        const { data } = await axios.post(`/api/commandes/${this.commande.id}/documents`, { type });
+        const docs = Array.isArray(data.documents) && data.documents.length ? data.documents : [data];
+        this.message = docs.length > 1
+          ? `${docs.length} documents générés — un par conteneur`
+          : `${docs[0]?.titre || 'Document'} généré`;
         await this.loadDocuments();
-        if (data.id) {
-          window.open(`/api/documents/${data.id}/download`, '_blank');
-        }
+        docs.forEach((doc) => {
+          if (doc?.id) window.open(`/api/documents/${doc.id}/download`, '_blank');
+        });
       } catch (e) {
         this.error = e.response?.data?.message || 'Erreur génération document';
       } finally {

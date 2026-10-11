@@ -224,6 +224,50 @@
                       class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                     ></textarea>
                   </div>
+                  <div class="grid grid-cols-2 gap-3">
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">Ville</label>
+                      <input v-model="form.ville" type="text" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500" />
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">Pays</label>
+                      <input v-model="form.pays" type="text" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500" />
+                    </div>
+                  </div>
+                  <div class="grid grid-cols-2 gap-3">
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">Forme juridique</label>
+                      <input v-model="form.forme_juridique" type="text" placeholder="SARL" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500" />
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">Capital</label>
+                      <input v-model="form.capital" type="text" placeholder="100 000" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500" />
+                    </div>
+                  </div>
+                  <div class="grid grid-cols-2 gap-3">
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">ICE</label>
+                      <input v-model="form.ice" type="text" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500" />
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">IF</label>
+                      <input v-model="form.identifiant_fiscal" type="text" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500" />
+                    </div>
+                  </div>
+                  <div class="grid grid-cols-2 gap-3">
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">RC</label>
+                      <input v-model="form.rc" type="text" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500" />
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">Patente</label>
+                      <input v-model="form.patente" type="text" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500" />
+                    </div>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Agrément EACCE N°</label>
+                    <input v-model="form.agrement_eacce" type="text" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500" />
+                  </div>
                   <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Tél.</label>
                     <input
@@ -365,6 +409,15 @@ export default {
         nom_societe: '',
         ref_foodex: '',
         adresse: '',
+        ville: '',
+        pays: '',
+        forme_juridique: '',
+        capital: '',
+        ice: '',
+        identifiant_fiscal: '',
+        rc: '',
+        patente: '',
+        agrement_eacce: '',
         telephone: '',
         email: '',
         web: '',
@@ -419,6 +472,15 @@ export default {
           nom_societe: item.nom_societe || '',
           ref_foodex: item.ref_foodex || '',
           adresse: item.adresse || '',
+          ville: item.ville || '',
+          pays: item.pays || '',
+          forme_juridique: item.forme_juridique || '',
+          capital: item.capital || '',
+          ice: item.ice || '',
+          identifiant_fiscal: item.identifiant_fiscal || '',
+          rc: item.rc || '',
+          patente: item.patente || '',
+          agrement_eacce: item.agrement_eacce || '',
           telephone: item.telephone || '',
           email: item.email || '',
           web: item.web || '',

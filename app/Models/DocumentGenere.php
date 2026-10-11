@@ -10,7 +10,7 @@ class DocumentGenere extends Model
     protected $table = 'documents_generes';
 
     protected $fillable = [
-        'exportation_id', 'dossier_emballage_id', 'type', 'titre', 'version',
+        'exportation_id', 'dossier_emballage_id', 'type', 'reference', 'titre', 'version',
         'chemin', 'categorie', 'generated_by', 'generated_at',
     ];
 

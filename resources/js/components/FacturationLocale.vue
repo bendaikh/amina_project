@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen p-4 md:p-6 lg:p-8">
+  <div class="min-h-screen p-4 md:p-6 lg:p-8 no-print">
     <div class="max-w-7xl mx-auto">
       <div class="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
@@ -64,13 +64,42 @@
               <td class="py-3 px-4">
                 <span :class="badgeClass(item.statut)" class="px-2 py-1 rounded text-xs font-medium">{{ labelStatut(item.statut) }}</span>
               </td>
-              <td class="py-3 px-4 text-right">
-                <button @click="openDetail(item)" class="text-teal-600 hover:underline font-medium">Ouvrir</button>
+              <td class="py-3 px-4 text-right whitespace-nowrap">
+                <div class="inline-flex items-center gap-1">
+                  <button
+                    type="button"
+                    title="Exporter en PDF"
+                    :disabled="downloadingId === item.id"
+                    @click="downloadPdf(item)"
+                    class="p-2 rounded-lg text-sky-700 hover:bg-sky-50 transition-colors disabled:opacity-50"
+                  >
+                    <svg v-if="downloadingId !== item.id" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    <svg v-else class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    title="Ouvrir"
+                    @click="openDetail(item)"
+                    class="p-2 rounded-lg text-teal-600 hover:bg-teal-50 transition-colors"
+                  >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  </button>
+                </div>
               </td>
             </tr>
           </tbody>
         </table>
       </div>
+
+      <p v-if="actionError" class="mt-3 text-sm text-red-600">{{ actionError }}</p>
 
       <!-- Create from BL -->
       <div v-if="showFromBl" class="app-modal-overlay">
@@ -222,15 +251,199 @@
             <p v-if="error" class="text-red-600 text-sm mt-3">{{ error }}</p>
             <p v-if="message" class="text-teal-700 text-sm mt-3">{{ message }}</p>
           </div>
-          <div class="app-modal__footer">
-            <button type="button" @click="closeDetail" class="px-4 py-2 border border-gray-300 rounded-lg bg-white">Fermer</button>
-            <button type="button" @click="save" :disabled="saving" class="px-5 py-2 bg-teal-600 text-white rounded-lg disabled:opacity-50">
-              {{ saving ? 'Enregistrement…' : 'Enregistrer' }}
+          <div class="app-modal__footer app-modal__footer--between">
+            <button type="button" @click="printFacture" :disabled="!form.id" class="px-4 py-2 border border-gray-300 rounded-lg bg-white inline-flex items-center gap-2 disabled:opacity-50">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+              </svg>
+              Imprimer
             </button>
+            <div class="flex gap-3">
+              <button type="button" @click="closeDetail" class="px-4 py-2 border border-gray-300 rounded-lg bg-white">Fermer</button>
+              <button type="button" @click="save" :disabled="saving" class="px-5 py-2 bg-teal-600 text-white rounded-lg disabled:opacity-50">
+                {{ saving ? 'Enregistrement…' : 'Enregistrer' }}
+              </button>
+            </div>
           </div>
         </div>
       </div>
     </div>
+  </div>
+
+  <div v-if="form" class="facture-print">
+    <table class="inv">
+      <tr>
+        <td style="width:58%;border-bottom:none;">
+          <div class="inv-brand">{{ societeNom }}</div>
+          <div class="inv-tagline">Facture de vente locale</div>
+          <div class="inv-contact">
+            <template v-if="societe?.adresse">{{ societe.adresse }}<br></template>
+            <template v-if="societe?.telephone">Tél. : {{ societe.telephone }}<br></template>
+            <template v-if="societe?.email">E-mail : {{ societe.email }}<br></template>
+            <template v-if="societe?.web">Web : {{ societe.web }}</template>
+          </div>
+        </td>
+        <td style="width:42%;border-bottom:none;vertical-align:middle;">
+          <div class="inv-title">Facture</div>
+          <div class="inv-title-en">{{ form.numero || 'Brouillon' }}</div>
+        </td>
+      </tr>
+    </table>
+
+    <table class="inv">
+      <thead>
+        <tr class="inv-head">
+          <th style="width:50%;">Émetteur</th>
+          <th style="width:50%;">Client</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="inv-party">
+            <strong>{{ societeNom }}</strong><br>
+            {{ societe?.adresse || '—' }}<br>
+            <template v-if="societe?.telephone">Tél. : {{ societe.telephone }}<br></template>
+            <template v-if="societe?.email">E-mail : {{ societe.email }}</template>
+          </td>
+          <td class="inv-party">
+            <strong>{{ clientFacture.nomination || clientFacture.nom || '—' }}</strong><br>
+            {{ clientAdresse }}<br>
+            <template v-if="clientFacture.ice_cin">ICE : {{ clientFacture.ice_cin }}<br></template>
+            <template v-if="clientFacture.numero_tva">N° TVA : {{ clientFacture.numero_tva }}<br></template>
+            <template v-if="clientFacture.telephone">Tél. : {{ clientFacture.telephone }}</template>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <table class="inv" style="border-top:none;">
+      <tr>
+        <td style="width:25%;">
+          <div class="inv-label">N° facture</div>
+          <div class="inv-val">{{ form.numero || '—' }}</div>
+        </td>
+        <td style="width:25%;">
+          <div class="inv-label">Date</div>
+          <div class="inv-val">{{ formatDateFr(form.date_facture) }}</div>
+        </td>
+        <td style="width:25%;">
+          <div class="inv-label">Échéance</div>
+          <div class="inv-val">{{ formatDateFr(form.echeance) }}</div>
+        </td>
+        <td style="width:25%;">
+          <div class="inv-label">Devise</div>
+          <div class="inv-val">{{ form.devise || 'MAD' }}</div>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <div class="inv-label">Réf. client</div>
+          <div class="inv-val">{{ form.reference_client || '—' }}</div>
+        </td>
+        <td>
+          <div class="inv-label">N° commande</div>
+          <div class="inv-val">{{ form.numero_commande || '—' }}</div>
+        </td>
+        <td>
+          <div class="inv-label">N° BL</div>
+          <div class="inv-val">{{ form.numero_bl || '—' }}</div>
+        </td>
+        <td>
+          <div class="inv-label">Paiement</div>
+          <div class="inv-val">{{ form.mode_paiement || form.conditions_paiement || '—' }}</div>
+        </td>
+      </tr>
+    </table>
+
+    <table class="inv" style="margin-top:8px;">
+      <thead>
+        <tr class="inv-head">
+          <th>Réf.</th>
+          <th>Désignation</th>
+          <th>Calibre</th>
+          <th>Emballage</th>
+          <th>Lot</th>
+          <th class="inv-right">Qté</th>
+          <th class="inv-right">PU HT</th>
+          <th class="inv-center">TVA</th>
+          <th class="inv-right">Montant HT</th>
+          <th class="inv-right">Montant TTC</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="(ligne, idx) in form.lignes" :key="'pf-'+idx">
+          <td>{{ ligne.ref_article || '—' }}</td>
+          <td>{{ ligne.designation || '—' }}</td>
+          <td>{{ ligne.calibre || '—' }}</td>
+          <td>{{ ligne.emballage || '—' }}</td>
+          <td>{{ ligne.numero_lot || '—' }}</td>
+          <td class="inv-right">{{ formatQty(ligne.quantite) }} {{ ligne.unite || '' }}</td>
+          <td class="inv-money">{{ formatMoney(ligne.prix_unitaire) }}</td>
+          <td class="inv-center">{{ ligne.tva_taux }} %</td>
+          <td class="inv-money">{{ formatMoney(ligne.montant_ht) }}</td>
+          <td class="inv-money">{{ formatMoney(ligne.montant_ttc) }}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <table class="inv" style="margin-top:0;border-top:none;width:48%;margin-left:auto;">
+      <tr class="inv-total-row">
+        <td>Total HT</td>
+        <td class="inv-money" style="width:40%;">{{ formatMoney(totals.ht) }} {{ form.devise }}</td>
+      </tr>
+      <tr>
+        <td>Total TVA</td>
+        <td class="inv-money">{{ formatMoney(totals.tva) }} {{ form.devise }}</td>
+      </tr>
+      <tr class="inv-grand">
+        <td>Total TTC</td>
+        <td class="inv-money">{{ formatMoney(totals.ttc) }} {{ form.devise }}</td>
+      </tr>
+    </table>
+
+    <table class="inv" style="margin-top:10px;">
+      <thead>
+        <tr class="inv-head">
+          <th colspan="2">Conditions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="inv-terms-label">Paiement</td>
+          <td>{{ form.conditions_paiement || '—' }}</td>
+        </tr>
+        <tr>
+          <td class="inv-terms-label">Mode</td>
+          <td>{{ form.mode_paiement || '—' }}</td>
+        </tr>
+        <tr v-if="form.observations">
+          <td class="inv-terms-label">Observations</td>
+          <td>{{ form.observations }}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <table v-if="societe?.banque || societe?.iban || societe?.rib" class="inv" style="margin-top:10px;">
+      <thead>
+        <tr class="inv-head">
+          <th colspan="4" style="text-align:left;">Coordonnées bancaires</th>
+        </tr>
+        <tr class="inv-head">
+          <th style="width:28%;">Banque</th>
+          <th style="width:22%;">Agence</th>
+          <th style="width:32%;">N° de compte</th>
+          <th style="width:18%;">SWIFT / BIC</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>{{ societe.banque || '—' }}</td>
+          <td>{{ societe.agence || '—' }}</td>
+          <td>{{ societe.iban || societe.rib || '—' }}</td>
+          <td>{{ societe.swift || '—' }}</td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 </template>
 
@@ -273,9 +486,25 @@ export default {
       blForm: { bon_livraison_id: null },
       error: '',
       message: '',
+      actionError: '',
+      downloadingId: null,
+      societe: null,
     };
   },
   computed: {
+    societeNom() {
+      return this.societe?.nom_societe || this.societe?.nom || '—';
+    },
+    clientFacture() {
+      if (!this.form) return {};
+      if (this.form.client) return this.form.client;
+      return this.clients.find(c => c.id === this.form.client_id) || {};
+    },
+    clientAdresse() {
+      const c = this.clientFacture;
+      const parts = [c.adresse_livraison || c.adresse, c.ville, c.pays].filter(Boolean);
+      return parts.join(', ') || '—';
+    },
     totals() {
       const lignes = this.form?.lignes || [];
       return {
@@ -288,6 +517,7 @@ export default {
   mounted() {
     this.load();
     this.loadClients();
+    this.loadSociete();
     if (this.$route.query.open) {
       this.openById(Number(this.$route.query.open));
     }
@@ -306,6 +536,14 @@ export default {
     },
     formatDate(d) {
       return d ? String(d).slice(0, 10) : '—';
+    },
+    formatDateFr(d) {
+      if (!d) return '—';
+      const [y, m, day] = String(d).slice(0, 10).split('-');
+      return day && m && y ? `${day}/${m}/${y}` : String(d).slice(0, 10);
+    },
+    formatQty(v) {
+      return Number(v || 0).toLocaleString('fr-FR', { maximumFractionDigits: 3 });
     },
     formatMoney(v) {
       return Number(v || 0).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -338,6 +576,53 @@ export default {
     async loadClients() {
       const { data } = await axios.get('/api/clients', { params: { per_page: 500, statut: 'client' } });
       this.clients = data.data || data;
+    },
+    async loadSociete() {
+      try {
+        const { data } = await axios.get('/api/exportateurs');
+        const list = data.data || data || [];
+        this.societe = list.find(e => e.est_defaut) || list[0] || null;
+      } catch {
+        this.societe = null;
+      }
+    },
+    printFacture() {
+      if (!this.form?.id) return;
+      this.$nextTick(() => window.print());
+    },
+    async downloadPdf(item) {
+      this.downloadingId = item.id;
+      this.actionError = '';
+      try {
+        const filename = `Facture_${item.numero || item.id}.pdf`.replace(/[^\w.\-]+/g, '_');
+        const { data } = await axios.get(`/api/factures-locales/${item.id}/pdf`, {
+          responseType: 'blob',
+        });
+        const url = window.URL.createObjectURL(new Blob([data], { type: 'application/pdf' }));
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(url);
+      } catch (e) {
+        this.actionError = await this.readError(e, 'Impossible d\'exporter la facture');
+      } finally {
+        this.downloadingId = null;
+      }
+    },
+    async readError(e, fallback) {
+      const data = e.response?.data;
+      if (data instanceof Blob) {
+        try {
+          const json = JSON.parse(await data.text());
+          return json.message || fallback;
+        } catch {
+          return fallback;
+        }
+      }
+      return data?.message || fallback;
     },
     emptyForm() {
       return {
@@ -457,3 +742,126 @@ export default {
   },
 };
 </script>
+
+<style>
+.facture-print {
+  display: none;
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  .facture-print,
+  .facture-print * {
+    visibility: visible;
+  }
+
+  .facture-print {
+    display: block !important;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    color: #111;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 11px;
+    padding: 8px;
+  }
+
+  .facture-print .inv {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .facture-print .inv th,
+  .facture-print .inv td {
+    border: 1px solid #222;
+    padding: 4px 6px;
+    vertical-align: top;
+    font-size: 9px;
+  }
+
+  .facture-print .inv-head th {
+    background: #2d5a42;
+    color: #fff;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 9px;
+  }
+
+  .facture-print .inv-label {
+    color: #555;
+    font-size: 8px;
+    text-transform: uppercase;
+  }
+
+  .facture-print .inv-val {
+    font-weight: 600;
+    font-size: 10px;
+  }
+
+  .facture-print .inv-brand {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1a3d2b;
+    margin: 0;
+  }
+
+  .facture-print .inv-tagline {
+    font-size: 8px;
+    color: #555;
+    margin: 2px 0 6px;
+  }
+
+  .facture-print .inv-contact,
+  .facture-print .inv-party {
+    font-size: 9px;
+    line-height: 1.45;
+  }
+
+  .facture-print .inv-title {
+    font-size: 18px;
+    font-weight: 700;
+    text-align: right;
+    text-transform: uppercase;
+    margin: 0;
+  }
+
+  .facture-print .inv-title-en {
+    font-size: 11px;
+    text-align: right;
+    color: #555;
+    margin: 2px 0 0;
+  }
+
+  .facture-print .inv-money {
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .facture-print .inv-center { text-align: center; }
+  .facture-print .inv-right { text-align: right; }
+
+  .facture-print .inv-total-row td {
+    font-weight: 700;
+    background: #f3f4f6;
+  }
+
+  .facture-print .inv-grand td {
+    font-weight: 700;
+    background: #2d5a42;
+    color: #fff;
+    font-size: 11px;
+  }
+
+  .facture-print .inv-terms-label {
+    width: 22%;
+    font-weight: 700;
+    background: #f0f4f1;
+    text-transform: uppercase;
+    font-size: 8px;
+  }
+}
+</style>

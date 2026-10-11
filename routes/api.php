@@ -207,6 +207,7 @@ Route::prefix('bons-livraison')->group(function () {
     Route::get('/', [BonLivraisonController::class, 'index']);
     Route::post('/', [BonLivraisonController::class, 'store']);
     Route::post('/from-commande/{commande}', [BonLivraisonController::class, 'fromCommande']);
+    Route::get('/{bonLivraison}/pdf', [BonLivraisonController::class, 'downloadPdf']);
     Route::get('/{bonLivraison}', [BonLivraisonController::class, 'show']);
     Route::put('/{bonLivraison}', [BonLivraisonController::class, 'update']);
     Route::delete('/{bonLivraison}', [BonLivraisonController::class, 'destroy']);
@@ -219,6 +220,7 @@ Route::prefix('factures-locales')->group(function () {
     Route::get('/', [FactureLocaleController::class, 'index']);
     Route::post('/', [FactureLocaleController::class, 'store']);
     Route::post('/from-bl/{bonLivraison}', [FactureLocaleController::class, 'fromBonLivraison']);
+    Route::get('/{factureLocale}/pdf', [FactureLocaleController::class, 'downloadPdf']);
     Route::get('/{factureLocale}', [FactureLocaleController::class, 'show']);
     Route::put('/{factureLocale}', [FactureLocaleController::class, 'update']);
     Route::delete('/{factureLocale}', [FactureLocaleController::class, 'destroy']);

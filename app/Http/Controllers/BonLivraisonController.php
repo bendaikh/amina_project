@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\AuditLog;
 use App\Models\BonLivraison;
 use App\Models\Commande;
+use App\Services\FinanceService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -48,6 +49,20 @@ class BonLivraisonController extends Controller
         $bonLivraison->load(['client', 'commande.lignes.article', 'lignes.article', 'factureLocale']);
 
         return response()->json($bonLivraison);
+    }
+
+    public function downloadPdf(BonLivraison $bonLivraison, FinanceService $finance)
+    {
+        $bonLivraison->load(['client', 'commande', 'lignes']);
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('documents.bon_livraison', [
+            'bl' => $bonLivraison,
+            'company' => $finance->company(),
+        ])->setPaper('a4', 'landscape');
+
+        $name = preg_replace('/[^A-Za-z0-9_\-]+/', '_', (string) $bonLivraison->numero) ?: 'bon-de-livraison';
+
+        return $pdf->download($name . '.pdf');
     }
 
     /**

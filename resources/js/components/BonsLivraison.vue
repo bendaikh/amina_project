@@ -77,6 +77,21 @@
                   </button>
                   <button
                     type="button"
+                    title="Exporter en PDF"
+                    :disabled="downloadingId === item.id"
+                    @click="downloadPdf(item)"
+                    class="p-2 rounded-lg text-sky-700 hover:bg-sky-50 transition-colors disabled:opacity-50"
+                  >
+                    <svg v-if="downloadingId !== item.id" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    <svg v-else class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
                     title="Ouvrir"
                     @click="openDetail(item)"
                     class="p-2 rounded-lg text-teal-600 hover:bg-teal-50 transition-colors"
@@ -92,6 +107,8 @@
           </tbody>
         </table>
       </div>
+
+      <p v-if="actionError" class="mt-3 text-sm text-red-600">{{ actionError }}</p>
 
       <!-- Create from commande -->
       <div v-if="showCreate" class="app-modal-overlay">
@@ -309,6 +326,8 @@ export default {
       loading: false,
       saving: false,
       convertingId: null,
+      downloadingId: null,
+      actionError: '',
       search: '',
       statut: '',
       timer: null,
@@ -467,6 +486,40 @@ export default {
     },
     printBl() {
       window.print();
+    },
+    async downloadPdf(item) {
+      this.downloadingId = item.id;
+      this.actionError = '';
+      try {
+        const filename = `Bon_de_livraison_${item.numero || item.id}.pdf`.replace(/[^\w.\-]+/g, '_');
+        const { data } = await axios.get(`/api/bons-livraison/${item.id}/pdf`, {
+          responseType: 'blob',
+        });
+        const url = window.URL.createObjectURL(new Blob([data], { type: 'application/pdf' }));
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(url);
+      } catch (e) {
+        this.actionError = await this.readError(e, 'Impossible d\'exporter le bon de livraison');
+      } finally {
+        this.downloadingId = null;
+      }
+    },
+    async readError(e, fallback) {
+      const data = e.response?.data;
+      if (data instanceof Blob) {
+        try {
+          const json = JSON.parse(await data.text());
+          return json.message || fallback;
+        } catch {
+          return fallback;
+        }
+      }
+      return data?.message || fallback;
     },
     async convertirEnFacture(item) {
       if (item.facture_locale?.id) {
