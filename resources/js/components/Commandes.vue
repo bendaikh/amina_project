@@ -78,55 +78,40 @@
               <td class="py-3 px-4">{{ formatDate(item.date_souhaitee) }}</td>
               <td class="py-3 px-4 font-medium">{{ formatMoney(item.total_ttc) }} {{ item.devise }}</td>
               <td class="py-3 px-4 text-right whitespace-nowrap">
-                <div class="inline-flex items-center gap-1">
-                  <button
-                    @click="openAddLignes(item)"
-                    type="button"
-                    title="Ajouter lignes"
-                    class="p-2 rounded-lg text-amber-600 hover:bg-amber-50 transition-colors"
-                  >
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                    </svg>
-                  </button>
-                  <button
-                    @click="transformerEnBl(item)"
-                    type="button"
-                    title="Transformer en BL"
-                    :disabled="transformingId === item.id || convertingColisageId === item.id"
-                    class="p-2 rounded-lg text-indigo-600 hover:bg-indigo-50 transition-colors disabled:opacity-50"
-                  >
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                  </button>
-                  <button
-                    @click="transformerEnColisage(item)"
-                    type="button"
-                    title="Transformer en liste de colisage"
-                    :disabled="transformingId === item.id || convertingColisageId === item.id"
-                    class="p-2 rounded-lg text-violet-600 hover:bg-violet-50 transition-colors disabled:opacity-50"
-                  >
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                    </svg>
-                  </button>
-                  <router-link
-                    :to="`/ventes/commandes/${item.id}`"
-                    title="Ouvrir"
-                    class="p-2 rounded-lg text-teal-600 hover:bg-teal-50 transition-colors inline-flex"
-                  >
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                  </router-link>
-                </div>
+                <button type="button" title="Actions" @click.stop="toggleMenu(item, $event)" class="p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors">
+                  <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z" /></svg>
+                </button>
               </td>
             </tr>
           </tbody>
         </table>
       </div>
+      <teleport to="body">
+        <div v-if="menu.item" class="fixed inset-0 z-[60]" @click="closeMenu" @wheel="closeMenu"></div>
+        <div v-if="menu.item" class="fixed z-[61] w-64 bg-white border border-gray-200 rounded-lg shadow-lg py-1 text-sm text-gray-700" :style="{ top: menu.top + 'px', left: menu.left + 'px' }">
+          <button type="button" @click="runMenu((it) => $router.push(`/ventes/commandes/${it.id}`))" class="w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-gray-50 disabled:opacity-50 text-teal-700">
+            <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+            <span>Ouvrir</span>
+          </button>
+          <button type="button" @click="runMenu((it) => openAddLignes(it))" class="w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-gray-50 disabled:opacity-50 text-amber-700">
+            <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+            <span>Ajouter des lignes</span>
+          </button>
+          <button type="button" @click="runMenu((it) => transformerEnBl(it))" class="w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-gray-50 disabled:opacity-50 text-indigo-700">
+            <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+            <span>Transformer en BL</span>
+          </button>
+          <button type="button" @click="runMenu((it) => transformerEnColisage(it))" class="w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-gray-50 disabled:opacity-50 text-violet-700">
+            <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
+            <span>Transformer en liste de colisage</span>
+          </button>
+          <div class="border-t border-gray-100 my-1"></div>
+          <button type="button" @click="runMenu((it) => supprimerCommande(it))" class="w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-gray-50 disabled:opacity-50 text-red-600">
+            <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+            <span>Supprimer</span>
+          </button>
+        </div>
+      </teleport>
 
       <!-- Create modal -->
       <div v-if="showModal" class="app-modal-overlay">
@@ -692,6 +677,7 @@ export default {
   name: 'Commandes',
   data() {
     return {
+      menu: { item: null, top: 0, left: 0 },
       items: [],
       clients: [],
       articles: [],
@@ -732,6 +718,31 @@ export default {
     this.loadLookups();
   },
   methods: {
+    toggleMenu(item, event) {
+      if (this.menu.item && this.menu.item.id === item.id) { this.closeMenu(); return; }
+      const r = event.currentTarget.getBoundingClientRect();
+      const h = 220;
+      let top = r.bottom + 4;
+      if (top + h > window.innerHeight) top = Math.max(8, r.top - h - 4);
+      this.menu = { item, top, left: Math.max(8, r.right - 256) };
+    },
+    closeMenu() {
+      this.menu = { item: null, top: 0, left: 0 };
+    },
+    runMenu(fn) {
+      const it = this.menu.item;
+      this.closeMenu();
+      if (it) fn(it);
+    },
+    async supprimerCommande(item) {
+      if (!confirm(`Supprimer définitivement la commande ${item.numero} et toutes ses lignes ? Cette action est irréversible.`)) return;
+      try {
+        await axios.delete(`/api/commandes/${item.id}`);
+        await this.load();
+      } catch (e) {
+        alert(e.response?.data?.message || 'Erreur lors de la suppression');
+      }
+    },
     emptyForm() {
       return {
         date_commande: new Date().toISOString().slice(0, 10),

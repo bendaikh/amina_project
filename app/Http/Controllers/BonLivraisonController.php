@@ -116,7 +116,9 @@ class BonLivraisonController extends Controller
             $bl->recalculateTotals();
 
             if (!in_array($commande->statut, ['livree', 'cloturee'], true)) {
+                $oldStatut = $commande->statut;
                 $commande->update(['statut' => 'livree']);
+                AuditLog::record($commande, 'update', 'statut', $oldStatut, 'livree', $request->user()?->id);
             }
 
             AuditLog::record($bl, 'create', null, null, $bl->numero, $request->user()?->id);
@@ -204,11 +206,71 @@ class BonLivraisonController extends Controller
         return response()->json($bonLivraison->fresh()->load(['client', 'commande', 'lignes.article']));
     }
 
-    public function destroy(BonLivraison $bonLivraison)
+    /**
+     * Suppression d'un bon de livraison.
+     *  - mode=remettre_commande : supprime le BL (et ses lignes) ; la commande d'origine
+     *    réapparaît dans la liste des commandes avec son statut d'avant transformation.
+     *  - mode=definitif : supprime le BL (et ses lignes) ET la commande d'origine (et ses lignes).
+     * Refusé si le BL a déjà été facturé (supprimer d'abord la facture).
+     */
+    public function destroy(Request $request, BonLivraison $bonLivraison)
     {
-        $bonLivraison->delete();
+        $data = $request->validate([
+            'mode' => 'required|in:definitif,remettre_commande',
+        ]);
 
-        return response()->json(['message' => 'Bon de livraison supprimé']);
+        if ($facture = $bonLivraison->factureLocale()->first()) {
+            return response()->json([
+                'message' => "Ce bon de livraison est facturé ({$facture->numero}). Supprimez d'abord la facture.",
+            ], 422);
+        }
+
+        $userId = $request->user()?->id;
+
+        if ($data['mode'] === 'remettre_commande' && !$bonLivraison->commande_id) {
+            return response()->json([
+                'message' => "Ce bon de livraison n'a pas été créé depuis une commande : utilisez la suppression définitive.",
+            ], 422);
+        }
+
+        $message = DB::transaction(function () use ($bonLivraison, $data, $userId) {
+            $commande = $bonLivraison->commande_id ? Commande::lockForUpdate()->find($bonLivraison->commande_id) : null;
+
+            AuditLog::record($bonLivraison, $data['mode'] === 'definitif' ? 'delete' : 'delete_revert_commande', null, $bonLivraison->numero, $commande?->numero, $userId);
+            $bonLivraison->lignes()->delete();
+            $bonLivraison->delete();
+
+            if (!$commande) {
+                return 'Bon de livraison supprimé définitivement';
+            }
+
+            if ($data['mode'] === 'definitif') {
+                AuditLog::record($commande, 'delete', null, $commande->numero, null, $userId);
+                $commande->delete(); // lignes supprimées en cascade
+                return "Bon de livraison et commande {$commande->numero} supprimés définitivement";
+            }
+
+            // Remettre en commande : restaurer le statut d'avant la transformation
+            if ($commande->statut === 'livree') {
+                $previous = \App\Models\AuditLog::where('entity_type', 'Commande')
+                    ->where('entity_id', $commande->id)
+                    ->where('action', 'update')
+                    ->orderByDesc('id')
+                    ->get()
+                    ->map(fn ($l) => is_array($l->details) ? $l->details : json_decode((string) $l->details, true))
+                    ->first(fn ($d) => ($d['champ'] ?? null) === 'statut' && ($d['nouvelle_valeur'] ?? null) === 'livree');
+                $restore = $previous['ancienne_valeur'] ?? 'confirmee';
+                if (!in_array($restore, Commande::STATUTS, true) || $restore === 'livree') {
+                    $restore = 'confirmee';
+                }
+                $commande->update(['statut' => $restore]);
+                AuditLog::record($commande, 'update', 'statut', 'livree', $restore, $userId);
+            }
+
+            return "Bon de livraison supprimé — la commande {$commande->numero} est revenue dans la liste des commandes";
+        });
+
+        return response()->json(['message' => $message]);
     }
 
     private function validateBl(Request $request, bool $creating = true): array

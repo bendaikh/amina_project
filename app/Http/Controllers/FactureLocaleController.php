@@ -143,11 +143,75 @@ class FactureLocaleController extends Controller
         );
     }
 
-    public function destroy(FactureLocale $factureLocale)
+    /**
+     * Suppression d'une facture locale.
+     *  - mode=remettre_bl : supprime la facture (et ses lignes) ; le BL d'origine redevient
+     *    "non facturé" et le montant facturé reporté sur la commande est remis à zéro.
+     *  - mode=definitif : supprime la facture (et ses lignes), son BL (et ses lignes)
+     *    et la commande d'origine (et ses lignes).
+     * Refusé si des règlements / lettrages sont imputés sur la facture.
+     */
+    public function destroy(Request $request, FactureLocale $factureLocale)
     {
-        $factureLocale->delete();
+        $data = $request->validate([
+            'mode' => 'required|in:definitif,remettre_bl',
+        ]);
 
-        return response()->json(['message' => 'Facture locale supprimée']);
+        $nbReglements = \App\Models\ReglementLigne::where('facture_type', \App\Models\ReglementLigne::LOCALE)
+            ->where('facture_id', $factureLocale->id)->count();
+        $nbLettrages = \App\Models\LettrageHistorique::where('facture_type', \App\Models\ReglementLigne::LOCALE)
+            ->where('facture_id', $factureLocale->id)->count();
+        if ($nbReglements || $nbLettrages) {
+            return response()->json([
+                'message' => "Impossible de supprimer la facture {$factureLocale->numero} : des règlements y sont imputés. Annulez d'abord les règlements.",
+            ], 422);
+        }
+
+        if ($data['mode'] === 'remettre_bl' && !$factureLocale->bon_livraison_id) {
+            return response()->json([
+                'message' => "Cette facture n'a pas été créée depuis un bon de livraison : utilisez la suppression définitive.",
+            ], 422);
+        }
+
+        $userId = $request->user()?->id;
+
+        $message = DB::transaction(function () use ($factureLocale, $data, $userId) {
+            $bl = $factureLocale->bon_livraison_id ? BonLivraison::find($factureLocale->bon_livraison_id) : null;
+            $commande = $factureLocale->commande_id
+                ? Commande::find($factureLocale->commande_id)
+                : ($bl?->commande_id ? Commande::find($bl->commande_id) : null);
+            $total = (float) $factureLocale->total_ttc;
+            $numero = $factureLocale->numero;
+
+            AuditLog::record($factureLocale, $data['mode'] === 'definitif' ? 'delete' : 'delete_revert_bl', null, $numero, $bl?->numero, $userId);
+            $factureLocale->lignes()->delete();
+            $factureLocale->delete();
+
+            if ($data['mode'] === 'remettre_bl') {
+                if ($commande && abs((float) $commande->montant_facture - $total) < 0.01) {
+                    $commande->update(['montant_facture' => 0]);
+                    AuditLog::record($commande, 'update', 'montant_facture', (string) $total, '0', $userId);
+                }
+                return "Facture {$numero} supprimée — le bon de livraison {$bl?->numero} est de nouveau à facturer";
+            }
+
+            $parts = ["Facture {$numero}"];
+            if ($bl) {
+                AuditLog::record($bl, 'delete', null, $bl->numero, null, $userId);
+                $bl->lignes()->delete();
+                $bl->delete();
+                $parts[] = "BL {$bl->numero}";
+            }
+            if ($commande && !BonLivraison::where('commande_id', $commande->id)->exists()) {
+                AuditLog::record($commande, 'delete', null, $commande->numero, null, $userId);
+                $commande->delete();
+                $parts[] = "commande {$commande->numero}";
+            }
+
+            return implode(', ', $parts) . ' supprimés définitivement';
+        });
+
+        return response()->json(['message' => $message]);
     }
 
     /**

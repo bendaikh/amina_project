@@ -59,53 +59,59 @@
                 <span :class="badgeClass(item.statut)" class="px-2 py-1 rounded text-xs font-medium">{{ labelStatut(item.statut) }}</span>
               </td>
               <td class="py-3 px-4 text-right whitespace-nowrap">
-                <div class="inline-flex items-center gap-1">
-                  <button
-                    type="button"
-                    title="Convertir en facture"
-                    :disabled="convertingId === item.id"
-                    @click="convertirEnFacture(item)"
-                    class="p-2 rounded-lg text-indigo-600 hover:bg-indigo-50 transition-colors disabled:opacity-50"
-                  >
-                    <svg v-if="convertingId !== item.id" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    <svg v-else class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-                    </svg>
-                  </button>
-                  <button
-                    type="button"
-                    title="Exporter en PDF"
-                    :disabled="downloadingId === item.id"
-                    @click="downloadPdf(item)"
-                    class="p-2 rounded-lg text-sky-700 hover:bg-sky-50 transition-colors disabled:opacity-50"
-                  >
-                    <svg v-if="downloadingId !== item.id" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                    </svg>
-                    <svg v-else class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-                    </svg>
-                  </button>
-                  <button
-                    type="button"
-                    title="Ouvrir"
-                    @click="openDetail(item)"
-                    class="p-2 rounded-lg text-teal-600 hover:bg-teal-50 transition-colors"
-                  >
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                  </button>
-                </div>
+                <button type="button" title="Actions" @click.stop="toggleMenu(item, $event)" class="p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors">
+                  <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z" /></svg>
+                </button>
               </td>
             </tr>
           </tbody>
         </table>
+      </div>
+      <teleport to="body">
+        <div v-if="menu.item" class="fixed inset-0 z-[60]" @click="closeMenu" @wheel="closeMenu"></div>
+        <div v-if="menu.item" class="fixed z-[61] w-64 bg-white border border-gray-200 rounded-lg shadow-lg py-1 text-sm text-gray-700" :style="{ top: menu.top + 'px', left: menu.left + 'px' }">
+          <button type="button" @click="runMenu((it) => openDetail(it))" class="w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-gray-50 disabled:opacity-50 text-teal-700">
+            <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+            <span>Ouvrir</span>
+          </button>
+          <button type="button" :disabled="convertingId === menu.item.id" @click="runMenu((it) => convertirEnFacture(it))" class="w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-gray-50 disabled:opacity-50 text-indigo-700">
+            <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+            <span>Convertir en facture</span>
+          </button>
+          <button type="button" :disabled="downloadingId === menu.item.id" @click="runMenu((it) => downloadPdf(it))" class="w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-gray-50 disabled:opacity-50 text-sky-700">
+            <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+            <span>Exporter en PDF</span>
+          </button>
+          <div class="border-t border-gray-100 my-1"></div>
+          <button type="button" @click="runMenu((it) => openDelete(it))" class="w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-gray-50 disabled:opacity-50 text-red-600">
+            <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+            <span>Supprimer</span>
+          </button>
+        </div>
+      </teleport>
+      <!-- Suppression -->
+      <div v-if="deleteTarget" class="app-modal-overlay">
+        <div class="app-modal app-modal--md" @click.stop>
+          <div class="app-modal__header">
+            <h2 class="app-modal__title">Supprimer le bon de livraison {{ deleteTarget.numero }}</h2>
+            <button type="button" class="app-modal__close" @click="deleteTarget=null" :disabled="deleting">&times;</button>
+          </div>
+          <div class="app-modal__body space-y-3">
+            <p class="text-sm text-gray-600">Choisissez le type de suppression :</p>
+            <button type="button" :disabled="deleting" @click="confirmDelete('remettre_commande')" class="w-full text-left border border-amber-300 rounded-lg p-3 hover:bg-amber-50 disabled:opacity-50">
+              <div class="font-medium text-amber-700">Supprimer et remettre en commande</div>
+              <div class="text-xs text-gray-500 mt-1">Le bon de livraison est supprimé et la commande d'origine revient dans la liste des commandes (statut d'avant transformation).</div>
+            </button>
+            <button type="button" :disabled="deleting" @click="confirmDelete('definitif')" class="w-full text-left border border-red-300 rounded-lg p-3 hover:bg-red-50 disabled:opacity-50">
+              <div class="font-medium text-red-700">Supprimer définitivement</div>
+              <div class="text-xs text-gray-500 mt-1">Le bon de livraison ET sa commande d'origine sont supprimés de la base de données.</div>
+            </button>
+            <p v-if="deleteError" class="text-red-600 text-sm">{{ deleteError }}</p>
+          </div>
+          <div class="app-modal__footer">
+            <button type="button" @click="deleteTarget=null" :disabled="deleting" class="px-4 py-2 border border-gray-300 rounded-lg bg-white">Annuler</button>
+          </div>
+        </div>
       </div>
 
       <p v-if="actionError" class="mt-3 text-sm text-red-600">{{ actionError }}</p>
@@ -321,6 +327,10 @@ export default {
   name: 'BonsLivraison',
   data() {
     return {
+      menu: { item: null, top: 0, left: 0 },
+      deleteTarget: null,
+      deleting: false,
+      deleteError: '',
       items: [],
       commandesDispo: [],
       loading: false,
@@ -355,6 +365,46 @@ export default {
     this.load();
   },
   methods: {
+    toggleMenu(item, event) {
+      if (this.menu.item && this.menu.item.id === item.id) { this.closeMenu(); return; }
+      const r = event.currentTarget.getBoundingClientRect();
+      const h = 200;
+      let top = r.bottom + 4;
+      if (top + h > window.innerHeight) top = Math.max(8, r.top - h - 4);
+      this.menu = { item, top, left: Math.max(8, r.right - 256) };
+    },
+    closeMenu() {
+      this.menu = { item: null, top: 0, left: 0 };
+    },
+    runMenu(fn) {
+      const it = this.menu.item;
+      this.closeMenu();
+      if (it) fn(it);
+    },
+    openDelete(item) {
+      this.deleteError = '';
+      this.deleteTarget = item;
+    },
+    async confirmDelete(mode) {
+      const item = this.deleteTarget;
+      if (!item) return;
+      const msg = mode === 'definitif'
+        ? `Supprimer DÉFINITIVEMENT ${item.numero} ? Le bon de livraison et sa commande d'origine seront supprimés. Cette action est irréversible.`
+        : `Supprimer ${item.numero} et remettre le document d'origine ?`;
+      if (!confirm(msg)) return;
+      this.deleting = true;
+      this.deleteError = '';
+      try {
+        const { data } = await axios.delete(`/api/bons-livraison/${item.id}`, { params: { mode } });
+        this.deleteTarget = null;
+        await this.load();
+        if (data?.message) alert(data.message);
+      } catch (e) {
+        this.deleteError = e.response?.data?.message || 'Erreur lors de la suppression';
+      } finally {
+        this.deleting = false;
+      }
+    },
     labelStatut(s) {
       return ({ brouillon: 'Brouillon', valide: 'Validé', annule: 'Annulé' })[s] || s;
     },

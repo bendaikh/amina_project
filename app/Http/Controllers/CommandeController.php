@@ -118,9 +118,22 @@ class CommandeController extends Controller
         return response()->json($commande->fresh()->load($this->detailRelations()));
     }
 
-    public function destroy(Commande $commande)
+    /**
+     * Supprime définitivement une commande (et ses lignes, en cascade).
+     * Refusé si la commande a déjà été transformée en bon de livraison.
+     */
+    public function destroy(Request $request, Commande $commande)
     {
-        $commande->delete();
+        if ($commande->bonLivraison()->exists()) {
+            return response()->json([
+                'message' => 'Cette commande a été transformée en bon de livraison. Supprimez d\'abord le bon de livraison.',
+            ], 422);
+        }
+
+        DB::transaction(function () use ($commande, $request) {
+            AuditLog::record($commande, 'delete', null, $commande->numero, null, $request->user()?->id);
+            $commande->delete();
+        });
 
         return response()->json(['message' => 'Commande supprimée']);
     }
