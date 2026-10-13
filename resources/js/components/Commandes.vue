@@ -181,12 +181,9 @@
 
               <div class="app-line-card">
                 <div class="flex flex-col sm:flex-row gap-3 mb-3">
-                  <div class="w-full sm:w-28 shrink-0">
+                  <div class="w-full sm:w-56 shrink-0">
                     <label class="text-xs text-gray-500">Article</label>
-                    <select v-model="ligneDraft.article_id" @change="fillArticle(ligneDraft)" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
-                      <option :value="null">—</option>
-                      <option v-for="a in articles" :key="a.id" :value="a.id">{{ a.code_article }}</option>
-                    </select>
+                    <ArticleSelect v-model="ligneDraft.article_id" :articles="articles" @change="fillArticle(ligneDraft)" input-class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white" />
                   </div>
                   <div class="flex-1 min-w-0">
                     <label class="text-xs text-gray-500">Désignation</label>
@@ -333,10 +330,7 @@
                     </tr>
                     <tr v-for="(ligne, idx) in form.lignes" :key="idx" class="border-t border-gray-50">
                       <td class="py-2 px-2">
-                        <select v-model="ligne.article_id" @change="fillArticle(ligne)" class="border border-gray-300 rounded px-2 py-1 text-xs min-w-[6.5rem] bg-white">
-                          <option :value="null">—</option>
-                          <option v-for="a in articles" :key="a.id" :value="a.id">{{ a.code_article }}</option>
-                        </select>
+                        <ArticleSelect v-model="ligne.article_id" :articles="articles" @change="fillArticle(ligne)" input-class="border border-gray-300 rounded px-2 py-1 text-xs min-w-[9rem] w-full bg-white" />
                       </td>
                       <td class="py-2 px-2">
                         <input v-model="ligne.designation" class="border border-gray-300 rounded px-2 py-1 text-xs min-w-[8rem] bg-white" />
@@ -464,12 +458,9 @@
 
             <div class="app-line-card mb-4">
               <div class="flex flex-col sm:flex-row gap-3 mb-3">
-                <div class="w-full sm:w-28 shrink-0">
+                <div class="w-full sm:w-56 shrink-0">
                   <label class="text-xs text-gray-500">Article</label>
-                  <select v-model="ligneDraft.article_id" @change="fillArticle(ligneDraft)" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
-                    <option :value="null">—</option>
-                    <option v-for="a in articles" :key="a.id" :value="a.id">{{ a.code_article }}</option>
-                  </select>
+                  <ArticleSelect v-model="ligneDraft.article_id" :articles="articles" @change="fillArticle(ligneDraft)" input-class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white" />
                 </div>
                 <div class="flex-1 min-w-0">
                   <label class="text-xs text-gray-500">Désignation</label>
@@ -594,10 +585,7 @@
                 <tbody>
                   <tr v-for="(ligne, idx) in newLignes" :key="'new-'+idx" class="border-t border-gray-50">
                     <td class="py-2 px-2">
-                      <select v-model="ligne.article_id" @change="fillArticle(ligne)" class="border border-gray-300 rounded px-2 py-1 text-xs min-w-[6.5rem] bg-white">
-                        <option :value="null">—</option>
-                        <option v-for="a in articles" :key="a.id" :value="a.id">{{ a.code_article }}</option>
-                      </select>
+                      <ArticleSelect v-model="ligne.article_id" :articles="articles" @change="fillArticle(ligne)" input-class="border border-gray-300 rounded px-2 py-1 text-xs min-w-[9rem] w-full bg-white" />
                     </td>
                     <td class="py-2 px-2">
                       <input v-model="ligne.designation" class="border border-gray-300 rounded px-2 py-1 text-xs min-w-[8rem] bg-white" />
@@ -661,6 +649,7 @@
 
 <script>
 import axios from 'axios';
+import ArticleSelect from './ArticleSelect.vue';
 
 const PROCESSUS = [
   { key: 'brouillon', label: 'Brouillon' },
@@ -675,6 +664,7 @@ const PROCESSUS = [
 
 export default {
   name: 'Commandes',
+  components: { ArticleSelect },
   data() {
     return {
       menu: { item: null, top: 0, left: 0 },
