@@ -24,7 +24,8 @@ class ArticleController extends Controller
             });
         }
 
-        $articles = $query->orderBy('created_at', 'desc')->paginate(15);
+        $perPage = max(1, min((int) $request->input('per_page', 15), 1000));
+        $articles = $query->orderBy('created_at', 'desc')->paginate($perPage);
 
         return response()->json($articles);
     }
