@@ -1,7 +1,7 @@
 <template>
-  <div class="min-h-screen p-4 md:p-6 lg:p-8">
-    <div class="max-w-7xl mx-auto">
-      <div class="mb-8">
+  <div :class="embedded ? '' : 'min-h-screen p-4 md:p-6 lg:p-8'">
+    <div :class="embedded ? '' : 'max-w-7xl mx-auto'">
+      <div v-if="!embedded" class="mb-8">
         <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-2">Exportateurs</h1>
         <p class="text-gray-600">Gérez les exportateurs — l’exportateur primaire est celui de la société</p>
       </div>
@@ -379,6 +379,7 @@
 import axios from 'axios';
 
 export default {
+  props: { embedded: { type: Boolean, default: false } },
   name: 'Exportateurs',
   data() {
     return {

@@ -1,6 +1,7 @@
 <template>
-  <div class="min-h-screen p-4 md:p-6 lg:p-8">
-    <div class="max-w-7xl mx-auto">
+  <div :class="fixedType ? '' : 'min-h-screen p-4 md:p-6 lg:p-8'">
+    <div :class="fixedType ? '' : 'max-w-7xl mx-auto'">
+      <template v-if="!fixedType">
       <div class="mb-8">
         <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-2">Paramètres</h1>
         <p class="text-gray-600">Configurez les paramètres et données de référence du système</p>
@@ -41,10 +42,11 @@
         </div>
       </div>
 
+      </template>
       <!-- Parametres Tab -->
-      <div v-if="activeTab === 'parametres'" class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <div v-if="activeTab === 'parametres'" :class="fixedType ? '' : 'grid grid-cols-1 lg:grid-cols-4 gap-6'">
         <!-- Types List -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+        <div v-if="!fixedType" class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
           <h3 class="text-lg font-semibold text-gray-900 mb-4">Types de paramètres</h3>
           <div class="space-y-1">
             <button
@@ -62,7 +64,7 @@
         </div>
 
         <!-- Parametres List -->
-        <div class="lg:col-span-3 bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div :class="fixedType ? 'bg-white rounded-xl shadow-sm border border-gray-100 p-6' : 'lg:col-span-3 bg-white rounded-xl shadow-sm border border-gray-100 p-6'">
           <div class="flex items-center justify-between mb-6">
             <h3 class="text-xl font-semibold text-gray-900">{{ parametreTypes[selectedType] || 'Sélectionnez un type' }}</h3>
             <button
@@ -230,11 +232,32 @@
 </template>
 
 <script>
+export const PARAMETRE_TYPES = {
+  famille: 'Familles',
+  sous_famille: 'Sous-familles',
+  calibre: 'Calibres',
+  type_emballage_primaire: 'Types emballage primaire',
+  type_emballage_secondaire: 'Types emballage secondaire',
+  type_palette: 'Références d\'emballage',
+  compagnie_maritime: 'Compagnies maritimes',
+  unite_facturation: 'Unités de facturation',
+  devise: 'Devises',
+  taux_tva: 'Taux TVA',
+  marche: 'Marchés',
+  secteur_activite: 'Secteurs d\'activité',
+  groupe_categorie: 'Groupes / Catégories',
+  incoterm: 'Incoterms',
+  delai_paiement: 'Délais de paiement',
+  type_conteneur: 'Types de conteneur'
+};
+
 export default {
   name: 'Settings',
+  props: { fixedType: { type: String, default: '' } },
   data() {
     return {
       activeTab: 'parametres',
+      selectedTypeInit: null,
       selectedType: 'famille',
       parametres: [],
       familles: [],
@@ -242,24 +265,7 @@ export default {
       saving: false,
       showModal: false,
       isEditing: false,
-      parametreTypes: {
-        famille: 'Familles',
-        sous_famille: 'Sous-familles',
-        calibre: 'Calibres',
-        type_emballage_primaire: 'Types emballage primaire',
-        type_emballage_secondaire: 'Types emballage secondaire',
-        type_palette: 'Références d\'emballage',
-        compagnie_maritime: 'Compagnies maritimes',
-        unite_facturation: 'Unités de facturation',
-        devise: 'Devises',
-        taux_tva: 'Taux TVA',
-        marche: 'Marchés',
-        secteur_activite: 'Secteurs d\'activité',
-        groupe_categorie: 'Groupes / Catégories',
-        incoterm: 'Incoterms',
-        delai_paiement: 'Délais de paiement',
-        type_conteneur: 'Types de conteneur'
-      },
+      parametreTypes: { ...PARAMETRE_TYPES },
       form: {
         id: null,
         type: '',
@@ -283,6 +289,7 @@ export default {
   },
   methods: {
     applyRouteType() {
+      if (this.fixedType) { if (this.selectedType !== this.fixedType) { this.selectedType = this.fixedType; return true; } return false; }
       const t = this.$route?.meta?.defaultType || this.$route?.query?.type;
       if (t && this.parametreTypes[t] && t !== this.selectedType) { this.selectedType = t; return true; }
       return false;

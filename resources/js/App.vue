@@ -281,10 +281,7 @@ export default {
           id: 'parametre',
           emoji: '⚙️',
           label: '9. Paramètre',
-          children: [
-            { label: 'Exportateurs', path: '/parametre/exportateurs' },
-            { label: 'Types de conteneur', path: '/parametre/types-conteneur' }
-          ]
+          path: '/parametre'
         }
       ]
     };

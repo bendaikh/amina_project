@@ -32,6 +32,7 @@ import StockMouvements from './components/StockMouvements.vue';
 import StockSituation from './components/StockSituation.vue';
 import StockInventaire from './components/StockInventaire.vue';
 import Exportateurs from './components/Exportateurs.vue';
+import ParametresPage from './components/ParametresPage.vue';
 import FacturationExport from './components/FacturationExport.vue';
 import FactureCommercialeDetail from './components/FactureCommercialeDetail.vue';
 import Reglements from './components/Reglements.vue';
@@ -63,7 +64,8 @@ const router = createRouter({
         { path: '/articles/familles', name: 'Familles', component: Placeholder, meta: { requiresAuth: true, title: 'Familles' } },
         { path: '/articles/parametres', name: 'ParametresArticles', component: Settings, meta: { requiresAuth: true, title: 'Paramètres articles' } },
         { path: '/settings', redirect: '/articles/parametres' },
-        { path: '/parametre/types-conteneur', name: 'TypesConteneur', component: Settings, meta: { requiresAuth: true, title: 'Types de conteneur', defaultType: 'type_conteneur' } },
+        { path: '/parametre', name: 'Parametres', component: ParametresPage, meta: { requiresAuth: true, title: 'Paramètres' } },
+        { path: '/parametre/types-conteneur', redirect: { path: '/parametre', hash: '#param-type_conteneur' } },
 
         // 4. Achats
         { path: '/achats', name: 'Achats', component: Purchases, meta: { requiresAuth: true, title: 'Achats' } },
