@@ -91,7 +91,7 @@
               <thead class="bg-gray-50">
                 <tr>
                   <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ordre</th>
-                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Valeur</th>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{{ selectedType === 'type_conteneur' ? 'Type (nom)' : 'Valeur' }}</th>
                   <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{{ selectedType === 'type_conteneur' ? 'Capacité (palettes)' : 'Code' }}</th>
                   <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Statut</th>
                   <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
@@ -168,10 +168,12 @@
               />
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">{{ selectedType === 'type_conteneur' ? 'Capacité (palettes)' : 'Code (optionnel)' }}</label>
+              <label class="block text-sm font-medium text-gray-700 mb-1">{{ selectedType === 'type_conteneur' ? 'Capacité (nombre de palettes)' : 'Code (optionnel)' }}</label>
               <input
                 v-model="form.code"
-                type="text"
+                :type="selectedType === 'type_conteneur' ? 'number' : 'text'"
+                :min="selectedType === 'type_conteneur' ? 1 : null"
+                :required="selectedType === 'type_conteneur'"
                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
                 placeholder="Code court"
               />
@@ -255,7 +257,8 @@ export default {
         secteur_activite: 'Secteurs d\'activité',
         groupe_categorie: 'Groupes / Catégories',
         incoterm: 'Incoterms',
-        delai_paiement: 'Délais de paiement'
+        delai_paiement: 'Délais de paiement',
+        type_conteneur: 'Types de conteneur'
       },
       form: {
         id: null,
@@ -269,10 +272,21 @@ export default {
     };
   },
   mounted() {
+    this.applyRouteType();
     this.fetchParametres();
     this.fetchFamilles();
   },
+  watch: {
+    '$route.fullPath'() {
+      if (this.applyRouteType()) this.fetchParametres();
+    },
+  },
   methods: {
+    applyRouteType() {
+      const t = this.$route?.meta?.defaultType || this.$route?.query?.type;
+      if (t && this.parametreTypes[t] && t !== this.selectedType) { this.selectedType = t; return true; }
+      return false;
+    },
     async fetchParametres() {
       if (!this.selectedType) return;
       this.loading = true;
@@ -335,7 +349,7 @@ export default {
             'Content-Type': 'application/json',
             'Accept': 'application/json'
           },
-          body: JSON.stringify(this.form)
+          body: JSON.stringify({ ...this.form, code: this.form.code === null || this.form.code === undefined || this.form.code === "" ? null : String(this.form.code) })
         });
         
         if (response.ok) {

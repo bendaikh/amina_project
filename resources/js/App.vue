@@ -282,7 +282,8 @@ export default {
           emoji: '⚙️',
           label: '9. Paramètre',
           children: [
-            { label: 'Exportateurs', path: '/parametre/exportateurs' }
+            { label: 'Exportateurs', path: '/parametre/exportateurs' },
+            { label: 'Types de conteneur', path: '/parametre/types-conteneur' }
           ]
         }
       ]
