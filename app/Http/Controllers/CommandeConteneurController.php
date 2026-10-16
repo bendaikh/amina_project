@@ -6,6 +6,7 @@ use App\Models\AuditLog;
 use App\Models\Commande;
 use App\Models\CommandeLigne;
 use App\Models\Livraison;
+use App\Models\LivraisonConteneur;
 use App\Models\LivraisonConteneurArticle;
 use App\Models\Parametre;
 use Illuminate\Http\Request;
@@ -172,5 +173,101 @@ class CommandeConteneurController extends Controller
         });
 
         return response()->json($conteneur->load('articles'), 201);
+    }
+    /**
+     * Ouvrir / remplir un conteneur existant (réservé en logistique ou ajouté ici) :
+     * N°, tare, plomb, date enlèvement, statut (livraison), articles et transport routier propres au conteneur.
+     * Booking / navire / ports / ETD / ETA restent ceux de la livraison (lecture seule ici).
+     */
+    public function update(Request $request, Commande $commande, LivraisonConteneur $conteneur)
+    {
+        $livraison = $conteneur->livraison;
+        if (!$livraison || (int) $livraison->commande_id !== (int) $commande->id) {
+            return response()->json(['message' => 'Conteneur introuvable pour cette commande'], 404);
+        }
+
+        $data = $request->validate([
+            'numero_conteneur' => 'nullable|string|max:255',
+            'type_conteneur' => ['nullable', 'string', 'max:50'],
+            'tare_conteneur' => 'nullable|string|max:255',
+            'numero_plomb' => 'nullable|string|max:255',
+            'date_enlevement' => 'nullable|date',
+            'statut' => 'nullable|in:' . implode(',', Livraison::STATUTS),
+            'transporteur' => 'nullable|string|max:255',
+            'matricule_camion' => 'nullable|string|max:255',
+            'chauffeur' => 'nullable|string|max:255',
+            'cin_chauffeur' => 'nullable|string|max:255',
+            'articles' => 'array',
+            'articles.*.commande_ligne_id' => 'required|integer',
+            'articles.*.cartons' => 'required|integer|min:1',
+        ]);
+
+        $type = $data['type_conteneur'] ?? $conteneur->type_conteneur;
+        $validTypes = array_column(self::types(), 'valeur');
+        if (($data['type_conteneur'] ?? null) && (string) $data['type_conteneur'] !== (string) $conteneur->type_conteneur && !in_array($data['type_conteneur'], $validTypes, true)) {
+            throw ValidationException::withMessages(['type_conteneur' => 'Type de conteneur inconnu (Paramètres › Types de conteneur).']);
+        }
+
+        $lignes = $commande->lignes()->get()->keyBy('id');
+        $capacite = self::capacite($type);
+
+        DB::transaction(function () use ($conteneur, $livraison, $data, $lignes, $capacite, $type) {
+            $totalPalettes = 0;
+            $rows = [];
+            foreach ($data['articles'] ?? [] as $i => $a) {
+                $ligne = $lignes->get($a['commande_ligne_id']);
+                if (!$ligne) {
+                    throw ValidationException::withMessages(["articles.$i" => 'Article hors commande.']);
+                }
+                $deja = (int) LivraisonConteneurArticle::where('commande_ligne_id', $ligne->id)
+                    ->where('livraison_conteneur_id', '!=', $conteneur->id)->lockForUpdate()->sum('cartons');
+                $dispo = max(0, self::colisCommandes($ligne) - $deja);
+                $cartons = (int) $a['cartons'];
+                if ($cartons > $dispo) {
+                    throw ValidationException::withMessages(["articles.$i" => "Quantité supérieure au disponible ($dispo cartons) pour {$ligne->designation}."]);
+                }
+                $cpp = (int) ($ligne->colis_par_palette ?? 0);
+                $palettes = $cpp > 0 ? (int) ceil($cartons / $cpp) : 0;
+                $totalPalettes += $palettes;
+                $rows[] = ['commande_ligne_id' => $ligne->id, 'article_id' => $ligne->article_id, 'cartons' => $cartons, 'palettes' => $palettes];
+            }
+            if ($capacite !== null && $totalPalettes > $capacite) {
+                throw ValidationException::withMessages(['articles' => "Capacité dépassée : $totalPalettes / $capacite palettes."]);
+            }
+
+            $conteneur->update([
+                'numero_conteneur' => $data['numero_conteneur'] ?? null,
+                'type_conteneur' => $type,
+                'tare_conteneur' => $data['tare_conteneur'] ?? null,
+                'numero_plomb' => $data['numero_plomb'] ?? null,
+                'date_enlevement' => $data['date_enlevement'] ?? null,
+                'transporteur' => $data['transporteur'] ?? null,
+                'matricule_camion' => $data['matricule_camion'] ?? null,
+                'chauffeur' => $data['chauffeur'] ?? null,
+                'cin_chauffeur' => $data['cin_chauffeur'] ?? null,
+                'arrivee_usine' => $conteneur->arrivee_usine ?: now(),
+            ]);
+            // Remplace uniquement les lignes d'articles de CE conteneur
+            $conteneur->articles()->delete();
+            foreach ($rows as $r) {
+                $conteneur->articles()->create($r);
+            }
+
+            if (!empty($data['statut']) && $data['statut'] !== $livraison->statut) {
+                $livraison->update(['statut' => $data['statut']]);
+            }
+
+            // Garder la livraison synchronisée sur son premier conteneur (documents existants)
+            $first = $livraison->conteneurs()->orderBy('ordre')->orderBy('id')->first();
+            if ($first && (int) $first->id === (int) $conteneur->id) {
+                $livraison->update([
+                    'numero_conteneur' => $conteneur->numero_conteneur,
+                    'numero_plomb' => $conteneur->numero_plomb,
+                    'tare_conteneur' => $conteneur->tare_conteneur,
+                ]);
+            }
+        });
+
+        return response()->json($conteneur->fresh()->load('articles'));
     }
 }

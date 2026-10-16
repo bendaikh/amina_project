@@ -64,6 +64,8 @@ class LivraisonController extends Controller
                 'express' => 'Express',
             ],
             'types_conteneur' => ['20', '40', '45'],
+            // Paramètres > Types de conteneur (valeur + capacité en palettes)
+            'types_conteneur_params' => CommandeConteneurController::types(),
             'transporteurs' => $this->distinctTransporteurs(),
             'chauffeurs' => $this->knownChauffeurs(),
             'lieux_chargement' => $this->distinctLieux(),
@@ -82,9 +84,11 @@ class LivraisonController extends Controller
         $this->normalizeBooleanFields($request);
 
         $data = $this->validateLivraison($request);
-        $conteneurs = $this->extractConteneurs($request);
+        $reservations = $request->has('reservations') ? $this->extractReservations($request) : null;
+        $conteneurs = is_array($reservations) ? [] : $this->extractConteneurs($request);
+        $warnings = [];
 
-        $livraison = DB::transaction(function () use ($data, $request, $conteneurs) {
+        $livraison = DB::transaction(function () use ($data, $request, $conteneurs, $reservations, &$warnings) {
             $data['numero'] = $data['numero'] ?? Livraison::nextNumero();
             $data['created_by'] = $request->user()?->id;
             $data['statut'] = $data['statut'] ?? 'a_preparer';
@@ -107,7 +111,11 @@ class LivraisonController extends Controller
             }
 
             $livraison = Livraison::create($data);
-            $this->syncConteneurs($livraison, $conteneurs);
+            if (is_array($reservations)) {
+                $warnings = $this->syncReservations($livraison, $reservations);
+            } else {
+                $this->syncConteneurs($livraison, $conteneurs);
+            }
 
             if ($livraison->commande_id) {
                 $cmd = Commande::find($livraison->commande_id);
@@ -121,7 +129,11 @@ class LivraisonController extends Controller
             return $livraison;
         });
 
-        return response()->json($livraison->load(['commande.client', 'conteneurs']), 201);
+        $livraison->load(['commande.client', 'conteneurs']);
+        $payload = $livraison->toArray();
+        $payload['warnings'] = $warnings;
+
+        return response()->json($payload, 201);
     }
 
     public function update(Request $request, Livraison $livraison)
@@ -129,7 +141,9 @@ class LivraisonController extends Controller
         $this->normalizeBooleanFields($request);
 
         $data = $this->validateLivraison($request, false);
-        $conteneurs = $request->has('conteneurs') ? $this->extractConteneurs($request) : null;
+        $reservations = $request->has('reservations') ? $this->extractReservations($request) : null;
+        $conteneurs = (!is_array($reservations) && $request->has('conteneurs')) ? $this->extractConteneurs($request) : null;
+        $warnings = [];
 
         $this->applyLegacyAliases($data);
         if (is_array($conteneurs)) {
@@ -145,11 +159,13 @@ class LivraisonController extends Controller
             }
         }
 
-        DB::transaction(function () use ($livraison, $data, $request, $conteneurs) {
+        DB::transaction(function () use ($livraison, $data, $request, $conteneurs, $reservations, &$warnings) {
             $oldStatut = $livraison->statut;
             $livraison->update($data);
 
-            if (is_array($conteneurs)) {
+            if (is_array($reservations)) {
+                $warnings = $this->syncReservations($livraison, $reservations);
+            } elseif (is_array($conteneurs)) {
                 $this->syncConteneurs($livraison, $conteneurs);
             }
 
@@ -163,7 +179,10 @@ class LivraisonController extends Controller
             AuditLog::record($livraison, 'update', null, null, $livraison->numero, $request->user()?->id);
         });
 
-        return response()->json($livraison->fresh()->load(['commande.client', 'piecesJointes', 'conteneurs']));
+        $payload = $livraison->fresh()->load(['commande.client', 'piecesJointes', 'conteneurs'])->toArray();
+        $payload['warnings'] = $warnings;
+
+        return response()->json($payload);
     }
 
     public function destroy(Livraison $livraison)
@@ -377,7 +396,10 @@ class LivraisonController extends Controller
             'conteneurs' => 'nullable|array',
             'conteneurs.*.id' => 'nullable|integer',
             'conteneurs.*.numero_conteneur' => 'nullable|string|max:100',
-            'conteneurs.*.type_conteneur' => 'nullable|in:20,40,45',
+            'conteneurs.*.type_conteneur' => 'nullable|string|max:50',
+            'reservations' => 'nullable|array',
+            'reservations.*.type_conteneur' => 'required|string|max:50',
+            'reservations.*.nombre' => 'required|integer|min:0|max:100',
             'conteneurs.*.tare_conteneur' => 'nullable|string|max:100',
             'conteneurs.*.vgm_methode' => 'nullable|in:1,2',
             'conteneurs.*.poids_brut_marchandise' => 'nullable|numeric|min:0',
@@ -401,7 +423,7 @@ class LivraisonController extends Controller
             'conteneurs.*.observations_controle' => 'nullable|string',
         ]);
 
-        unset($data['conteneurs']);
+        unset($data['conteneurs'], $data['reservations']);
 
         return $data;
     }
@@ -541,15 +563,68 @@ class LivraisonController extends Controller
             $keepIds[] = $created->id;
         }
 
-        $livraison->conteneurs()
-            ->when(count($keepIds), fn ($q) => $q->whereNotIn('id', $keepIds), fn ($q) => $q)
-            ->get()
-            ->each(function (LivraisonConteneur $c) {
-                if ($c->cin_chauffeur_scan) {
-                    Storage::disk('public')->delete($c->cin_chauffeur_scan);
+        // Ne jamais supprimer ici les conteneurs absents du formulaire
+        // (ils peuvent avoir été créés/remplis depuis la fiche commande > Chargement).
+        // La suppression passe uniquement par destroyConteneur.
+    }
+
+    private function extractReservations(Request $request): array
+    {
+        $out = [];
+        foreach ((array) $request->input('reservations', []) as $r) {
+            if (!is_array($r) || !isset($r['type_conteneur']) || $r['type_conteneur'] === '') {
+                continue;
+            }
+            $type = (string) $r['type_conteneur'];
+            $out[$type] = ($out[$type] ?? 0) + max(0, (int) ($r['nombre'] ?? 0));
+        }
+        return $out;
+    }
+
+    /** Conteneur vide = placeholder (aucun numéro, plomb, transport ni article). */
+    public static function isPlaceholder(LivraisonConteneur $c): bool
+    {
+        foreach (['numero_conteneur', 'numero_plomb', 'tare_conteneur', 'transporteur', 'matricule_camion', 'chauffeur', 'cin_chauffeur', 'cin_chauffeur_scan'] as $f) {
+            if (!empty($c->{$f})) {
+                return false;
+            }
+        }
+        return !$c->articles()->exists();
+    }
+
+    /**
+     * Réservations (type => nombre) : crée les conteneurs manquants comme placeholders ;
+     * en cas de baisse, ne supprime que des placeholders vides, sinon avertit et ne supprime rien.
+     * Les types absents des réservations ne sont jamais touchés si leurs conteneurs sont remplis.
+     */
+    private function syncReservations(Livraison $livraison, array $reservations): array
+    {
+        $warnings = [];
+        $existing = $livraison->conteneurs()->orderBy('ordre')->orderBy('id')->get();
+        $types = array_unique(array_merge(array_keys($reservations), $existing->pluck('type_conteneur')->filter()->map(fn ($t) => (string) $t)->all()));
+        $ordre = (int) $existing->max('ordre');
+
+        foreach ($types as $type) {
+            $wanted = (int) ($reservations[$type] ?? 0);
+            $ofType = $existing->filter(fn ($c) => (string) $c->type_conteneur === (string) $type)->values();
+            $have = $ofType->count();
+
+            if ($wanted > $have) {
+                for ($i = $have; $i < $wanted; $i++) {
+                    $livraison->conteneurs()->create(['type_conteneur' => $type, 'ordre' => ++$ordre]);
                 }
-                $c->delete();
-            });
+            } elseif ($wanted < $have) {
+                $toRemove = $have - $wanted;
+                $placeholders = $ofType->reverse()->filter(fn ($c) => self::isPlaceholder($c))->values();
+                if ($placeholders->count() < $toRemove) {
+                    $warnings[] = "Impossible de réduire les conteneurs $type à $wanted : seuls {$placeholders->count()} conteneur(s) vide(s) sur $have peuvent être retirés (les autres contiennent des données). Aucun conteneur $type supprimé.";
+                    continue;
+                }
+                $placeholders->take($toRemove)->each(fn ($c) => $c->delete());
+            }
+        }
+
+        return $warnings;
     }
 
     private function distinctTransporteurs(): array

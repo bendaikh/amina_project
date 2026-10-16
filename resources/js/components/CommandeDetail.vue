@@ -178,9 +178,9 @@
       <!-- TAB: Chargement -->
       <div v-show="activeTab === 'chargement'">
         <div class="flex justify-end mb-4">
-          <button @click="showConteneurModal = true" type="button" class="px-4 py-2 bg-teal-600 text-white rounded-lg text-sm hover:bg-teal-700">+ Ajouter conteneur</button>
+          <button @click="openConteneur(null)" type="button" class="px-4 py-2 border border-teal-600 text-teal-700 bg-white rounded-lg text-sm hover:bg-teal-50">+ Ajouter conteneur</button>
         </div>
-        <AjouterConteneurModal :show="showConteneurModal" :commande="commande" @close="showConteneurModal = false" @saved="onConteneurSaved" />
+        <AjouterConteneurModal :show="showConteneurModal" :commande="commande" :conteneur="editConteneur" @close="showConteneurModal = false" @saved="onConteneurSaved" />
         <div v-if="!conteneurCards.length" class="bg-white border border-gray-100 rounded-xl p-10 text-center shadow-sm">
           <p class="text-gray-500 mb-4">Aucun conteneur. Créez une livraison avec réservation booking.</p>
           <div class="flex flex-wrap justify-center gap-3">
@@ -199,7 +199,7 @@
             class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm flex flex-col"
           >
             <div class="flex items-start justify-between gap-3 mb-2">
-              <h3 class="font-semibold text-gray-900 truncate">{{ card.numero_conteneur || 'Conteneur sans N°' }}</h3>
+              <h3 class="font-semibold text-gray-900 truncate">{{ card.numero_conteneur || (card.typeLabel + ' · sans N°') }}</h3>
               <span class="shrink-0 px-2.5 py-0.5 rounded-full text-xs font-semibold" :class="card.badgeClass">
                 {{ card.statutLabel }}
               </span>
@@ -218,7 +218,7 @@
               <div class="flex flex-wrap gap-2">
                 <button
                   type="button"
-                  @click="ouvrirLivraison(card.livraison_id)"
+                  @click="card.conteneur_id ? openConteneur(card.raw) : ouvrirLivraison(card.livraison_id)"
                   class="px-3 py-1.5 bg-teal-700 text-white rounded-lg text-sm font-medium hover:bg-teal-800"
                 >Ouvrir</button>
                 <button
@@ -420,6 +420,7 @@ export default {
       saving: false,
       creatingLiv: false,
       showConteneurModal: false,
+      editConteneur: null,
       typesConteneur: [],
       creatingBl: false,
       creatingColisage: false,
@@ -499,6 +500,7 @@ export default {
       return {
         key: c.id ? `c-${c.id}` : `l-${liv.id}-legacy`,
         conteneur_id: c.id || null,
+        raw: c.id ? { ...c, livraison_id: liv.id } : null,
         livraison_id: liv.id,
         numero_conteneur: c.numero_conteneur || '',
         plomb: c.numero_plomb || liv.numero_plomb || '',
@@ -682,9 +684,14 @@ export default {
         this.creatingLiv = false;
       }
     },
+    openConteneur(c) {
+      this.editConteneur = c;
+      this.showConteneurModal = true;
+    },
     async onConteneurSaved() {
       this.showConteneurModal = false;
-      this.message = 'Conteneur ajouté';
+      this.message = this.editConteneur ? 'Conteneur enregistré' : 'Conteneur ajouté';
+      this.editConteneur = null;
       await this.load();
     },
     ouvrirLivraison(livraisonId) {

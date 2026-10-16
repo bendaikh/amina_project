@@ -214,171 +214,30 @@
                 </div>
               </div>
 
-              <div class="pt-2 space-y-4">
+              <div class="pt-2 space-y-3">
                 <div class="flex items-center justify-between gap-3">
-                  <h4 class="text-sm font-semibold text-gray-800">Conteneurs</h4>
-                  <button
-                    type="button"
-                    @click="addConteneur"
-                    class="px-3 py-1.5 text-sm font-medium text-teal-700 bg-teal-50 hover:bg-teal-100 rounded-lg"
-                  >
-                    + Ajouter un conteneur
-                  </button>
+                  <h4 class="text-sm font-semibold text-gray-800">Conteneurs réservés</h4>
+                  <button type="button" @click="addReservation" class="px-3 py-1.5 text-sm font-medium text-teal-700 bg-teal-50 hover:bg-teal-100 rounded-lg">+ Ajouter un type</button>
                 </div>
-
-                <div
-                  v-for="(conteneur, idx) in form.conteneurs"
-                  :key="conteneur._key || conteneur.id || idx"
-                  class="bg-white border border-gray-200 rounded-lg p-4 space-y-4"
-                >
-                  <div class="flex items-center justify-between gap-3">
-                    <p class="text-sm font-semibold text-gray-800">Conteneur {{ idx + 1 }}</p>
-                    <button
-                      v-if="form.conteneurs.length > 1"
-                      type="button"
-                      @click="removeConteneur(idx)"
-                      class="text-sm text-red-600 hover:underline"
-                    >
-                      Supprimer
-                    </button>
+                <p v-if="!typesConteneur.length" class="text-xs text-amber-700">Aucun type de conteneur configuré : ajoutez-les dans Paramètres › Types de conteneur.</p>
+                <div v-for="(r, idx) in form.reservations" :key="idx" class="grid grid-cols-12 gap-3 items-end bg-white border border-gray-200 rounded-lg p-3">
+                  <div class="col-span-7">
+                    <label class="text-sm text-gray-600">Type de conteneur</label>
+                    <select v-model="r.type_conteneur" class="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white">
+                      <option value="">—</option>
+                      <option v-for="t in reservationTypeOptions(r)" :key="t.valeur" :value="t.valeur">{{ t.valeur }}<template v-if="t.capacite != null"> ({{ t.capacite }} palettes)</template></option>
+                    </select>
                   </div>
-
-                  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <div>
-                      <label class="text-sm text-gray-600">Type de conteneur</label>
-                      <select v-model="conteneur.type_conteneur" class="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white">
-                        <option value="">—</option>
-                        <option value="20">20'</option>
-                        <option value="40">40'</option>
-                        <option value="45">45'</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label class="text-sm text-gray-600">N° de conteneur</label>
-                      <input v-model="conteneur.numero_conteneur" class="w-full border border-gray-300 rounded-lg px-3 py-2" />
-                    </div>
-                    <div>
-                      <label class="text-sm text-gray-600">Tare conteneur (kg)</label>
-                      <input v-model="conteneur.tare_conteneur" class="w-full border border-gray-300 rounded-lg px-3 py-2" />
-                    </div>
-                    <div>
-                      <label class="text-sm text-gray-600">Poids brut marchandise (kg)</label>
-                      <input v-model="conteneur.poids_brut_marchandise" class="w-full border border-gray-300 rounded-lg px-3 py-2" placeholder="Auto si un seul conteneur" />
-                    </div>
-                    <div>
-                      <label class="text-sm text-gray-600">Méthode VGM</label>
-                      <select v-model="conteneur.vgm_methode" class="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white">
-                        <option value="2">Méthode 2 — calcul des masses</option>
-                        <option value="1">Méthode 1 — pesée du conteneur chargé</option>
-                      </select>
-                    </div>
-                    <div v-if="conteneur.vgm_methode === '1'">
-                      <label class="text-sm text-gray-600">Poids VGM pesé (kg)</label>
-                      <input v-model="conteneur.vgm_poids" class="w-full border border-gray-300 rounded-lg px-3 py-2" />
-                    </div>
-                    <div>
-                      <label class="text-sm text-gray-600">N° de plomb</label>
-                      <input v-model="conteneur.numero_plomb" class="w-full border border-gray-300 rounded-lg px-3 py-2" />
-                    </div>
-                    <div class="md:col-span-2 lg:col-span-3">
-                      <div class="flex flex-wrap items-center gap-3 p-3 bg-gray-50 border border-gray-200 rounded-lg">
-                        <span class="text-sm font-medium text-gray-700">Changement du plomb</span>
-                        <button
-                          type="button"
-                          @click="conteneur.changement_plomb = !conteneur.changement_plomb"
-                          class="px-4 py-1.5 rounded-lg text-sm font-medium transition-colors"
-                          :class="conteneur.changement_plomb ? 'bg-amber-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
-                        >
-                          {{ conteneur.changement_plomb ? 'Activé' : 'Activer' }}
-                        </button>
-                      </div>
-                    </div>
-                    <template v-if="conteneur.changement_plomb">
-                      <div class="md:col-span-2">
-                        <label class="text-sm text-gray-600">Raisons</label>
-                        <textarea v-model="conteneur.raison_changement_plomb" rows="2" class="w-full border border-gray-300 rounded-lg px-3 py-2" placeholder="Motif du changement de plomb…"></textarea>
-                      </div>
-                      <div>
-                        <label class="text-sm text-gray-600">Renseigner le nouveau plomb</label>
-                        <input v-model="conteneur.nouveau_plomb" class="w-full border border-gray-300 rounded-lg px-3 py-2" />
-                      </div>
-                    </template>
+                  <div class="col-span-3">
+                    <label class="text-sm text-gray-600">Nombre de conteneurs</label>
+                    <input type="number" min="0" v-model.number="r.nombre" class="w-full border border-gray-300 rounded-lg px-3 py-2" />
                   </div>
-
-                  <div class="border-t border-gray-100 pt-4">
-                    <h5 class="text-sm font-semibold text-gray-800 mb-3">Transport routier — Conteneur {{ idx + 1 }}</h5>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      <div>
-                        <label class="text-sm text-gray-600">Matricule camion</label>
-                        <input v-model="conteneur.matricule_camion" class="w-full border border-gray-300 rounded-lg px-3 py-2" />
-                      </div>
-                      <div>
-                        <label class="text-sm text-gray-600">Transporteur</label>
-                        <input v-model="conteneur.transporteur" list="transporteurs-list" class="w-full border border-gray-300 rounded-lg px-3 py-2" placeholder="Liste ou saisie" />
-                      </div>
-                      <div>
-                        <label class="text-sm text-gray-600">Chauffeur</label>
-                        <input v-model="conteneur.chauffeur" list="chauffeurs-list" @change="applyChauffeur(conteneur)" class="w-full border border-gray-300 rounded-lg px-3 py-2" placeholder="Liste — identité reprise automatiquement" />
-                      </div>
-                      <div>
-                        <label class="text-sm text-gray-600">Téléphone chauffeur</label>
-                        <input v-model="conteneur.telephone_chauffeur" class="w-full border border-gray-300 rounded-lg px-3 py-2" />
-                      </div>
-                      <div>
-                        <label class="text-sm text-gray-600">CIN chauffeur</label>
-                        <input v-model="conteneur.cin_chauffeur" class="w-full border border-gray-300 rounded-lg px-3 py-2" placeholder="N° CIN" />
-                      </div>
-                      <div class="md:col-span-2">
-                        <label class="text-sm text-gray-600">Scanner CIN chauffeur</label>
-                        <div class="flex flex-col sm:flex-row gap-3 items-start">
-                          <input
-                            type="file"
-                            accept="image/*,.pdf"
-                            capture="environment"
-                            @change="onConteneurCinScanSelect($event, idx)"
-                            class="block w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100"
-                          />
-                          <a
-                            v-if="conteneurCinScanUrl(conteneur)"
-                            :href="conteneurCinScanUrl(conteneur)"
-                            target="_blank"
-                            class="text-sm text-teal-600 hover:underline whitespace-nowrap"
-                          >Voir le scan</a>
-                        </div>
-                        <p v-if="conteneur._cinScanFile" class="text-xs text-gray-500 mt-1">
-                          Fichier sélectionné : {{ conteneur._cinScanFile.name }}
-                        </p>
-                      </div>
-                    </div>
-                    <div class="md:col-span-2 lg:col-span-3 border-t border-gray-100 pt-4">
-                      <h5 class="text-sm font-semibold text-gray-800 mb-3">Itinéraire et contrôle — Conteneur {{ idx + 1 }}</h5>
-                      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <div>
-                          <label class="text-sm text-gray-600">Lieu de chargement</label>
-                          <input v-model="conteneur.lieu_chargement" list="lieux-list" class="w-full border border-gray-300 rounded-lg px-3 py-2" />
-                        </div>
-                        <div>
-                          <label class="text-sm text-gray-600">Arrivée usine</label>
-                          <input type="datetime-local" v-model="conteneur.arrivee_usine" class="w-full border border-gray-300 rounded-lg px-3 py-2" />
-                          <p class="text-xs text-gray-500 mt-1">Reprise à la création, modifiable</p>
-                        </div>
-                        <div>
-                          <label class="text-sm text-gray-600">Départ usine</label>
-                          <input type="datetime-local" v-model="conteneur.depart_usine" class="w-full border border-gray-300 rounded-lg px-3 py-2" />
-                        </div>
-                        <div class="md:col-span-2 lg:col-span-3 flex flex-col gap-2 text-sm text-gray-700">
-                          <label class="inline-flex items-center gap-2"><input type="checkbox" v-model="conteneur.ctrl_conteneur" class="rounded text-teal-600" /> Numéro du conteneur contrôlé</label>
-                          <label class="inline-flex items-center gap-2"><input type="checkbox" v-model="conteneur.ctrl_plomb" class="rounded text-teal-600" /> Plomb posé et numéro vérifié</label>
-                          <label class="inline-flex items-center gap-2"><input type="checkbox" v-model="conteneur.ctrl_documents" class="rounded text-teal-600" /> Chargement et documents validés</label>
-                        </div>
-                        <div class="md:col-span-2 lg:col-span-3">
-                          <label class="text-sm text-gray-600">Observations / réserves</label>
-                          <textarea v-model="conteneur.observations_controle" rows="2" class="w-full border border-gray-300 rounded-lg px-3 py-2"></textarea>
-                        </div>
-                      </div>
-                    </div>
+                  <div class="col-span-2 text-right">
+                    <button type="button" @click="form.reservations.splice(idx, 1)" class="text-sm text-red-600 hover:underline">Retirer</button>
                   </div>
                 </div>
+                <p v-if="untypedConteneurs" class="text-xs text-gray-500">{{ untypedConteneurs }} conteneur(s) existant(s) sans type : ils sont conservés.</p>
+                <p class="text-xs text-gray-500">Les détails de chaque conteneur (N°, tare, plomb, articles, transport routier) se remplissent dans la fiche commande › Chargement › Ouvrir. Réduire un nombre ne retire que des conteneurs encore vides.</p>
               </div>
               </div>
             </section>
@@ -549,6 +408,7 @@ function createEmptyForm() {
     eta: '',
     etd: '',
     conteneurs: [createEmptyConteneur()],
+    reservations: [{ type_conteneur: '', nombre: 1 }],
     numero_conteneur: '',
     tare_conteneur: '',
     numero_plomb: '',
@@ -590,6 +450,7 @@ export default {
       transporteurs: [],
       chauffeurs: [],
       lieuxChargement: [],
+      typesConteneur: [],
       form: createEmptyForm(),
     };
   },
@@ -602,6 +463,9 @@ export default {
     },
     selectedReferenceClient() {
       return this.selectedCommande?.reference_client || '—';
+    },
+    untypedConteneurs() {
+      return (this.form.conteneurs || []).filter(c => c.id && !c.type_conteneur).length;
     },
     cinScanUrl() {
       if (!this.form.cin_chauffeur_scan) return null;
@@ -630,6 +494,22 @@ export default {
     },
     emptyForm() {
       return createEmptyForm();
+    },
+    addReservation() {
+      this.form.reservations.push({ type_conteneur: '', nombre: 1 });
+    },
+    groupReservations(conteneurs) {
+      const m = {};
+      for (const c of conteneurs) if (c.type_conteneur) m[c.type_conteneur] = (m[c.type_conteneur] || 0) + 1;
+      const out = Object.entries(m).map(([type_conteneur, nombre]) => ({ type_conteneur, nombre }));
+      return out.length ? out : [{ type_conteneur: '', nombre: 1 }];
+    },
+    reservationTypeOptions(r) {
+      const opts = [...this.typesConteneur];
+      if (r.type_conteneur && !opts.some(t => String(t.valeur) === String(r.type_conteneur))) {
+        opts.push({ valeur: r.type_conteneur, capacite: null });
+      }
+      return opts;
     },
     addConteneur() {
       this.form.conteneurs.push(createEmptyConteneur());
@@ -752,6 +632,7 @@ export default {
       this.transporteurs = meta.data.transporteurs || [];
       this.chauffeurs = meta.data.chauffeurs || [];
       this.lieuxChargement = meta.data.lieux_chargement || [];
+      this.typesConteneur = meta.data.types_conteneur_params || [];
     },
     applyChauffeur(target) {
       const nom = String(target.chauffeur || '').trim().toLowerCase();
@@ -816,6 +697,7 @@ export default {
         eta: this.sliceDate(item.eta),
         etd: this.sliceDate(item.etd),
         conteneurs,
+        reservations: this.groupReservations(Array.isArray(item.conteneurs) ? item.conteneurs : []),
         numero_conteneur: item.numero_conteneur || '',
         tare_conteneur: item.tare_conteneur || '',
         numero_plomb: item.numero_plomb || '',
@@ -922,21 +804,15 @@ export default {
         observations_controle: c.observations_controle || null,
       }));
 
+      delete payload.reservations;
       if (this.form.reservation_booking) {
-        payload.conteneurs = conteneurs;
-        const first = conteneurs[0] || {};
-        payload.numero_conteneur = first.numero_conteneur || null;
-        payload.tare_conteneur = first.tare_conteneur || null;
-        payload.numero_plomb = first.numero_plomb || null;
-        payload.changement_plomb = !!first.changement_plomb;
-        payload.raison_changement_plomb = first.raison_changement_plomb || null;
-        payload.nouveau_plomb = first.nouveau_plomb || null;
-        payload.matricule_camion = first.matricule_camion || null;
-        payload.chauffeur = first.chauffeur || null;
-        payload.transporteur = first.transporteur || null;
-        payload.cin_chauffeur = first.cin_chauffeur || null;
+        // Réservation : uniquement type + nombre ; les conteneurs existants ne sont jamais écrasés.
+        delete payload.conteneurs;
+        payload.reservations = (this.form.reservations || [])
+          .filter(r => r.type_conteneur)
+          .map(r => ({ type_conteneur: r.type_conteneur, nombre: Math.max(0, Number(r.nombre) || 0) }));
       } else {
-        payload.conteneurs = [];
+        delete payload.conteneurs;
       }
 
       if (this.selectedCommande?.date_souhaitee) {
@@ -968,7 +844,11 @@ export default {
         }
 
         if (this.form.reservation_booking) {
-          await this.uploadConteneurCinScans(id, saved?.conteneurs || []);
+          if (saved?.warnings?.length) {
+            this.error = saved.warnings.join(' ');
+            await this.load();
+            return;
+          }
         } else if (this.cinScanFile) {
           await this.uploadCinScan(id);
         }

@@ -2,7 +2,7 @@
   <div v-if="show" class="app-modal-overlay">
     <div class="app-modal app-modal--lg" @click.stop>
       <div class="app-modal__header">
-        <h2 class="app-modal__title">Ajouter un conteneur</h2>
+        <h2 class="app-modal__title">{{ isEdit ? ('Conteneur ' + (conteneur.numero_conteneur || (conteneur.type_conteneur ? conteneur.type_conteneur + ' (sans N°)' : 'sans N°'))) : 'Ajouter un conteneur' }}</h2>
         <button type="button" class="app-modal__close" @click="close">&times;</button>
       </div>
       <div class="app-modal__body space-y-4">
@@ -15,12 +15,12 @@
             </select></div>
           <div><label class="text-xs text-gray-500">Tare (kg)</label><input v-model="f.tare_conteneur" class="w-full border border-gray-300 rounded-lg px-3 py-2" /></div>
           <div><label class="text-xs text-gray-500">N° plomb</label><input v-model="f.numero_plomb" class="w-full border border-gray-300 rounded-lg px-3 py-2" /></div>
-          <div><label class="text-xs text-gray-500">Booking</label><input v-model="f.numero_booking" class="w-full border border-gray-300 rounded-lg px-3 py-2" /></div>
-          <div><label class="text-xs text-gray-500">Navire</label><input v-model="f.navire" class="w-full border border-gray-300 rounded-lg px-3 py-2" /></div>
-          <div><label class="text-xs text-gray-500">Port départ</label><input v-model="f.port_depart" class="w-full border border-gray-300 rounded-lg px-3 py-2" /></div>
-          <div><label class="text-xs text-gray-500">Port arrivée</label><input v-model="f.port_arrivee" class="w-full border border-gray-300 rounded-lg px-3 py-2" /></div>
-          <div><label class="text-xs text-gray-500">ETD</label><input type="date" v-model="f.etd" class="w-full border border-gray-300 rounded-lg px-3 py-2" /></div>
-          <div><label class="text-xs text-gray-500">ETA</label><input type="date" v-model="f.eta" class="w-full border border-gray-300 rounded-lg px-3 py-2" /></div>
+          <div><label class="text-xs text-gray-500">Booking</label><input v-model="f.numero_booking" :readonly="isEdit" class="read-only:bg-gray-50 w-full border border-gray-300 rounded-lg px-3 py-2" /></div>
+          <div><label class="text-xs text-gray-500">Navire</label><input v-model="f.navire" :readonly="isEdit" class="read-only:bg-gray-50 w-full border border-gray-300 rounded-lg px-3 py-2" /></div>
+          <div><label class="text-xs text-gray-500">Port départ</label><input v-model="f.port_depart" :readonly="isEdit" class="read-only:bg-gray-50 w-full border border-gray-300 rounded-lg px-3 py-2" /></div>
+          <div><label class="text-xs text-gray-500">Port arrivée</label><input v-model="f.port_arrivee" :readonly="isEdit" class="read-only:bg-gray-50 w-full border border-gray-300 rounded-lg px-3 py-2" /></div>
+          <div><label class="text-xs text-gray-500">ETD</label><input type="date" v-model="f.etd" :readonly="isEdit" class="read-only:bg-gray-50 w-full border border-gray-300 rounded-lg px-3 py-2" /></div>
+          <div><label class="text-xs text-gray-500">ETA</label><input type="date" v-model="f.eta" :readonly="isEdit" class="read-only:bg-gray-50 w-full border border-gray-300 rounded-lg px-3 py-2" /></div>
           <div><label class="text-xs text-gray-500">Statut</label>
             <select v-model="f.statut" class="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white">
               <option v-for="s in statuts" :key="s.key" :value="s.key">{{ s.label }}</option>
@@ -28,7 +28,7 @@
           <div><label class="text-xs text-gray-500">Date enlèvement</label><input type="date" v-model="f.date_enlevement" class="w-full border border-gray-300 rounded-lg px-3 py-2" /></div>
         </div>
         <p v-if="!types.length" class="text-xs text-amber-700">Aucun type de conteneur configuré : ajoutez-les dans Paramètres › Types de conteneur (capacité en palettes).</p>
-        <p class="text-xs text-gray-500">Booking, navire, ports, ETD/ETA et statut sont partagés par tous les conteneurs de la livraison de cette commande.</p>
+        <p class="text-xs text-gray-500">Booking, navire, ports, ETD/ETA et statut sont partagés par tous les conteneurs de la livraison de cette commande<template v-if="isEdit"> (booking, navire, ports, ETD/ETA se modifient dans Logistique)</template>.</p>
 
         <div v-if="f.type_conteneur && capacite === null" class="bg-amber-50 border border-amber-100 text-sm text-amber-800 rounded-lg px-4 py-3">
           Capacité en palettes non renseignée pour le type {{ f.type_conteneur }} (Paramètres › Types de conteneur).
@@ -44,7 +44,7 @@
           <p class="text-xs text-gray-500 mb-3">Cochez uniquement les articles à charger. Le code article et la désignation viennent directement de la commande. Les autres informations de la liste seront générées automatiquement.</p>
           <p v-if="!rows.length" class="text-sm text-gray-500">Aucune ligne dans cette commande.</p>
           <div v-for="r in rows" :key="r.id" class="grid grid-cols-12 gap-2 items-center py-3 border-t border-gray-100 first:border-t-0">
-            <input type="checkbox" v-model="r.checked" :disabled="r.disponible <= 0" class="col-span-1 h-4 w-4" @change="onCheck(r)" />
+            <input type="checkbox" v-model="r.checked" :disabled="r.disponible <= 0 && !r.checked" class="col-span-1 h-4 w-4" @change="onCheck(r)" />
             <div class="col-span-4"><p class="font-semibold text-sm text-gray-900">{{ r.code }}</p><p class="text-xs text-gray-500">{{ r.designation }}</p></div>
             <div class="col-span-2"><p class="text-xs text-gray-500">Disponible</p><p class="text-sm font-semibold">{{ r.disponible }} cartons</p></div>
             <div class="col-span-2"><p class="text-xs text-gray-500">Colis/palette</p><p class="text-sm font-semibold">{{ r.cpp || '—' }}</p></div>
@@ -98,7 +98,7 @@ export function colisCommandes(l) {
 
 export default {
   name: 'AjouterConteneurModal',
-  props: { show: Boolean, commande: { type: Object, default: null } },
+  props: { show: Boolean, commande: { type: Object, default: null }, conteneur: { type: Object, default: null } },
   emits: ['close', 'saved'],
   data() {
     return {
@@ -108,6 +108,7 @@ export default {
   },
   computed: {
     capacite() { const t = this.types.find(x => x.valeur === this.f.type_conteneur); return t && t.capacite != null ? t.capacite : null; },
+    isEdit() { return !!(this.conteneur && this.conteneur.id); },
     typeLabel() { return this.f.type_conteneur || ''; },
     camions() { return [...new Set(this.chauffeurs.map(c => c.immatriculation).filter(Boolean))]; },
     selected() { return this.rows.filter(r => r.checked && Number(r.cartons) > 0); },
@@ -136,18 +137,23 @@ export default {
     },
     init() {
       const c = this.commande || {};
-      const liv = [...(c.livraisons || [])].sort((a, b) => b.id - a.id)[0] || {};
+      const ct = this.isEdit ? this.conteneur : null;
+      const liv = (ct && (c.livraisons || []).find(l => l.id === ct.livraison_id))
+        || [...(c.livraisons || [])].sort((a, b) => b.id - a.id)[0] || {};
       const d = v => (v ? String(v).slice(0, 10) : '');
       this.error = '';
       this.f = {
-        numero_conteneur: '', type_conteneur: '', tare_conteneur: '', numero_plomb: '', date_enlevement: '',
+        numero_conteneur: ct?.numero_conteneur || '', type_conteneur: ct?.type_conteneur || '', tare_conteneur: ct?.tare_conteneur || '',
+        numero_plomb: ct?.numero_plomb || '', date_enlevement: d(ct?.date_enlevement),
         numero_booking: liv.numero_booking || '', navire: liv.navire || '',
         port_depart: liv.port_depart || c.client?.port_chargement || '', port_arrivee: liv.port_arrivee || c.destination || '',
         etd: d(liv.etd), eta: d(liv.eta), statut: liv.statut || '',
-        transporteur: '', matricule_camion: '', chauffeur: '', cin_chauffeur: '',
+        transporteur: ct?.transporteur || '', matricule_camion: ct?.matricule_camion || '', chauffeur: ct?.chauffeur || '', cin_chauffeur: ct?.cin_chauffeur || '',
       };
+      const mine = {};
+      for (const a of ct?.articles || []) mine[a.commande_ligne_id] = (mine[a.commande_ligne_id] || 0) + Number(a.cartons || 0);
       const loaded = {};
-      for (const l of c.livraisons || []) for (const ct of l.conteneurs || []) for (const a of ct.articles || []) {
+      for (const l of c.livraisons || []) for (const k of l.conteneurs || []) if (!ct || k.id !== ct.id) for (const a of k.articles || []) {
         loaded[a.commande_ligne_id] = (loaded[a.commande_ligne_id] || 0) + Number(a.cartons || 0);
       }
       this.rows = (c.lignes || []).map(l => ({
@@ -156,7 +162,7 @@ export default {
         designation: [l.designation, l.calibre].filter(Boolean).join(' '),
         cpp: Number(l.colis_par_palette) || 0,
         disponible: Math.max(0, colisCommandes(l) - (loaded[l.id] || 0)),
-        checked: false, cartons: null,
+        checked: !!mine[l.id], cartons: mine[l.id] || null,
       }));
     },
     onCheck(r) { if (r.checked && !r.cartons) r.cartons = r.disponible; if (!r.checked) r.cartons = null; },
@@ -164,10 +170,12 @@ export default {
     async save() {
       this.saving = true; this.error = '';
       try {
-        await axios.post(`/api/commandes/${this.commande.id}/conteneurs`, {
+        const body = {
           ...this.f,
           articles: this.selected.map(r => ({ commande_ligne_id: r.id, cartons: Number(r.cartons) })),
-        });
+        };
+        if (this.isEdit) await axios.put(`/api/commandes/${this.commande.id}/conteneurs/${this.conteneur.id}`, body);
+        else await axios.post(`/api/commandes/${this.commande.id}/conteneurs`, body);
         this.$emit('saved');
       } catch (e) {
         const errs = e.response?.data?.errors;

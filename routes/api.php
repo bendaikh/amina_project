@@ -177,6 +177,7 @@ Route::prefix('commandes')->group(function () {
     Route::get('/{commande}/documents', [CommandeController::class, 'listDocuments']);
     Route::post('/{commande}/documents', [CommandeController::class, 'generateDocument']);
     Route::post('/{commande}/conteneurs', [\App\Http\Controllers\CommandeConteneurController::class, 'store']);
+    Route::put('/{commande}/conteneurs/{conteneur}', [\App\Http\Controllers\CommandeConteneurController::class, 'update']);
 });
 
 Route::get('/productions/meta', [OrdreProductionController::class, 'meta']);
