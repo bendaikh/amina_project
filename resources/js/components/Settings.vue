@@ -92,7 +92,7 @@
                 <tr>
                   <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ordre</th>
                   <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Valeur</th>
-                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Code</th>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{{ selectedType === 'type_conteneur' ? 'Capacité (palettes)' : 'Code' }}</th>
                   <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Statut</th>
                   <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                 </tr>
@@ -168,7 +168,7 @@
               />
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Code (optionnel)</label>
+              <label class="block text-sm font-medium text-gray-700 mb-1">{{ selectedType === 'type_conteneur' ? 'Capacité (palettes)' : 'Code (optionnel)' }}</label>
               <input
                 v-model="form.code"
                 type="text"

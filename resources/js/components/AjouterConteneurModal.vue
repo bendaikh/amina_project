@@ -10,7 +10,8 @@
           <div><label class="text-xs text-gray-500">N° conteneur</label><input v-model="f.numero_conteneur" class="w-full border border-gray-300 rounded-lg px-3 py-2" /></div>
           <div><label class="text-xs text-gray-500">Type</label>
             <select v-model="f.type_conteneur" class="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white">
-              <option v-for="t in TYPES" :key="t.key" :value="t.key">{{ t.label }}</option>
+              <option value="">—</option>
+              <option v-for="t in types" :key="t.valeur" :value="t.valeur">{{ t.valeur }}</option>
             </select></div>
           <div><label class="text-xs text-gray-500">Tare (kg)</label><input v-model="f.tare_conteneur" class="w-full border border-gray-300 rounded-lg px-3 py-2" /></div>
           <div><label class="text-xs text-gray-500">N° plomb</label><input v-model="f.numero_plomb" class="w-full border border-gray-300 rounded-lg px-3 py-2" /></div>
@@ -22,13 +23,17 @@
           <div><label class="text-xs text-gray-500">ETA</label><input type="date" v-model="f.eta" class="w-full border border-gray-300 rounded-lg px-3 py-2" /></div>
           <div><label class="text-xs text-gray-500">Statut</label>
             <select v-model="f.statut" class="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white">
-              <option v-for="s in STATUTS" :key="s.key" :value="s.key">{{ s.label }}</option>
+              <option v-for="s in statuts" :key="s.key" :value="s.key">{{ s.label }}</option>
             </select></div>
           <div><label class="text-xs text-gray-500">Date enlèvement</label><input type="date" v-model="f.date_enlevement" class="w-full border border-gray-300 rounded-lg px-3 py-2" /></div>
         </div>
+        <p v-if="!types.length" class="text-xs text-amber-700">Aucun type de conteneur configuré : ajoutez-les dans Paramètres › Types de conteneur (capacité en palettes).</p>
         <p class="text-xs text-gray-500">Booking, navire, ports, ETD/ETA et statut sont partagés par tous les conteneurs de la livraison de cette commande.</p>
 
-        <div class="bg-teal-50 border border-teal-100 text-sm text-gray-700 rounded-lg px-4 py-3">
+        <div v-if="f.type_conteneur && capacite === null" class="bg-amber-50 border border-amber-100 text-sm text-amber-800 rounded-lg px-4 py-3">
+          Capacité en palettes non renseignée pour le type {{ f.type_conteneur }} (Paramètres › Types de conteneur).
+        </div>
+        <div v-if="capacite !== null" class="bg-teal-50 border border-teal-100 text-sm text-gray-700 rounded-lg px-4 py-3">
           Ce conteneur de type <span class="font-semibold text-teal-700">{{ typeLabel }}</span> peut contenir
           <span class="font-semibold text-teal-700">{{ capacite }} palettes</span>. Les informations de la liste de colisage
           sont reprises automatiquement depuis la commande.
@@ -50,7 +55,7 @@
         <section class="border border-gray-200 rounded-lg p-4">
           <h3 class="font-semibold text-gray-900 mb-1">Résumé chargement</h3>
           <p class="text-sm" :class="overCapacity ? 'text-red-600 font-semibold' : 'text-gray-600'">
-            <span class="font-semibold">{{ totalPalettes }} / {{ capacite }} palettes</span> utilisées · {{ selected.length }} article(s) sélectionné(s)
+            <span class="font-semibold">{{ totalPalettes }}<template v-if="capacite !== null"> / {{ capacite }}</template> palettes</span> utilisées · {{ selected.length }} article(s) sélectionné(s)
           </p>
           <p v-if="overCapacity" class="text-xs text-red-600 mt-1">Capacité du conteneur dépassée.</p>
         </section>
@@ -58,12 +63,15 @@
         <section class="border border-gray-200 rounded-lg p-4">
           <h3 class="font-semibold text-gray-900 mb-3">Transport routier</h3>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div><label class="text-xs text-gray-500">Transporteur</label><input v-model="f.transporteur" class="w-full border border-gray-300 rounded-lg px-3 py-2" /></div>
-            <div><label class="text-xs text-gray-500">Camion</label><input v-model="f.matricule_camion" class="w-full border border-gray-300 rounded-lg px-3 py-2" /></div>
-            <div><label class="text-xs text-gray-500">Chauffeur</label><input v-model="f.chauffeur" class="w-full border border-gray-300 rounded-lg px-3 py-2" /></div>
+            <div><label class="text-xs text-gray-500">Transporteur</label><input v-model="f.transporteur" list="ac-transporteurs" class="w-full border border-gray-300 rounded-lg px-3 py-2" /></div>
+            <div><label class="text-xs text-gray-500">Camion</label><input v-model="f.matricule_camion" list="ac-camions" class="w-full border border-gray-300 rounded-lg px-3 py-2" /></div>
+            <div><label class="text-xs text-gray-500">Chauffeur</label><input v-model="f.chauffeur" list="ac-chauffeurs" @change="applyChauffeur" class="w-full border border-gray-300 rounded-lg px-3 py-2" /></div>
             <div><label class="text-xs text-gray-500">CIN chauffeur</label><input v-model="f.cin_chauffeur" class="w-full border border-gray-300 rounded-lg px-3 py-2" /></div>
           </div>
         </section>
+        <datalist id="ac-transporteurs"><option v-for="t in transporteurs" :key="t" :value="t" /></datalist>
+        <datalist id="ac-chauffeurs"><option v-for="c in chauffeurs" :key="c.nom" :value="c.nom" /></datalist>
+        <datalist id="ac-camions"><option v-for="m in camions" :key="m" :value="m" /></datalist>
         <p v-if="error" class="text-sm text-red-600">{{ error }}</p>
       </div>
       <div class="app-modal__footer">
@@ -77,12 +85,6 @@
 <script>
 import axios from 'axios';
 
-export const CONTENEUR_TYPES = [
-  { key: '20', label: "20'", capacite: 11 },
-  { key: '40', label: "40'", capacite: 25 },
-  { key: '40HC', label: "40' HC", capacite: 28 },
-  { key: '45', label: "45' HC", capacite: 33 },
-];
 const KG = ['kg', 'kgs', 'kilo', 'kilogramme'];
 
 export function colisCommandes(l) {
@@ -100,35 +102,48 @@ export default {
   emits: ['close', 'saved'],
   data() {
     return {
-      TYPES: CONTENEUR_TYPES,
-      STATUTS: [
-        { key: 'a_preparer', label: 'À préparer' }, { key: 'en_preparation', label: 'En préparation' },
-        { key: 'pret', label: 'Prêt' }, { key: 'charge', label: 'Chargé' },
-        { key: 'livre', label: 'Livré' }, { key: 'expedie', label: 'Expédié' },
-      ],
+      types: [], statuts: [], transporteurs: [], chauffeurs: [],
       f: {}, rows: [], saving: false, error: '',
     };
   },
   computed: {
-    capacite() { return (CONTENEUR_TYPES.find(t => t.key === this.f.type_conteneur) || {}).capacite || 28; },
-    typeLabel() { return (CONTENEUR_TYPES.find(t => t.key === this.f.type_conteneur) || {}).label || ''; },
+    capacite() { const t = this.types.find(x => x.valeur === this.f.type_conteneur); return t && t.capacite != null ? t.capacite : null; },
+    typeLabel() { return this.f.type_conteneur || ''; },
+    camions() { return [...new Set(this.chauffeurs.map(c => c.immatriculation).filter(Boolean))]; },
     selected() { return this.rows.filter(r => r.checked && Number(r.cartons) > 0); },
     totalPalettes() { return this.selected.reduce((s, r) => s + (r.cpp > 0 ? Math.ceil(Number(r.cartons) / r.cpp) : 0), 0); },
-    overCapacity() { return this.totalPalettes > this.capacite; },
+    overCapacity() { return this.capacite !== null && this.totalPalettes > this.capacite; },
     invalid() { return this.overCapacity || this.rows.some(r => r.checked && Number(r.cartons) > r.disponible); },
   },
-  watch: { show(v) { if (v) this.init(); } },
+  watch: { show(v) { if (v) { this.init(); this.loadMeta(); } } },
   methods: {
+    async loadMeta() {
+      const [m, l] = await Promise.all([
+        axios.get('/api/commandes/conteneurs-meta').catch(() => ({ data: {} })),
+        axios.get('/api/livraisons/meta').catch(() => ({ data: {} })),
+      ]);
+      this.types = m.data.types_conteneur || [];
+      this.statuts = m.data.statuts || [];
+      this.transporteurs = l.data.transporteurs || [];
+      this.chauffeurs = l.data.chauffeurs || [];
+    },
+    applyChauffeur() {
+      const nom = String(this.f.chauffeur || '').trim().toLowerCase();
+      const c = this.chauffeurs.find(x => String(x.nom || '').trim().toLowerCase() === nom);
+      if (!c) return;
+      if (c.cin && !this.f.cin_chauffeur) this.f.cin_chauffeur = c.cin;
+      if (c.immatriculation && !this.f.matricule_camion) this.f.matricule_camion = c.immatriculation;
+    },
     init() {
       const c = this.commande || {};
       const liv = [...(c.livraisons || [])].sort((a, b) => b.id - a.id)[0] || {};
       const d = v => (v ? String(v).slice(0, 10) : '');
       this.error = '';
       this.f = {
-        numero_conteneur: '', type_conteneur: '40HC', tare_conteneur: '0', numero_plomb: '', date_enlevement: '',
+        numero_conteneur: '', type_conteneur: '', tare_conteneur: '', numero_plomb: '', date_enlevement: '',
         numero_booking: liv.numero_booking || '', navire: liv.navire || '',
-        port_depart: liv.port_depart || 'Casablanca', port_arrivee: liv.port_arrivee || c.destination || '',
-        etd: d(liv.etd), eta: d(liv.eta), statut: liv.statut || 'a_preparer',
+        port_depart: liv.port_depart || c.client?.port_chargement || '', port_arrivee: liv.port_arrivee || c.destination || '',
+        etd: d(liv.etd), eta: d(liv.eta), statut: liv.statut || '',
         transporteur: '', matricule_camion: '', chauffeur: '', cin_chauffeur: '',
       };
       const loaded = {};

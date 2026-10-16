@@ -357,7 +357,7 @@
 
 <script>
 import axios from 'axios';
-import AjouterConteneurModal, { CONTENEUR_TYPES } from './AjouterConteneurModal.vue';
+import AjouterConteneurModal from './AjouterConteneurModal.vue';
 
 const PROCESSUS = [
   { key: 'brouillon', label: 'Brouillon' },
@@ -420,6 +420,7 @@ export default {
       saving: false,
       creatingLiv: false,
       showConteneurModal: false,
+      typesConteneur: [],
       creatingBl: false,
       creatingColisage: false,
       markingFacture: false,
@@ -487,6 +488,7 @@ export default {
   mounted() {
     this.load();
     this.loadLookups();
+    axios.get('/api/commandes/conteneurs-meta').then(r => { this.typesConteneur = r.data.types_conteneur || []; }).catch(() => {});
   },
   methods: {
     buildConteneurCard(liv, c) {
@@ -505,7 +507,7 @@ export default {
         statutLabel: ui.label,
         badgeClass: ui.class,
         typeLabel: this.formatTypeConteneur(c.type_conteneur),
-        capacite: (CONTENEUR_TYPES.find(t => t.key === c.type_conteneur) || {}).capacite || 28,
+        capacite: (this.typesConteneur.find(t => String(t.valeur) === String(c.type_conteneur)) || {}).capacite ?? '—',
         palettesChargees: (c.articles || []).reduce((s, a) => s + Number(a.palettes || 0), 0),
         poidsEstime: Number.isFinite(tare) && tare > 0 ? Math.round(tare).toLocaleString('fr-FR') : '0',
         articlesCount: (c.articles || []).length,
@@ -513,11 +515,8 @@ export default {
     },
     formatTypeConteneur(value) {
       const raw = String(value || '');
-      if (raw === '40HC') return "40' HC";
-      if (raw.includes('45')) return "45'";
-      if (raw.includes('20')) return "20'";
-      if (raw.includes('40')) return "40'";
-      return 'Type non renseigné';
+      if (/^\d+$/.test(raw)) return `${raw}'`;
+      return raw || 'Type non renseigné';
     },
     articleLabel(id) {
       const a = this.articles.find(x => x.id === id);

@@ -163,6 +163,7 @@ Route::prefix('stock/inventaires')->group(function () {
 
 // 6. Ventes — Commandes / Production / Logistique
 Route::get('/commandes/meta', [CommandeController::class, 'meta']);
+Route::get('/commandes/conteneurs-meta', [\App\Http\Controllers\CommandeConteneurController::class, 'meta']);
 Route::get('/commandes/pieces/{piece}', [CommandeController::class, 'downloadPiece']);
 Route::prefix('commandes')->group(function () {
     Route::get('/', [CommandeController::class, 'index']);

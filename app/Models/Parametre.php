@@ -39,6 +39,7 @@ class Parametre extends Model
     const TYPE_GROUPE_CATEGORIE = 'groupe_categorie';
     const TYPE_INCOTERM = 'incoterm';
     const TYPE_DELAI_PAIEMENT = 'delai_paiement';
+    const TYPE_CONTENEUR = 'type_conteneur';
 
     public static function getTypes(): array
     {
@@ -58,6 +59,7 @@ class Parametre extends Model
             self::TYPE_GROUPE_CATEGORIE => 'Groupes / Catégories',
             self::TYPE_INCOTERM => 'Incoterms',
             self::TYPE_DELAI_PAIEMENT => 'Délais de paiement',
+            self::TYPE_CONTENEUR => 'Types de conteneur',
         ];
     }
 

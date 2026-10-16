@@ -7,6 +7,7 @@ use App\Models\Commande;
 use App\Models\CommandeLigne;
 use App\Models\Livraison;
 use App\Models\LivraisonConteneurArticle;
+use App\Models\Parametre;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -17,12 +18,24 @@ use Illuminate\Validation\ValidationException;
  */
 class CommandeConteneurController extends Controller
 {
-    /** Capacité en palettes par type de conteneur. */
-    public const CAPACITES = ['20' => 11, '40' => 25, '40HC' => 28, '45' => 33];
-
-    public static function capacite(?string $type): int
+    /** Types de conteneur actifs (Paramètres > Types de conteneur ; code = capacité en palettes). */
+    public static function types(): array
     {
-        return self::CAPACITES[$type ?? ''] ?? 28;
+        return Parametre::ofType(Parametre::TYPE_CONTENEUR)->where('actif', true)->orderBy('ordre')->get()
+            ->map(fn ($p) => [
+                'valeur' => $p->valeur,
+                'capacite' => is_numeric($p->code) ? (int) $p->code : null,
+            ])->values()->all();
+    }
+
+    public static function capacite(?string $type): ?int
+    {
+        foreach (self::types() as $t) {
+            if ((string) $t['valeur'] === (string) $type) {
+                return $t['capacite'];
+            }
+        }
+        return null;
     }
 
     /** Colis (cartons) commandés pour une ligne. */
@@ -40,11 +53,24 @@ class CommandeConteneurController extends Controller
         return (int) ($l->nombre_total_par_palette ?? 0);
     }
 
+    /** Données réelles pour le formulaire "Ajouter un conteneur". */
+    public function meta()
+    {
+        $labels = [
+            'a_preparer' => 'À préparer', 'en_preparation' => 'En préparation', 'pret' => 'Prêt',
+            'charge' => 'Chargé', 'livre' => 'Livré', 'expedie' => 'Expédié', 'annule' => 'Annulé',
+        ];
+        return response()->json([
+            'types_conteneur' => self::types(),
+            'statuts' => collect(Livraison::STATUTS)->map(fn ($k) => ['key' => $k, 'label' => $labels[$k] ?? $k])->values(),
+        ]);
+    }
+
     public function store(Request $request, Commande $commande)
     {
         $data = $request->validate([
             'numero_conteneur' => 'nullable|string|max:255',
-            'type_conteneur' => 'required|in:' . implode(',', array_keys(self::CAPACITES)),
+            'type_conteneur' => ['nullable', 'string', 'max:50', \Illuminate\Validation\Rule::in(array_column(self::types(), 'valeur'))],
             'tare_conteneur' => 'nullable|string|max:255',
             'numero_plomb' => 'nullable|string|max:255',
             'date_enlevement' => 'nullable|date',
@@ -65,7 +91,7 @@ class CommandeConteneurController extends Controller
         ]);
 
         $lignes = $commande->lignes()->get()->keyBy('id');
-        $capacite = self::capacite($data['type_conteneur']);
+        $capacite = self::capacite($data['type_conteneur'] ?? null);
 
         $conteneur = DB::transaction(function () use ($commande, $data, $lignes, $capacite, $request) {
             $totalPalettes = 0;
@@ -86,7 +112,7 @@ class CommandeConteneurController extends Controller
                 $totalPalettes += $palettes;
                 $rows[] = ['commande_ligne_id' => $ligne->id, 'article_id' => $ligne->article_id, 'cartons' => $cartons, 'palettes' => $palettes];
             }
-            if ($totalPalettes > $capacite) {
+            if ($capacite !== null && $totalPalettes > $capacite) {
                 throw ValidationException::withMessages(['articles' => "Capacité dépassée : $totalPalettes / $capacite palettes."]);
             }
 
@@ -124,7 +150,7 @@ class CommandeConteneurController extends Controller
             $conteneur = $livraison->conteneurs()->create([
                 'ordre' => (int) $livraison->conteneurs()->max('ordre') + 1,
                 'numero_conteneur' => $data['numero_conteneur'] ?? null,
-                'type_conteneur' => $data['type_conteneur'],
+                'type_conteneur' => $data['type_conteneur'] ?? null,
                 'tare_conteneur' => $data['tare_conteneur'] ?? null,
                 'numero_plomb' => $data['numero_plomb'] ?? null,
                 'date_enlevement' => $data['date_enlevement'] ?? null,
