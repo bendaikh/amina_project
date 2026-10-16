@@ -3,19 +3,19 @@
     <div class="max-w-7xl mx-auto">
       <div class="mb-6">
         <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-2">Paramètres</h1>
-        <p class="text-gray-600">Tous les paramètres de l'application sur une seule page.</p>
+        <p class="text-gray-600">Configurez les paramètres et données de référence du système</p>
       </div>
-      <nav class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-8 flex flex-wrap gap-2">
-        <a v-for="s in sections" :key="s.id" :href="'#' + s.id" @click.prevent="goTo(s.id)"
-           class="px-3 py-1.5 rounded-lg text-sm bg-gray-50 text-gray-700 hover:bg-teal-50 hover:text-teal-700">{{ s.label }}</a>
-      </nav>
-      <section id="param-exportateurs" class="mb-10 scroll-mt-4">
-        <h2 class="text-2xl font-semibold text-gray-900 mb-4">Exportateurs</h2>
-        <Exportateurs embedded />
-      </section>
-      <section v-for="(label, type) in types" :key="type" :id="'param-' + type" class="mb-10 scroll-mt-4">
-        <Settings :fixed-type="type" />
-      </section>
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 mb-6">
+        <nav class="flex flex-wrap border-b border-gray-200">
+          <button v-for="t in tabs" :key="t.key" type="button" @click="select(t.key)"
+            :class="['px-4 py-3 text-sm font-medium whitespace-nowrap -mb-px',
+              active === t.key ? 'border-b-2 border-teal-600 text-teal-600' : 'text-gray-500 hover:text-gray-700']">
+            {{ t.label }}
+          </button>
+        </nav>
+      </div>
+      <Exportateurs v-if="active === 'exportateurs'" embedded />
+      <Settings v-else :key="active" :fixed-type="active" />
     </div>
   </div>
 </template>
@@ -28,22 +28,24 @@ export default {
   name: 'ParametresPage',
   components: { Settings, Exportateurs },
   data() {
-    return { types: PARAMETRE_TYPES };
+    return { active: 'exportateurs' };
   },
   computed: {
-    sections() {
-      return [{ id: 'param-exportateurs', label: 'Exportateurs' },
-        ...Object.entries(this.types).map(([t, label]) => ({ id: 'param-' + t, label }))];
+    tabs() {
+      return [{ key: 'exportateurs', label: 'Exportateurs' },
+        ...Object.entries(PARAMETRE_TYPES).map(([key, label]) => ({ key, label }))];
     },
   },
-  watch: { '$route.hash'(h) { if (h) this.goTo(h.slice(1)); } },
-  mounted() {
-    if (this.$route.hash) setTimeout(() => this.goTo(this.$route.hash.slice(1)), 400);
-  },
+  watch: { '$route.fullPath'() { this.fromRoute(); } },
+  created() { this.fromRoute(); },
   methods: {
-    goTo(id) {
-      const el = document.getElementById(id);
-      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    fromRoute() {
+      const q = this.$route.query.tab || (this.$route.hash || '').replace(/^#(param-)?/, '');
+      if (q && this.tabs.some(t => t.key === q)) this.active = q;
+    },
+    select(key) {
+      this.active = key;
+      if (this.$route.query.tab !== key) this.$router.replace({ path: '/parametre', query: { tab: key } });
     },
   },
 };

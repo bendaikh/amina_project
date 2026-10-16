@@ -65,7 +65,7 @@ const router = createRouter({
         { path: '/articles/parametres', name: 'ParametresArticles', component: Settings, meta: { requiresAuth: true, title: 'Paramètres articles' } },
         { path: '/settings', redirect: '/articles/parametres' },
         { path: '/parametre', name: 'Parametres', component: ParametresPage, meta: { requiresAuth: true, title: 'Paramètres' } },
-        { path: '/parametre/types-conteneur', redirect: { path: '/parametre', hash: '#param-type_conteneur' } },
+        { path: '/parametre/types-conteneur', redirect: { path: '/parametre', query: { tab: 'type_conteneur' } } },
 
         // 4. Achats
         { path: '/achats', name: 'Achats', component: Purchases, meta: { requiresAuth: true, title: 'Achats' } },
