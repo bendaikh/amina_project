@@ -175,6 +175,7 @@ Route::prefix('commandes')->group(function () {
     Route::post('/{commande}/marquer-a-facturer', [CommandeController::class, 'marquerAFacturer']);
     Route::get('/{commande}/documents', [CommandeController::class, 'listDocuments']);
     Route::post('/{commande}/documents', [CommandeController::class, 'generateDocument']);
+    Route::post('/{commande}/conteneurs', [\App\Http\Controllers\CommandeConteneurController::class, 'store']);
 });
 
 Route::get('/productions/meta', [OrdreProductionController::class, 'meta']);

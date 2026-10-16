@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class LivraisonConteneur extends Model
 {
@@ -15,6 +16,7 @@ class LivraisonConteneur extends Model
         'numero_conteneur',
         'type_conteneur',
         'tare_conteneur',
+        'date_enlevement',
         'vgm_methode',
         'poids_brut_marchandise',
         'vgm_poids',
@@ -47,10 +49,16 @@ class LivraisonConteneur extends Model
         'vgm_poids' => 'decimal:3',
         'arrivee_usine' => 'datetime',
         'depart_usine' => 'datetime',
+        'date_enlevement' => 'date:Y-m-d',
     ];
 
     public function livraison(): BelongsTo
     {
         return $this->belongsTo(Livraison::class);
+    }
+
+    public function articles(): HasMany
+    {
+        return $this->hasMany(LivraisonConteneurArticle::class, 'livraison_conteneur_id');
     }
 }

@@ -177,6 +177,10 @@
 
       <!-- TAB: Chargement -->
       <div v-show="activeTab === 'chargement'">
+        <div class="flex justify-end mb-4">
+          <button @click="showConteneurModal = true" type="button" class="px-4 py-2 bg-teal-600 text-white rounded-lg text-sm hover:bg-teal-700">+ Ajouter conteneur</button>
+        </div>
+        <AjouterConteneurModal :show="showConteneurModal" :commande="commande" @close="showConteneurModal = false" @saved="onConteneurSaved" />
         <div v-if="!conteneurCards.length" class="bg-white border border-gray-100 rounded-xl p-10 text-center shadow-sm">
           <p class="text-gray-500 mb-4">Aucun conteneur. Créez une livraison avec réservation booking.</p>
           <div class="flex flex-wrap justify-center gap-3">
@@ -353,6 +357,7 @@
 
 <script>
 import axios from 'axios';
+import AjouterConteneurModal, { CONTENEUR_TYPES } from './AjouterConteneurModal.vue';
 
 const PROCESSUS = [
   { key: 'brouillon', label: 'Brouillon' },
@@ -404,6 +409,7 @@ const DOCUMENT_CARDS = [
 
 export default {
   name: 'CommandeDetail',
+  components: { AjouterConteneurModal },
   data() {
     return {
       commande: null,
@@ -413,6 +419,7 @@ export default {
       newStatut: '',
       saving: false,
       creatingLiv: false,
+      showConteneurModal: false,
       creatingBl: false,
       creatingColisage: false,
       markingFacture: false,
@@ -498,14 +505,15 @@ export default {
         statutLabel: ui.label,
         badgeClass: ui.class,
         typeLabel: this.formatTypeConteneur(c.type_conteneur),
-        capacite: 28,
-        palettesChargees: 0,
+        capacite: (CONTENEUR_TYPES.find(t => t.key === c.type_conteneur) || {}).capacite || 28,
+        palettesChargees: (c.articles || []).reduce((s, a) => s + Number(a.palettes || 0), 0),
         poidsEstime: Number.isFinite(tare) && tare > 0 ? Math.round(tare).toLocaleString('fr-FR') : '0',
-        articlesCount: 0,
+        articlesCount: (c.articles || []).length,
       };
     },
     formatTypeConteneur(value) {
       const raw = String(value || '');
+      if (raw === '40HC') return "40' HC";
       if (raw.includes('45')) return "45'";
       if (raw.includes('20')) return "20'";
       if (raw.includes('40')) return "40'";
@@ -674,6 +682,11 @@ export default {
       } finally {
         this.creatingLiv = false;
       }
+    },
+    async onConteneurSaved() {
+      this.showConteneurModal = false;
+      this.message = 'Conteneur ajouté';
+      await this.load();
     },
     ouvrirLivraison(livraisonId) {
       this.$router.push({ path: '/ventes/commandes/logistique', query: { open: livraisonId } });

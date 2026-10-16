@@ -271,7 +271,7 @@ class CommandeController extends Controller
             'client',
             'lignes.article',
             'productions.article',
-            'livraisons.conteneurs',
+            'livraisons.conteneurs.articles',
             'exportations',
             'bonLivraison',
             'piecesJointes',
